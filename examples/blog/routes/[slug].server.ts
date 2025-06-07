@@ -1,11 +1,10 @@
 import { Layout } from "../components/layout/Layout.ts"
-import { StaticPath } from "mastro/generate.ts"
 import { html, renderToString } from "mastro/html.ts"
 import { htmlResponse } from "mastro/routes.ts"
 import { getPost, getPostSlugs } from "../models/posts.ts"
 
 export const GET = async (req: Request): Promise<Response> => {
-  const post = await getPost(getSlug(req.url))
+  const post = await getPost(new URL(req.url).pathname)
   const title = post.meta.title + ' | My blog'
   return htmlResponse(
     await renderToString(
@@ -22,10 +21,7 @@ export const GET = async (req: Request): Promise<Response> => {
   )
 }
 
-export const getStaticPaths = async (): Promise<StaticPath[]> => {
+export const getStaticPaths = async () => {
   const slugs = await getPostSlugs()
-  return slugs.map(slug => ({ params: { slug } }))
+  return slugs.map(p => '/' + p)
 }
-
-const getSlug = (url: string) =>
-  url.split('/').at(-1) || ''

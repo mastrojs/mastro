@@ -5,6 +5,9 @@
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
   },
+  "fmt": {
+    "lineWidth": 90
+  },
   "nodeModulesDir": "auto",
   "imports": {
     "@deno/dnt": "jsr:@deno/dnt@^0.41.3",

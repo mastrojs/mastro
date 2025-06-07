@@ -8,11 +8,13 @@ if (typeof URLPattern !== "function") {
   throw Error("Please use a browser that implements URLPattern")
 }
 
+export const paramRegex = /^\[([a-zA-Z0-9]+)\]/
+
 const pathSegments = []
 const suffix = typeof window === "object" ? "js" : "{ts,js}"
 for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
   const segments = filePath.split('/').slice(2).map(segment => {
-    const param = segment.match(/^\[([a-zA-Z0-9]+)\]/)?.[1]
+    const param = segment.match(paramRegex)?.[1]
     if (param) {
       return ':' + param
     } else if (segment === 'index.server.ts' || segment === 'index.server.js') {
@@ -52,3 +54,6 @@ export const matchRoute = (urlPath: string) => {
     }
   }
 }
+
+export const getParams = (urlPath: string) =>
+  matchRoute(urlPath)?.params || {}

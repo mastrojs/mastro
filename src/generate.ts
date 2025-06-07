@@ -1,9 +1,5 @@
 import { findFiles } from "./fs.ts";
-import { routes } from "./router.ts";
-
-export interface StaticPath {
-  params: Record<string, string>;
-}
+import { paramRegex, routes } from "./router.ts";
 
 /**
  * On Deno, call this function to generate the whole
@@ -17,16 +13,20 @@ export const generate = async (outFolder = "dist") => {
     await Deno.remove(outFolder, { recursive: true });
   }
 
-  for (const { filePath } of routes) {
-    const module = await import(Deno.cwd() + filePath);
+  try {
+    for (const { filePath } of routes) {
+      const module = await import(Deno.cwd() + filePath);
 
-    for (const file of await generatePagesForRoute(filePath, module)) {
-      if (file) {
-        const outFilePath = outFolder + file.outFilePath;
-        await Deno.mkdir(dirname(outFilePath), { recursive: true });
-        Deno.writeTextFile(outFilePath, file.output);
+      for (const file of await generatePagesForRoute(filePath, module)) {
+        if (file) {
+          const outFilePath = outFolder + file.outFilePath;
+          await Deno.mkdir(dirname(outFilePath), { recursive: true });
+          Deno.writeTextFile(outFilePath, file.output);
+        }
       }
     }
+  } catch (e) {
+    console.error(e);
   }
 
   for (const filePath of await getStaticFilePaths()) {
@@ -39,11 +39,26 @@ export const generate = async (outFolder = "dist") => {
 export const generatePagesForRoute = async (filePath: string, module: any) => {
   const { GET, getStaticPaths } = module;
   if (typeof GET === "function") {
-    const paths = typeof getStaticPaths === "function"
-      ? replaceParams(filePath, await getStaticPaths())
-      : [filePath];
+    let urls = [new URL(filePathToUrlPath(filePath))];
 
-    return Promise.all(paths.map((p) => generatePage(p, GET)));
+    if (filePath.split("/").some((segment) => segment.match(paramRegex))) {
+      if (typeof getStaticPaths !== "function") {
+        throw Error(filePath + " should export a function named getStaticPaths");
+      }
+      const paths = await getStaticPaths();
+      if (Array.isArray(paths) && (paths.length === 0 || typeof paths[0] === "string")) {
+        urls = paths.map((p) => {
+          if (p[0] !== "/") {
+            throw Error(filePath + "#getStaticPaths: paths must start with a slash (/)");
+          }
+          return new URL(urlPrefix + p);
+        });
+      } else {
+        throw Error(filePath + "#getStaticPaths must return an array of strings");
+      }
+    }
+
+    return Promise.all(urls.map((u) => generatePage(filePath, GET, u)));
   } else {
     throw Error(filePath + " should export a function named GET");
   }
@@ -60,13 +75,14 @@ const isStaticFile = (p: string) =>
 const generatePage = async (
   filePath: string,
   GET: (req: Request) => Promise<Response>,
+  url: URL,
 ) => {
-  const req = new Request(filePathToUrlPath(filePath));
-  const res = await GET(req);
+  const res = await GET(new Request(url));
   if (res instanceof Response) {
     const output = await res.text();
+    const path = url.pathname;
     return {
-      outFilePath: removeRoutesAndServerTs(filePath) + ".html",
+      outFilePath: ensureTrailingSlash(path) + "index.html",
       output,
     };
   } else {
@@ -74,22 +90,17 @@ const generatePage = async (
   }
 };
 
-const replaceParams = (path: string, staticPaths: StaticPath[]): string[] => {
-  const params = path.match(/\[([^\]]+)]/g) || [];
-  return staticPaths.map((p) =>
-    params.reduce((acc, paramWithBrackets) => {
-      const param = paramWithBrackets.slice(1, -1);
-      return acc.replace(paramWithBrackets, p.params[param]);
-    }, path)
-  );
-};
-
 const filePathToUrlPath = (path: string) => {
   path = removeRoutesAndServerTs(path);
   if (path.endsWith("/index")) {
     path = path.slice(0, -5); // '/index' -> '/'
   }
-  return "http://localhost" + path;
+  return urlPrefix + path;
 };
 
 const removeRoutesAndServerTs = (path: string) => path.slice(7, -10);
+
+// just a dummy prefix so `new URL` doesn't throw
+const urlPrefix = "http://localhost";
+
+const ensureTrailingSlash = (path: string) => path.endsWith("/") ? path : path + "/";
