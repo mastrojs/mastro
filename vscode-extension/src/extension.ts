@@ -57,9 +57,12 @@ export const activate = async (context: vscode.ExtensionContext) => {
           case "generateFiles": {
             const { files } = msg;
             try {
+              await vscode.workspace.fs.delete(
+                rootFolder.with({ path: basePath + "/docs" }),
+                { recursive: true },
+              );
               const wsedit = new vscode.WorkspaceEdit();
               const encoder = new TextEncoder();
-              // TODO: clear docs folder
               wsedit.createFile(
                 rootFolder.with({ path: basePath + "/docs/.nojekyll" }),
                 { ignoreIfExists: true },
