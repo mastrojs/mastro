@@ -99,7 +99,8 @@ export const activate = async (context: vscode.ExtensionContext) => {
               );
               webview.postMessage({ type: "success", response, requestId });
             } catch (e) {
-              webview.postMessage({ type: "error", response: e, requestId });
+              const response = `readDir failed to find ${path}: ${(e as any)?.code || e}`
+              webview.postMessage({ type: "error", response, requestId });
             }
             return;
           }
@@ -112,7 +113,8 @@ export const activate = async (context: vscode.ExtensionContext) => {
               const response = new TextDecoder().decode(bs);
               webview.postMessage({ type: "success", response, requestId });
             } catch (e) {
-              webview.postMessage({ type: "error", response: e, requestId });
+              const response = `readTextFile failed to find ${path}: ${(e as any)?.code || e}`
+              webview.postMessage({ type: "error", response, requestId });
             }
             return;
           }
@@ -353,7 +355,8 @@ const getWebviewContent = async (
                     const pages = await generatePagesForRoute(filePath, module)
                     files.push(...pages.filter(p => p))
                   } catch (e) {
-                    const error = "Failed to generate route " + filePath + ": " + e
+                    const error = "Failed to generate route " + filePath + ": " +
+                      (e?.message || e?.code || JSON.stringify(e))
                     vscode.postMessage({ type: "showErrorInOutputChannel", error });
                   }
                 } catch (e) {
@@ -469,12 +472,17 @@ const findFiles = async (
   // `routes/**/*.server.js`
   // `data/posts/*.md`
 
-  const readDir = (path: string) =>
-    vscode.workspace.fs.readDirectory(
-      rootFolder.with({ path: basePath + path })
-    ).then(entries =>
-      entries.map(([name, type]) => [path + "/" + name, type] as const)
-    )
+  const readDir = async (path: string) => {
+    try {
+      const entries = await vscode.workspace.fs.readDirectory(
+        rootFolder.with({ path: basePath + path })
+      )
+      return entries.map(([name, type]) => [path + "/" + name, type] as const)
+    } catch (e) {
+      console.warn(e)
+      return []
+    }
+  }
 
   pattern = pattern.startsWith("/") ? pattern : "/" + pattern
   const segments = pattern.split("/")
