@@ -61,28 +61,24 @@ export const activate = async (context: vscode.ExtensionContext) => {
                 rootFolder.with({ path: basePath + "/docs" }),
                 { recursive: true },
               );
-              const wsedit = new vscode.WorkspaceEdit();
-              const encoder = new TextEncoder();
-              wsedit.createFile(
+              await vscode.workspace.fs.writeFile(
                 rootFolder.with({ path: basePath + "/docs/.nojekyll" }),
-                { ignoreIfExists: true },
+                new Uint8Array(0),
               );
+
+              const encoder = new TextEncoder();
               await Promise.all(files.map(async (file: any) => {
                 const { outFilePath, output } = file;
-                const fileUri = rootFolder.with({ path: basePath + "/docs" + outFilePath })
+                const fileUri = rootFolder.with({ path: basePath + "/docs" + outFilePath });
                 const contents = output
                   ? encoder.encode(output)
                   : await vscode.workspace.fs.readFile(
                       rootFolder.with({ path: basePath + "/routes" + outFilePath }),
                     );
-                wsedit.createFile(fileUri, { overwrite: true, contents });
+                return vscode.workspace.fs.writeFile(fileUri, contents);
               }));
-              if (await vscode.workspace.applyEdit(wsedit)) {
-                outputChannel.appendLine('🟢 Updated docs/ folder. Click the "Source Control" icon on the left, then click "Commit & Push" to publish your changes.');
-                outputChannel.show(true);
-              } else {
-                vscode.window.showErrorMessage("Could not create files in the workspace.");
-              }
+              outputChannel.appendLine('🟢 Updated docs/ folder. Click the "Source Control" icon on the left, then click "Commit & Push" to publish your changes.');
+              outputChannel.show(true);
             } catch (e) {
               vscode.window.showErrorMessage(`${e}`);
             }
