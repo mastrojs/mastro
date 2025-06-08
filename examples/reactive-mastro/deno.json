@@ -1,14 +1,16 @@
 {
   "tasks": {
     "start": "deno run -A --watch=. server.ts",
-    "generate": "deno eval \"import 'mastro/generate.ts'\""
+    "generate": "deno eval \"import 'mastro/generate'\""
   },
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
   },
   "patch": ["../../"],
   "imports": {
-    "mastro/": "../../src/",
+    "mastro": "../../src/index.ts",
+    "mastro/generate": "../../src/generate.ts",
+    "mastro/server": "../../src/server.ts",
     "mastro/reactive": "../../src/reactive/reactive.ts"
   }
 }

@@ -1,4 +1,4 @@
-import { html } from "mastro/html.js";
+import { html } from "mastro";
 
 export const Layout = (props) =>
   html`

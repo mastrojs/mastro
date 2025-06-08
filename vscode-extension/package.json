@@ -29,7 +29,7 @@
   "scripts": {
     "open-in-browser": "npm run build; vscode-test-web --extensionDevelopmentPath=. ../examples/hello-world/",
     "vscode:prepublish": "npm run build",
-    "build": "tsc -p ./ && tsc ../src/*.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions || true",
+    "build": "tsc -p ./",
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {

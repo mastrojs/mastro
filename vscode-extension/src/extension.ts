@@ -197,7 +197,7 @@ const getWebviewContent = async (
           }
 
           // after we've populated window.fs, we can import things that use it
-          const { routes, matchRoute } = await import("mastro/router.js")
+          const { routes, matchRoute } = await import("mastro")
 
           const replaceAsync = async (str, regex, asyncFn) => {
             const promises = []
@@ -340,12 +340,12 @@ const getWebviewContent = async (
           document.getElementById("generateBtn").addEventListener("click", async () => {
             try {
               vscode.postMessage({ type: "clearOutputChannel" })
-              const { generatePagesForRoute, getStaticFilePaths } = await import("mastro/generate.js")
+              const { generatePagesForRoute, getStaticFilePaths } = await import("mastro/generator")
 
               const files = (await getStaticFilePaths()).map(outFilePath => ({ outFilePath }))
               for (const { filePath } of routes) {
                 try {
-                  // we have to do the import here and cannot factor it out to mastro/generate
+                  // we have to do the import here and cannot factor it out to mastro/generator
                   const module = await import(filePath)
                   try {
                     const pages = await generatePagesForRoute(filePath, module)
@@ -427,19 +427,16 @@ const getImportMap = async (
   rootFolder: vscode.Uri,
   basePath: string,
 ) => {
-  const imports = {} as Record<string, string>;
+  const imports = {
+    mastro: 'https://esm.sh/stable/mastro@0.0.6?bundle',
+    'mastro/generator': 'https://esm.sh/stable/mastro@0.0.6/generator',
+  } as Record<string, string>;
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {
     if (uri.path.endsWith(".js")) {
       imports[uri.path.slice(basePath.length)] = webview.asWebviewUri(uri)
         .toString();
     }
   }
-
-  ["fs.js", "generate.js", "html.js", "markdown.js", "router.js", "routes.js"]
-    .forEach((fileName) => {
-      const uri = vscode.Uri.joinPath(context.extensionUri, "mastro", fileName);
-      imports["mastro/" + fileName] = webview.asWebviewUri(uri).toString();
-    });
   return JSON.stringify({ imports });
 };
 

@@ -1,10 +1,12 @@
 {
   "tasks": {
     "start": "deno run -A --watch=. server.ts",
-    "generate": "deno eval \"import { generate } from 'mastro/generate.ts'; generate()\""
+    "generate": "deno eval 'import \"mastro/generate\"'"
   },
   "patch": ["../../"],
   "imports": {
-    "mastro/": "../../src/"
+    "mastro": "../../src/index.ts",
+    "mastro/generate": "../../src/generate.ts",
+    "mastro/server": "../../src/server.ts"
   }
 }

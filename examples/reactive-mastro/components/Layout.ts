@@ -1,4 +1,4 @@
-import { type Html, html } from "mastro/html.ts"
+import { type Html, html } from "mastro";
 
 interface Props {
   children: Html;

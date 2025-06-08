@@ -1,6 +1,4 @@
-import { readDir } from 'mastro/fs.ts'
-import { readMarkdownFile } from 'mastro/markdown.ts'
-import { Html } from "mastro/html.ts";
+import { type Html, readDir, readMarkdownFile } from 'mastro'
 
 export interface Post {
   content: Html;

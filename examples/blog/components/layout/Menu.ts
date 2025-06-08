@@ -1,7 +1,8 @@
-import { html } from 'mastro/html.ts'
+import { html } from "mastro";
 
-export const Menu = () => html`
-  <nav>
-    <ul></ul>
-  </nav>
-  `
+export const Menu = () =>
+  html`
+    <nav>
+      <ul></ul>
+    </nav>
+  `;

@@ -1,6 +1,5 @@
 import { Layout } from "../components/Layout.js";
-import { html } from "mastro/html.js";
-import { htmlToResponse } from "mastro/routes.js";
+import { html, htmlToResponse } from "mastro";
 
 export const GET = () =>
   htmlToResponse(

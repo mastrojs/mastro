@@ -1,7 +1,5 @@
 import { Layout } from "../components/Layout.js";
-import { html } from "mastro/html.js";
-import { readDir, readTextFile } from "mastro/fs.js";
-import { htmlToResponse } from "mastro/routes.js";
+import { html, htmlToResponse, readDir, readTextFile } from "mastro";
 
 export const GET = () =>
   htmlToResponse(

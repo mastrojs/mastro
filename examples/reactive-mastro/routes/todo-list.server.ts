@@ -1,6 +1,5 @@
 import { Layout } from "../components/Layout.ts"
-import { html, renderToStream } from "mastro/html.ts"
-import { htmlResponse } from "mastro/routes.ts"
+import { html, htmlResponse, renderToStream } from "mastro";
 
 export const GET = () =>
   htmlResponse(renderToStream(

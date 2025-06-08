@@ -1,3 +1,3 @@
-import { handler } from 'mastro/server.ts'
+import { handler } from 'mastro/server'
 
 Deno.serve(handler)
