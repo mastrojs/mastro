@@ -31,17 +31,20 @@ for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
 // TODO: sort this according to solid route precedence criteria
 pathSegments.sort((a, b) => a.segments.length - b.segments.length)
 
-export const routes = pathSegments.map(r => {
-  const route = {
-    filePath: r.filePath,
-    pattern: new URLPattern({ pathname: `/${r.segments.join('/')}` }),
-  };
-  Object.freeze(route);
-  return route;
-})
+export const routes: Array<{ filePath: string; pattern: URLPattern}> =
+  pathSegments.map(r => {
+    const route = {
+      filePath: r.filePath,
+      pattern: new URLPattern({ pathname: `/${r.segments.join('/')}` }),
+    };
+    Object.freeze(route);
+    return route;
+  });
 Object.freeze(routes)
 
-export const matchRoute = (urlPath: string) => {
+export const matchRoute = (
+  urlPath: string,
+): { filePath: string; params: URLPatternComponentResult['groups'] } | undefined => {
   for (const route of routes) {
     const match = route.pattern.exec(urlPath)
     if (match) {
@@ -60,5 +63,5 @@ export const matchRoute = (urlPath: string) => {
   }
 }
 
-export const getParams = (urlPath: string) =>
+export const getParams = (urlPath: string): URLPatternComponentResult['groups'] =>
   matchRoute(urlPath)?.params || {}

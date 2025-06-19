@@ -5,7 +5,7 @@ import { matchRoute } from './router.ts'
 import { jsResponse } from './routes.ts'
 import { readTextFile } from './fs.ts'
 
-export const handler = async (req: Request) => {
+export const handler = async (req: Request): Promise<Response> => {
   const url = new URL(req.url)
   const { pathname } = url
 

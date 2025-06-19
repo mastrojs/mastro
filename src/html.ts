@@ -27,7 +27,7 @@ export const html = (strings: TemplateStringsArray, ...params: Html[]): Html[] =
   return output
 }
 
-export const unsafeInnerHtml = (str: string) =>
+export const unsafeInnerHtml = (str: string): Html =>
   // we're using a string object to mark something as HTML
   // (as opposed to a string that still needs to be escaped)
   // we could also use a plain object like `{ type: 'html', str }`

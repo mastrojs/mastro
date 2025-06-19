@@ -1,7 +1,7 @@
 import { findFiles } from "./fs.ts";
 import { paramRegex, routes } from "./router.ts";
 
-export const generate = async (outFolder = "dist") => {
+export const generate = async (outFolder = "dist"): Promise<void> => {
   const { exists } = await import("@std/fs/exists");
   const { dirname } = await import("@std/path");
 
@@ -32,7 +32,10 @@ export const generate = async (outFolder = "dist") => {
   console.info(`Generated static site and wrote to ${outFolder}/ folder.`);
 };
 
-export const generatePagesForRoute = async (filePath: string, module: any) => {
+export const generatePagesForRoute = async (
+  filePath: string,
+  module: any,
+): Promise<Array<{ outFilePath: string; output: string } | undefined>> => {
   const { GET, getStaticPaths } = module;
   if (typeof GET === "function") {
     let urls = [new URL(filePathToUrlPath(filePath))];
@@ -60,7 +63,7 @@ export const generatePagesForRoute = async (filePath: string, module: any) => {
   }
 };
 
-export const getStaticFilePaths = async () =>
+export const getStaticFilePaths = async (): Promise<string[]> =>
   (await findFiles("routes/**/*"))
     .filter(isStaticFile).map((p) => p.slice(7));
 
