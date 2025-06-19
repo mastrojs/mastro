@@ -415,7 +415,7 @@ const getWebviewContent = async (
           <input id="pathInput">
           <button id="generateBtn" type="button">Generate</button>
         </form>
-        <iframe sandbox="allow-modals allow-scripts">
+        <iframe sandbox="allow-forms allow-modals allow-scripts">
       </body>
     </html>
     `;
