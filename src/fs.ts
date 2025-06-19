@@ -1,16 +1,17 @@
-const fs = typeof window === "object"
+const fs = typeof document === "object"
   ? undefined
   : await import("node:fs/promises");
 
-const vscodeExtensionFs = typeof window === "object"
+// we use document.fs because dnt would add a shim for window https://github.com/denoland/dnt/issues/454
+const vscodeExtensionFs = typeof document === "object"
   // deno-lint-ignore no-explicit-any
-  ? (window as any).fs
+  ? (document as any).fs
   : undefined;
 
 /**
  * Reads the directory and lists its files non-recursively and ignoring symlinks.
  */
-export const readDir = async (path: string): Promise<string[]> =>
+export const readDir = (path: string): Promise<string[]> =>
   fs
     ? fs.readdir(ensureNoLeadingSlash(path), { withFileTypes: true })
       .then((files) =>
@@ -35,7 +36,7 @@ export const readTextFile = (path: string): Promise<string> =>
  */
 export const findFiles = async (pattern: string): Promise<string[]> => {
   pattern = pattern.startsWith("/") ? pattern.slice(1) : pattern;
-  if (typeof window === "object") {
+  if (typeof document === "object") {
     return vscodeExtensionFs.findFiles(pattern);
   } else {
     const { expandGlob } = await import("@std/fs");

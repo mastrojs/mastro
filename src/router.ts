@@ -11,7 +11,7 @@ if (typeof URLPattern !== "function") {
 export const paramRegex = /^\[([a-zA-Z0-9]+)\]/
 
 const pathSegments = []
-const suffix = typeof window === "object" ? "js" : "{ts,js}"
+const suffix = typeof document === "object" ? "js" : "{ts,js}"
 for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
   const segments = filePath.split('/').slice(2).map(segment => {
     const param = segment.match(paramRegex)?.[1]
@@ -46,7 +46,7 @@ export const matchRoute = (urlPath: string) => {
     const match = route.pattern.exec(urlPath)
     if (match) {
       const { filePath } = route
-      if (typeof window === 'object' && filePath.endsWith(".server.ts")) {
+      if (typeof document === 'object' && filePath.endsWith(".server.ts")) {
         throw Error(
           "TypeScript files are currently not supported in the " +
           ` Mastro VSCode extension (${filePath})`

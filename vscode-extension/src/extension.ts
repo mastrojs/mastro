@@ -190,13 +190,13 @@ const getWebviewContent = async (
               })
               vscode.postMessage({ ...msg, requestId })
             })
-          window.fs = {
+          document.fs = {
             findFiles: pattern => postMessageAndAwaitAnswer({ type: "findFiles", pattern }),
             readDir: pathOfDir => postMessageAndAwaitAnswer({ type: "readDir", path: pathOfDir }),
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
           }
 
-          // after we've populated window.fs, we can import things that use it
+          // after we've populated document.fs, we can import things that use it
           const { routes, matchRoute } = await import("mastro")
 
           const replaceAsync = async (str, regex, asyncFn) => {

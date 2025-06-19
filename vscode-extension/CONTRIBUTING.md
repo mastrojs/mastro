@@ -42,5 +42,5 @@ iframe.srcdoc = output
 ```
 
 APIs we can call here are those we set up in the WebViewPanel:
-- `window.fs`
+- `document.fs`
 - `window.parent.postMessage`
