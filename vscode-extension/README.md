@@ -1,6 +1,6 @@
 This is a _Visual Studio Code for the Web_ extension to preview, build and publish your static site – all you need is a browser and a GitHub account.
 
-**[Follow the guide!](https://mastrojs.github.io/)**
+**[Follow the guide!](https://mastrojs.github.io/guides/)**
 
 ### Usage
 

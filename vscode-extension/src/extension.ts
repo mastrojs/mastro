@@ -428,8 +428,8 @@ const getImportMap = async (
   basePath: string,
 ) => {
   const imports = {
-    mastro: 'https://esm.sh/stable/mastro@0.0.6?bundle',
-    'mastro/generator': 'https://esm.sh/stable/mastro@0.0.6/generator',
+    mastro: 'https://esm.sh/stable/mastro@0.0.8?bundle',
+    'mastro/generator': 'https://esm.sh/stable/mastro@0.0.8/generator',
   } as Record<string, string>;
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {
     if (uri.path.endsWith(".js")) {
