@@ -1,6 +1,6 @@
 import tsBlankSpace from 'ts-blank-space'
 import { serveFile } from "@std/http/file-server"
-import { join } from '@std/path'
+import { join, toFileUrl } from '@std/path'
 import { matchRoute } from './router.ts'
 import { jsResponse } from './routes.ts'
 import { readTextFile } from './fs.ts'
@@ -31,7 +31,7 @@ export const handler = async (req: Request): Promise<Response> => {
         if (route) {
           const modulePath = Deno.cwd() + route.filePath
           console.info(`Received ${req.url}, loading ${modulePath}`)
-          const { GET } = await import(modulePath)
+          const { GET } = await import(toFileUrl(modulePath).toString())
           const res = await GET(req)
           if (res instanceof Response) {
             return res
