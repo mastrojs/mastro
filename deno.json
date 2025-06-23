@@ -16,7 +16,6 @@
   "fmt": {
     "lineWidth": 90
   },
-  "nodeModulesDir": "auto",
   "imports": {
     "@deno/dnt": "jsr:@deno/dnt@^0.41.3",
     "@std/fs": "jsr:@std/fs@^1.0.17",

@@ -1,30 +1,4 @@
-import { findFiles } from './fs.ts'
-import { Html, html, renderToString, unsafeInnerHtml } from './html.ts'
-
-export const importMap = async () => {
-  const denoImports = JSON.parse(await Deno.readTextFile('deno.json')).imports as Record<string, string>
-  const imports = Object.keys(denoImports).filter(k => k.startsWith('client/')).reduce((acc, key) => {
-    acc[key] = `./${key}/`
-    return acc
-  }, {} as Record<string, string>)
-  imports['mastro/reactive'] = '/client/mastro/reactive/reactive.ts'
-  imports['@maverick-js/signals'] = '/client/@maverick-js/signals/'
-  return html`
-    <script type="importmap">
-      ${unsafeInnerHtml(JSON.stringify({
-        imports
-      }))}
-    </script>
-    `
-}
-
-export const scripts = async (pattern: string) => {
-  const prefixLength = Deno.cwd().length
-  const files = await findFiles(pattern)
-  return files.map(filePath =>
-    html`<script type="module" src=${filePath.slice(prefixLength)}></script>`
-  )
-}
+import { type Html, renderToString } from './html.ts'
 
 export const htmlResponse = (
   body: string | AsyncIterable<string>,
