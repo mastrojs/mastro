@@ -1,10 +1,11 @@
 {
   "name": "@mastrojs/mastro",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "exports": {
     ".": "./src/index.ts",
     "./generate": "./src/generate.ts",
     "./generator": "./src/generator.ts",
+    "./init": "./src/init.ts",
     "./server": "./src/server.ts",
     "./reactive": "./src/reactive/reactive.ts"
   },

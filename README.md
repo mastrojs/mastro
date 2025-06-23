@@ -36,7 +36,11 @@ A *m*inimal take on an *Astro*-like MPA web framework. Currently, there are thre
 
 ### Deno
 
-Download the contents of the [`examples/hello-world` folder](examples/hello-world/) and `cd` into it, then:
+After [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either run:
+
+    deno run --allow-write jsr:@mastrojs/mastro/init
+
+or download the contents of the [`examples/hello-world` folder](examples/hello-world/). `cd` into the folder, then:
 
 Start the development server:
 
