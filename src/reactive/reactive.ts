@@ -1,3 +1,9 @@
+/**
+ * This module contains [Reactive Mastro](https://mastrojs.github.io/reactive/)
+ * – a tiny reactive GUI library that runs in your browser.
+ * @module
+ */
+
 import * as signals from '@maverick-js/signals'
 import { renderToString } from '../html.ts'
 import { parseArgs, parseBind } from "./reactive.util.ts";

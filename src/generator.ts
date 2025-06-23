@@ -1,3 +1,10 @@
+/**
+ * This module contains all functions related to static site generation.
+ * It is used both by the [vscode-extension](../vscode-extension/) and
+ * by `deno task generate`.
+ * @module
+ */
+
 import { findFiles } from "./fs.ts";
 import { paramRegex, routes } from "./router.ts";
 

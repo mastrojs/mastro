@@ -1,3 +1,9 @@
+/**
+ * This module exports a `fetch` handler that can be passed to Deno.serve,
+ * or used directly with `deno serve`.
+ * @module
+ */
+
 import tsBlankSpace from "ts-blank-space";
 import { serveFile } from "@std/http/file-server";
 import { toFileUrl } from "@std/path";
