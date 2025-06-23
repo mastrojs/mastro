@@ -8,9 +8,6 @@
     "./server": "./src/server.ts",
     "./reactive": "./src/reactive/reactive.ts"
   },
-  "tasks": {
-    "build_npm": "deno run -A scripts/build_npm.ts"
-  },
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
   },
