@@ -1,12 +1,9 @@
 {
   "tasks": {
-    "start": "deno eval --unstable-sloppy-imports \"import { handler } from 'mastro/server'\nDeno.serve(handler)\"",
-    "generate": "deno eval --unstable-sloppy-imports \"import 'mastro/generate'\""
+    "start": "deno serve --watch=. --allow-read --allow-env jsr:@mastrojs/mastro@0.0.3/server",
+    "generate": "deno eval \"import 'mastro/generate';\""
   },
-  "patch": ["../../"],
   "imports": {
-    "mastro": "../../src/index.ts",
-    "mastro/generate": "../../src/generate.ts",
-    "mastro/server": "../../src/server.ts"
+    "mastro": "jsr:@mastrojs/mastro@0.0.3"
   }
 }

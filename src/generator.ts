@@ -3,7 +3,7 @@ import { paramRegex, routes } from "./router.ts";
 
 export const generate = async (outFolder = "dist"): Promise<void> => {
   const { exists } = await import("@std/fs/exists");
-  const { dirname } = await import("@std/path");
+  const { dirname, toFileUrl } = await import("@std/path");
 
   if (await exists(outFolder, { isDirectory: true })) {
     await Deno.remove(outFolder, { recursive: true });
@@ -11,7 +11,7 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
 
   try {
     for (const { filePath } of routes) {
-      const module = await import(Deno.cwd() + filePath);
+      const module = await import(toFileUrl(Deno.cwd() + filePath).toString());
 
       for (const file of await generatePagesForRoute(filePath, module)) {
         if (file) {

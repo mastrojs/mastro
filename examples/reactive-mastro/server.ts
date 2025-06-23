@@ -1,3 +1,3 @@
-import { handler } from 'mastro/server'
+import server from 'mastro/server'
 
-Deno.serve(handler)
+Deno.serve(server.fetch)
