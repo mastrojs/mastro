@@ -13,6 +13,12 @@ export const computed = signals.computed
 export const effect = signals.effect
 export const signal = signals.signal
 
+if (typeof HTMLElement !== "function") {
+  // if this module happens to get imported server-side,
+  // this hack avoids it from crashing on import
+  globalThis.HTMLElement = class Foo {} as any
+}
+
 export class ReactiveElement extends HTMLElement {
   #dispose?: signals.Dispose
   /** override this field in your class constructor as necessary */

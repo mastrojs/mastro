@@ -11,6 +11,7 @@ import { paramRegex, routes } from "./router.ts";
 export const generate = async (outFolder = "dist"): Promise<void> => {
   const { exists } = await import("@std/fs/exists");
   const { dirname, toFileUrl } = await import("@std/path");
+  const { tsToJs } = await import("./server.ts");
 
   if (await exists(outFolder, { isDirectory: true })) {
     await Deno.remove(outFolder, { recursive: true });
@@ -33,7 +34,12 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
   }
 
   for (const filePath of await getStaticFilePaths()) {
-    Deno.copyFile("routes" + filePath, outFolder + filePath);
+    if (filePath.endsWith(".client.ts")) {
+      const text = await Deno.readTextFile("routes" + filePath);
+      Deno.writeTextFile(outFolder + filePath.slice(0, -3) + ".js", tsToJs(text));
+    } else {
+      Deno.copyFile("routes" + filePath, outFolder + filePath);
+    }
   }
 
   console.info(`Generated static site and wrote to ${outFolder}/ folder.`);
