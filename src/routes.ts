@@ -14,7 +14,7 @@ export const htmlResponse = (
     {
       status,
       headers: {
-        'Content-Type': 'text/html',
+        "Content-Type": "text/html; charset=utf-8",
         ...headers,
       },
     })
@@ -27,7 +27,7 @@ export const jsResponse = (body: string, status = 200, headers?: HeadersInit): R
   new Response(body, {
     status,
     headers: {
-      'Content-Type': 'text/javascript',
+      'Content-Type': 'text/javascript; charset=utf-8',
       ...headers,
     },
   })

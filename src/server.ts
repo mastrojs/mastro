@@ -27,13 +27,18 @@ const fetch = async (req: Request): Promise<Response> => {
       const route = matchRoute(req.url);
       if (route) {
         const modulePath = Deno.cwd() + route.filePath;
-        console.info(`Received ${req.url}, loading ${modulePath}`);
-        const { GET } = await import(toFileUrl(modulePath).toString());
-        const res = await GET(req);
+        const method = req.method.toUpperCase()
+        console.info(`${method} ${req.url}, loading ${modulePath}`);
+        const module = await import(toFileUrl(modulePath).toString());
+        const handler = module[method]
+        if (!handler) {
+          throw Error(`No function ${method} exported by ${modulePath}`)
+        }
+        const res = await handler(req);
         if (res instanceof Response) {
           return res;
         } else {
-          throw Error("GET must return a Response object");
+          throw Error(method + " must return a Response object");
         }
       } else {
         return new Response("404 not found", { status: 404 });
@@ -43,7 +48,7 @@ const fetch = async (req: Request): Promise<Response> => {
     if (pathname !== "/favicon.ico") {
       console.warn(e);
     }
-    if (e.name === "NotFound") {
+    if (e.name === "NotFound" || e.code === 'ENOENT') {
       return new Response("404 not found", { status: 404 });
     } else {
       return new Response(`500: ${e.name || "Unknown error"}\n\n${e}`, { status: 500 });
