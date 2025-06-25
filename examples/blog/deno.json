@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "start": "deno run -A --watch=. server.ts",
+    "start": "deno serve -A --watch=. ../../src/server.ts",
     "generate": "deno eval 'import \"mastro/generate\"'"
   },
   "compilerOptions": {
