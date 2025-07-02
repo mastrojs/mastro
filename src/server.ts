@@ -48,7 +48,7 @@ const fetch = async (req: Request): Promise<Response> => {
       const handler = module[method];
       if (!handler) {
         return new Response(`No function ${method} exported by ${modulePath}`, {
-          status: 404,
+          status: 405,
         });
       }
       const res = await handler(req);
