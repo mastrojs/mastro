@@ -241,7 +241,6 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@deno/dnt@~0.41.3",
       "jsr:@std/fs@^1.0.17",
       "jsr:@std/http@^1.0.15",
       "jsr:@std/path@^1.0.9",
