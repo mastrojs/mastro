@@ -16,6 +16,10 @@ interface Md {
   meta: Record<string, string>;
 }
 
+/**
+ * Convert a markdown string (GFM, with YAML metadata) to an `Html` node
+ * and an object for the metadata.
+ */
 export const markdownToHtml = (md: string, opts?: Options): Md => {
   const { bodyMd, meta } = parseYamlFrontmatter(md)
   const content = unsafeInnerHtml(
@@ -28,6 +32,10 @@ export const markdownToHtml = (md: string, opts?: Options): Md => {
   return { content, meta };
 };
 
+/**
+ * Read a file from the local filesystem and convert its markdown contents
+ * (GFM, with YAML metadata) to an `Html` node and an object for the metadata.
+ */
 export const readMarkdownFile = async (path: string, opts?: Options): Promise<Md> =>
   markdownToHtml(await readTextFile(path), opts);
 

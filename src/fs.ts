@@ -9,7 +9,8 @@ const vscodeExtensionFs = typeof document === "object"
   : undefined;
 
 /**
- * Reads the directory and lists its files non-recursively and ignoring symlinks.
+ * Read the directory on the local file system and return its files,
+ * non-recursive and ignoring symlinks.
  */
 export const readDir = (path: string): Promise<string[]> =>
   fs
@@ -21,15 +22,19 @@ export const readDir = (path: string): Promise<string[]> =>
       )
     : vscodeExtensionFs.readDir(ensureLeadingSlash(path));
 
+/**
+ * Return the contents of a text file on the local file system as a string.
+ */
 export const readTextFile = (path: string): Promise<string> =>
   fs
     ? fs.readFile(ensureNoLeadingSlash(path), { encoding: "utf8" })
     : vscodeExtensionFs.readTextFile(ensureLeadingSlash(path));
 
 /**
- * Expands glob patterns like `*` and `**` and returns the matching file paths.
+ * Return the file paths on the local file system,
+ * expanding glob patterns like `*` and `**`.
  *
- * Patterns supported currently depends on platform:
+ * Supported patterns depend on the platform:
  *
  * - VSCode for the Web: [Glob Pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
  * - Deno: [expandGlob](https://jsr.io/@std/fs/doc/expand-glob/~/expandGlob)

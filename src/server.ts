@@ -1,6 +1,8 @@
 /**
- * This module exports a `fetch` handler that can be passed to Deno.serve,
- * or used directly with `deno serve`.
+ * This module exports a `fetch` handler that can be passed to
+ * [Deno.serve](https://docs.deno.com/api/deno/~/Deno.serve),
+ * or used directly with [deno serve](https://docs.deno.com/runtime/reference/cli/serve/)
+ * command line interface.
  * @module
  */
 
@@ -13,9 +15,12 @@ import { jsResponse } from "./routes.ts";
 const importRegex = /^import .*\.ts("|')(;)?$/gm;
 
 /**
+ * Convert a TypeScript string to JavaScript by running it through `tsBlankSpace`
+ * and changing imports ending with `.ts` to end with `.js`.
+ *
  * Since browsers don't understand TypeScript and static file servers generally
- * don't serve `.ts` files with `content-type: text/javascript`, we convert all
- * `.client.ts` files to `.client.js` and strip the types inside with `tsBlankSpace`.
+ * don't serve `.ts` files with `content-type: text/javascript`, we need to run this
+ * function on `.client.ts` files, to convert them to `.client.js` files.
  */
 export const tsToJs = (text: string): string =>
   tsBlankSpace(text)
@@ -74,8 +79,8 @@ const fetch = async (req: Request): Promise<Response> => {
 
 /**
  * Default export with a `fetch` handler.
- * see [fetch handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/)
- * and [Deno.ServeDefaultExport](https://docs.deno.com/api/deno/~/Deno.ServeDefaultExport)
+ * See [fetch handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/)
+ * and [Deno.ServeDefaultExport](https://docs.deno.com/api/deno/~/Deno.ServeDefaultExport).
  */
 export default { fetch };
 

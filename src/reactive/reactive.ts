@@ -9,8 +9,26 @@ import { renderToString } from '../html.ts'
 import { parseArgs, parseBind } from "./reactive.util.ts";
 
 export * from '../html.ts'
+/**
+ * Creates a new signal whose value is computed and returned by the given function.
+ * The given compute function is only re-run when one of its dependencies are updated.
+ *
+ * See [@maverick-js/signals#computed](https://github.com/maverick-js/signals#computed)
+ */
 export const computed = signals.computed
+
+/**
+ * Invokes the given function each time any of the signals that are read inside are updated (i.e., their value changes)
+ *
+ * See [@maverick-js/signals#computed](https://github.com/maverick-js/signals#effect)
+ */
 export const effect = signals.effect
+
+/**
+ * Wraps the given value into a signal.
+ *
+ * See [@maverick-js/signals#computed](https://github.com/maverick-js/signals#signal)
+ */
 export const signal = signals.signal
 
 if (typeof HTMLElement !== "function") {
@@ -19,6 +37,10 @@ if (typeof HTMLElement !== "function") {
   globalThis.HTMLElement = class Foo {} as any
 }
 
+/**
+ * Base class for reactive elements. Extends [HTMLElement](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements).
+ * For usage, see the [Reactive Mastro website](https://mastrojs.github.io/reactive/).
+ */
 export class ReactiveElement extends HTMLElement {
   #dispose?: signals.Dispose
   /** override this field in your class constructor as necessary */

@@ -8,6 +8,10 @@
 import { findFiles } from "./fs.ts";
 import { paramRegex, routes } from "./router.ts";
 
+/**
+ * Generate all pages for the static site and write them to disk.
+ * Can only be used with Deno and not the VSCode extension.
+ */
 export const generate = async (outFolder = "dist"): Promise<void> => {
   const { exists } = await import("@std/fs/exists");
   const { dirname, toFileUrl } = await import("@std/path");
@@ -45,6 +49,13 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
   console.info(`Generated static site and wrote to ${outFolder}/ folder.`);
 };
 
+/**
+ * Takes a file path for a route file on the local filesystem, runs the
+ * static site generation logic and returns an array of output strings
+ * and their respective output file paths. However, this function itself
+ * doesn't actually write anything to disk. Instead, it's called by `generate`
+ * and by the VSCode extension.
+ */
 export const generatePagesForRoute = async (
   filePath: string,
   module: any,
@@ -76,6 +87,10 @@ export const generatePagesForRoute = async (
   }
 };
 
+/**
+ * Return the paths of all non-route files from the the local filesystem.
+ * It's called by `generate` and by the VSCode extension.
+ */
 export const getStaticFilePaths = async (): Promise<string[]> =>
   (await findFiles("routes/**/*"))
     .filter(isStaticFile).map((p) => p.slice(7));
