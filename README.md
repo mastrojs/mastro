@@ -51,8 +51,30 @@ Generate the static site:
     deno task generate
 
 
+## Why not Mastro?
+
+There are [many ways to build websites](http://localhost:4321/guide/why-html-css/#you-want-to-build-a-website).
+But if we limit ourselves to JavaScript server frameworks and static site generators (SSG),
+here is a list of projects with a somewhat similar philosophy (in alphabetical order):
+
+- [Adonis](https://adonisjs.com) (server-only)
+- [Astro](https://astro.build)
+- [Brisa](https://brisa.build)
+- [Eleventy](https://www.11ty.dev) (SSG-only)
+- [Elysia](https://elysiajs.com) (server-only)
+- [Enhance](https://enhance.dev) (server-only)
+- [Fresh](https://fresh.deno.dev) (server-only)
+- [h3](https://h3.dev/) (server-only)
+- [Haunty](https://haunty.org) (SSG-only)
+- [Hono](https://hono.dev)
+- [Nue](https://nuejs.org) (SSG-only)
+
+Are we missing one that should be on the list? Make a PR.
+
+
 ## TODOs
 
+- Support Node.js and test on Bun, Cloudflare
 - Asset handling (on server startup / static site generation?)
   - support something like CSS Modules? Then again, read [this great article by Heydon Pickering](https://www.smashingmagazine.com/2016/11/css-inheritance-cascade-global-scope-new-old-worst-best-friends/) if you want to be convinced otherwise.
-  - image resizing
+  - image transformations/resizing
