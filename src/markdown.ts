@@ -39,6 +39,11 @@ export const markdownToHtml = (md: string, opts?: Options): Md => {
 export const readMarkdownFile = async (path: string, opts?: Options): Promise<Md> =>
   markdownToHtml(await readTextFile(path), opts);
 
+/**
+ * Read all files from the local filesystem that match the supplied glob pattern,
+ * (via `findFiles`) and convert their markdown contents (GFM, with YAML metadata)
+ * to `Html` nodes and objects for their metadata.
+ */
 export const readMarkdownFiles = async (
   pattern: string,
   opts?: Options,
