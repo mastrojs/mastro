@@ -27,10 +27,11 @@
     ]
   },
   "scripts": {
-    "open-in-browser": "npm run build; vscode-test-web --extensionDevelopmentPath=. ../examples/hello-world/",
+    "open-in-browser": "npm run build-dev; vscode-test-web --open-devtools --extensionDevelopmentPath=. ../examples/hello-world/",
     "publish": "npx @vscode/vsce publish minor",
     "vscode:prepublish": "npm run build",
     "build": "tsc -p ./",
+    "build-dev": "tsc -p ./ && tsc ../src/*.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions || true",
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {

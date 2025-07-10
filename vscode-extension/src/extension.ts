@@ -427,9 +427,14 @@ const getImportMap = async (
   rootFolder: vscode.Uri,
   basePath: string,
 ) => {
+  const isDev = context.extensionMode === vscode.ExtensionMode.Development;
   const imports = {
-    mastro: 'https://esm.sh/jsr/@mastrojs/mastro@0.0.6?bundle',
-    'mastro/generator': 'https://esm.sh/jsr/@mastrojs/mastro@0.0.6/generator',
+    mastro: isDev
+      ? webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", "index.js")).toString()
+      : "https://esm.sh/jsr/@mastrojs/mastro@0.0.6?bundle",
+    'mastro/generator': isDev
+      ? webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", "generator.js")).toString()
+      : "https://esm.sh/jsr/@mastrojs/mastro@0.0.6/generator",
   } as Record<string, string>;
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {
     if (uri.path.endsWith(".js")) {
