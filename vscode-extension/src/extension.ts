@@ -56,6 +56,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
           case "generateFiles": {
             const { files } = msg;
             try {
+              outputChannel.show(true);
               try {
                 await vscode.workspace.fs.delete(
                   rootFolder.with({ path: basePath + "/docs" }),
@@ -80,8 +81,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
                     );
                 return vscode.workspace.fs.writeFile(fileUri, contents);
               }));
-              outputChannel.appendLine('🟢 Updated docs/ folder. Click the "Source Control" icon on the left, then click "Commit & Push" to publish your changes.');
-              outputChannel.show(true);
+              outputChannel.appendLine('Updated docs/ folder. Click the "Source Control" icon on the left, then click "Commit & Push" to publish your changes.');
             } catch (e) {
               vscode.window.showErrorMessage(`${e}`);
             }
