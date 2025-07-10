@@ -29,7 +29,7 @@ Follow [The Mastro Guide's _Setup_ section](https://mastrojs.github.io/guide/set
 
 If you prefer the command line, after [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either run:
 
-    deno run --allow-write jsr:@mastrojs/mastro@0.0.6/init
+    deno run --allow-write jsr:@mastrojs/mastro@0.0.7/init
 
 or download the contents of the [`examples/hello-world`](examples/hello-world/) folder. `cd` into the folder, then:
 

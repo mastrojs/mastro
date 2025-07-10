@@ -1,6 +1,6 @@
 /**
  * This script initializes an empty Mastro project for deno.
- * Usage: deno run --allow-write jsr:@mastrojs/mastro@0.0.6/init
+ * Usage: deno run --allow-write jsr:@mastrojs/mastro@0.0.7/init
  * @module
  */
 
@@ -13,11 +13,11 @@ if (dir) {
   await Deno.mkdir(path.join(dir, "routes"));
   await Deno.writeTextFile(path.join(dir, "deno.json"), String.raw`{
   "tasks": {
-    "start": "deno serve --watch=. --allow-env --allow-read jsr:@mastrojs/mastro@0.0.6/server",
+    "start": "deno serve --watch=. --allow-env --allow-read jsr:@mastrojs/mastro@0.0.7/server",
     "generate": "deno eval \"import 'mastro/generate';\""
   },
   "imports": {
-    "mastro": "jsr:@mastrojs/mastro@0.0.6"
+    "mastro": "jsr:@mastrojs/mastro@0.0.7"
   }
 }
 `);

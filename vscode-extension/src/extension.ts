@@ -429,10 +429,10 @@ const getImportMap = async (
   const imports = {
     mastro: isDev
       ? webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", "index.js")).toString()
-      : "https://esm.sh/jsr/@mastrojs/mastro@0.0.6?bundle",
+      : "https://esm.sh/jsr/@mastrojs/mastro@0.0.7/?bundle",
     'mastro/generator': isDev
       ? webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", "generator.js")).toString()
-      : "https://esm.sh/jsr/@mastrojs/mastro@0.0.6/generator",
+      : "https://esm.sh/jsr/@mastrojs/mastro@0.0.7/generator",
   } as Record<string, string>;
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {
     if (uri.path.endsWith(".js")) {
