@@ -15,7 +15,7 @@ export const GET = () =>
           </ul>
         </todo-list>
 
-        <script type="module" src="todo-list.client.ts"></script>
+        <script type="module" src="/todo-list.client.js"></script>
         `
     })
 ))

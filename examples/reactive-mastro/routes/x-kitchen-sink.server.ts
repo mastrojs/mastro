@@ -8,7 +8,7 @@ export const GET = () =>
       children: html`
         <tab-switch></tab-switch>
 
-        <script type="module" src="x-kitchen-sink.client.ts"></script>
+        <script type="module" src="/x-kitchen-sink.client.js"></script>
         `,
     }),
   ));

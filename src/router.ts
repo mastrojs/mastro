@@ -31,11 +31,18 @@ for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
 // TODO: sort this according to solid route precedence criteria
 pathSegments.sort((a, b) => a.segments.length - b.segments.length);
 
-export const routes: Array<{ filePath: string; pattern: URLPattern }> = pathSegments.map(
+/**
+ * Array containing all routes that Mastro found.
+ * Useful for debugging. Also used by `matchRoute` below,
+ * and the static site generator (both extension and `generator.ts`).
+ */
+export const routes: Readonly<Array<{ filePath: string; pattern: URLPattern }>> = pathSegments.map(
   (r) => {
     const route = {
       filePath: r.filePath,
-      pattern: new URLPattern({ pathname: `/${r.segments.join("/")}` }),
+      pattern: new URLPattern({
+        pathname: `/${r.segments.join("/")}${r.segments.length === 0 ? '' : '/'}`,
+      }),
     };
     Object.freeze(route);
     return route;

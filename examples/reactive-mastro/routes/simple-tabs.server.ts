@@ -21,7 +21,7 @@ export const GET = () =>
           </section>
         </simple-tabs>
 
-        <script type="module" src="simple-tabs.client.ts"></script>
+        <script type="module" src="/simple-tabs.client.js"></script>
         `
     })
 ))

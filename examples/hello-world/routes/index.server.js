@@ -7,7 +7,7 @@ export const GET = () =>
       title: "Hello world",
       children: html`
         <p>Welcome!</p>
-        <p><a href="about">About us</a></p>
+        <p><a href="about/">About us</a></p>
         <ul>
           ${readDir("/routes").then((dir) =>
           dir.map((file) =>

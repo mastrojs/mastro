@@ -22,7 +22,7 @@ export const GET = () =>
           </div>
         </my-counter>
 
-        <script type="module" src="counter.client.ts"></script>
+        <script type="module" src="/counter.client.js"></script>
         `,
     }),
   ));

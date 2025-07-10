@@ -7,7 +7,7 @@ export interface Post {
 }
 
 export const getPost = async (slug: string): Promise<Post> => {
-  const { content, meta } = await readMarkdownFile(`./data/posts/${slug}.md`)
+  const { content, meta } = await readMarkdownFile(`./data/posts/${slug.slice(0, -1)}.md`)
   return {
     content,
     meta,
@@ -21,4 +21,4 @@ export const getPosts = async () => {
 }
 
 export const getPostSlugs = async () =>
-  (await readDir('./data/posts')).map(name => name.replace('.md', ''))
+  (await readDir('./data/posts')).map(name => name.replace('.md', '/'))
