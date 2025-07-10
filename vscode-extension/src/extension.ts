@@ -36,8 +36,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
             history.push(msg.path);
             return;
           }
-          case "popHistoryTwice": {
-            history.pop();
+          case "popHistory": {
             history.pop();
             return;
           }
@@ -233,7 +232,7 @@ const getWebviewContent = async (
           const insertNavigationInterceptScript = str => {
             // hack that injects a script that tells parent window when a link was clicked or similar
             const [head, tail] = str.split("</head>")
-            return head + '<script' + '>window.addEventListener("beforeunload", e => {e.preventDefault(); window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*");})</script' + '>' + "</head>" + (tail || "")
+            return head + '<script' + '>window.addEventListener("beforeunload", e => {const target = document.activeElement.getAttribute("href"); if (target) { window.parent.postMessage({ type: "navigate", target }, "*") }})</script' + '>' + "</head>" + (tail || "")
           }
 
           const transformOutput = async (path, output) => {
@@ -257,13 +256,8 @@ const getWebviewContent = async (
           const render = async (path) => {
             console.clear()
             console.log('rendering ', path)
-            vscode.postMessage({
-              type: "pushHistory",
-              path,
-            })
             pathInput.value = path
             backBtn.disabled = history.length < 1
-            history.push(path)
 
             try {
               const staticHtml = await getStaticFile(path, "") || await getStaticFile(path, "/index")
@@ -318,7 +312,10 @@ const getWebviewContent = async (
                 render(oldPath)
               } else {
                 const newPath = URL.parse(target, "http://localhost" + pathInput.value)?.pathname
-                render(newPath || oldPath)
+                const path = newPath || oldPath
+                vscode.postMessage({ type: "pushHistory", path })
+                history.push(path)
+                render(path)
               }
             }
           })
@@ -327,14 +324,15 @@ const getWebviewContent = async (
 
           document.querySelector("form").addEventListener("submit", e => {
             e.preventDefault()
-            render(pathInput.value || "/")
+            const path = pathInput.value || "/"
+            vscode.postMessage({ type: "pushHistory", path })
+            history.push(path)
+            render(path)
           })
           backBtn.addEventListener("click", () => {
+            vscode.postMessage({ type: "popHistory" })
             history.pop()
-            render(history.pop())
-            vscode.postMessage({
-              type: "popHistoryTwice",
-            })
+            render(history.at(-1) || "/")
           })
 
           document.getElementById("generateBtn").addEventListener("click", async () => {
