@@ -56,10 +56,14 @@ export const activate = async (context: vscode.ExtensionContext) => {
           case "generateFiles": {
             const { files } = msg;
             try {
-              await vscode.workspace.fs.delete(
-                rootFolder.with({ path: basePath + "/docs" }),
-                { recursive: true },
-              );
+              try {
+                await vscode.workspace.fs.delete(
+                  rootFolder.with({ path: basePath + "/docs" }),
+                  { recursive: true },
+                );
+              } catch (e) {
+                // on github.dev, this throws when folder not there
+              }
               await vscode.workspace.fs.writeFile(
                 rootFolder.with({ path: basePath + "/docs/.nojekyll" }),
                 new Uint8Array(0),
