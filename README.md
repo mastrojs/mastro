@@ -10,13 +10,13 @@ A *m*inimal take on an *Astro*-like MPA web framework. There are four parts to i
 
 ## Philosophy
 
-- **No magic and no bundler**: Mastro provides you with a small number of composable helper functions, and gives you full control over your HTML, CSS and JS. Nothing is auto-injected into your page. No complexing tooling is messing with your code before it reaches the browser.
+- **No magic and no bundler**: Mastro provides you with a handful of composable helper functions, and gives you full control over your HTML, CSS and JS. Nothing is auto-injected into your page. No complexing tooling is messing with your code before it reaches the browser.
 
 - **No leaky abstractions**: while some JS meta-frameworks try to erase the boundary between client and server, Mastro makes it explicit which parts of your app run where and when.
 
 - **No client-side JavaScript** by default: create lean websites, that load blazingly fast. Leveraging native browser functionality instead of reinventing the wheel in JavaScript and [embracing an MPA architecture](https://mastrojs.github.io/reactive/why-reactive-mastro/).
 
-- **No bloat**: written in just ~700 lines of TypeScript and with [minimal dependencies](deno.json), Mastro is easy to fork and adapt. It runs either as a static site generator as a [VS Code extension in your browser](https://mastrojs.github.io/guide/setup/), or on Deno (Node.js, Bun and Workers are in the works).
+- **No bloat**: written in just [~700 lines](src/#readme) of TypeScript and with [minimal dependencies](deno.json), Mastro is easy to fork and adapt. It runs either as a static site generator as a [VS Code extension in your browser](https://mastrojs.github.io/guide/setup/), or on Deno (Node.js, Bun and Workers are in the works).
 
 
 ## How to run
