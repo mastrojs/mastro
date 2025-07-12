@@ -1,6 +1,6 @@
 import { assertEquals } from 'jsr:@std/assert'
 import { html, renderToStream, renderToString, unsafeInnerHtml } from './html.ts'
-import { htmlResponse } from "./routes.ts";
+import { htmlResponse } from "./responses.ts";
 
 Deno.test('html escaping', async () => {
   assertEquals(

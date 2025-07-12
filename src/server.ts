@@ -10,7 +10,7 @@ import tsBlankSpace from "ts-blank-space";
 import { serveFile } from "@std/http/file-server";
 import { toFileUrl } from "@std/path";
 import { matchRoute } from "./router.ts";
-import { jsResponse } from "./routes.ts";
+import { jsResponse } from "./responses.ts";
 
 const importRegex = /^import .*\.ts("|')(;)?$/gm;
 
