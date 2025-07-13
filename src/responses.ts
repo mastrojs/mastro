@@ -45,18 +45,6 @@ export const htmlToStreamingResponse = (node: Html): Response =>
   htmlResponse(renderToStream(node));
 
 /**
- * Create a standard Response object with `Content-Type: text/javascript`.
- */
-export const jsResponse = (body: string, status = 200, headers?: HeadersInit): Response =>
-  new Response(body, {
-    status,
-    headers: {
-      "Content-Type": "text/javascript; charset=utf-8",
-      ...headers,
-    },
-  });
-
-/**
  * Create a standard Response object with `Content-Type: application/json`.
  */
 export const jsonResponse = (

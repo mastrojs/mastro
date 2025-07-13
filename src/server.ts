@@ -10,7 +10,6 @@ import tsBlankSpace from "ts-blank-space";
 import { serveFile } from "@std/http/file-server";
 import { toFileUrl } from "@std/path";
 import { matchRoute } from "./router.ts";
-import { jsResponse } from "./responses.ts";
 
 const importRegex = /^import .*\.ts("|')(;)?$/gm;
 
@@ -41,7 +40,10 @@ const fetch = async (req: Request): Promise<Response> => {
     if (pathname.endsWith(".client.js")) {
       const fileRes = await getStaticFile(req, pathname.slice(0, -3) + ".ts");
       if (fileRes) {
-        return jsResponse(tsToJs(await fileRes.text()));
+        const { status, headers } = fileRes; // // 200 or 304 Not Modified, hopefully no range request
+        headers.set("Content-Type", "text/javascript; charset=utf-8");
+        headers.set("Accept-Ranges", "none");
+        return new Response(tsToJs(await fileRes.text()) || null, { status, headers });
       }
     }
     const route = matchRoute(req.url);
@@ -86,5 +88,5 @@ export default { fetch };
 
 const getStaticFile = async (req: Request, path: string) => {
   const res = await serveFile(req, "routes" + path);
-  return res.ok ? res : undefined;
+  return (res.status === 404 || res.status === 405) ? undefined : res;
 };
