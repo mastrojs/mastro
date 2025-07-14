@@ -88,5 +88,16 @@ export default { fetch };
 
 const getStaticFile = async (req: Request, path: string) => {
   const res = await serveFile(req, "routes" + path);
-  return (res.status === 404 || res.status === 405) ? undefined : res;
+  if (res.status === 404 || res.status === 405) {
+    return;
+  } else {
+    if (Deno.env.get("DENO_DEPLOYMENT_ID")) {
+      // See https://docs.deno.com/deploy/early-access/reference/caching/
+      // The idea is to have the CDN of Deno Deploy EA cache static assets forever (7d)
+      // which is okay because deploys invalidate the cache.
+      // Browsers meanwhile would use etags to see whether the file has been updated.
+      res.headers.set("Cache-Control", "s-maxage=604800");
+    }
+    return res;
+  }
 };
