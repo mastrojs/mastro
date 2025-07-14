@@ -51,21 +51,25 @@ Do you have an idea how Mastro could be improved? Something not working as expec
 
 There are [many ways to build websites](http://localhost:4321/guide/why-html-css/#you-want-to-build-a-website).
 But if we limit ourselves to JavaScript server frameworks and static site generators (SSG),
-here is a list of projects with a somewhat similar philosophy (in alphabetical order):
+here is a list of projects with a somewhat similar philosophy in alphabetical order.
+(Are we missing one that should be on the list? Make a PR.)
 
-- [Adonis](https://adonisjs.com) (server-only)
-- [Astro](https://astro.build)
-- [Brisa](https://brisa.build)
-- [Eleventy](https://www.11ty.dev) (SSG-only)
-- [Elysia](https://elysiajs.com) (server-only)
-- [Enhance](https://enhance.dev) (server-only)
-- [Fresh](https://fresh.deno.dev) (server-only)
-- [h3](https://h3.dev/) (server-only)
-- [Haunty](https://haunty.org) (SSG-only)
-- [Hono](https://hono.dev)
-- [Nue](https://nuejs.org) (SSG-only)
+|                                  | Output      | Router       | Templating               |   Bundler           |
+| -------------------------------- | ----------- | ------------ | ------------------------ | ------------------- |
+| [Adonis](https://adonisjs.com)   | SSG         | programmatic | EdgeJS/Pug/Nunjucks      | optionally Vite     |
+| [Astro](https://astro.build)     | SSG/Server  | file-based   | Astro (JSX-like)         | Vite                |
+| [Brisa](https://brisa.build)     | SSG/Server  | file-based   | JSX                      | Bun build           |
+| [Eleventy](https://www.11ty.dev) | SSG         | file-based   | Liquid/Nunjucks/WebC etc | optional            |
+| [Elysia](https://elysiajs.com)   | Server      | programmatic | JSX                      | Bun build
+| [Enhance](https://enhance.dev)   | Server      | file-based   | html tagged template     | optionally esbuild  |
+| [Fresh](https://fresh.deno.dev)  | Server      | file-based   | JSX                      | optionally esbuild  |
+| [h3](https://h3.dev/)            | Server      | programmatic | -                        | -                   |
+| [Haunty](https://haunty.org)     | SSG         | file-based   | mustache-like            | -                   |
+| [Hono](https://hono.dev)         | SSG/Server  | programmatic | html tagged template     | optionally esbuild  |
+| Mastro                           | SSG/Server  | file-based   | html tagged template     | -                   |
+| [Nue](https://nuejs.org)         | SSG         | file-based   | custom                   | -                   |
 
-Are we missing one that should be on the list? Make a PR.
+What we believe differentiates Mastro, is that it's even simpler and even more minimal than the others.
 
 
 ## TODOs
