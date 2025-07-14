@@ -40,7 +40,7 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
   for (const filePath of await getStaticFilePaths()) {
     if (filePath.endsWith(".client.ts")) {
       const text = await Deno.readTextFile("routes" + filePath);
-      Deno.writeTextFile(outFolder + filePath.slice(0, -3) + ".js", tsToJs(text));
+      Deno.writeTextFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
     } else {
       Deno.copyFile("routes" + filePath, outFolder + filePath);
     }

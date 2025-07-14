@@ -1,15 +1,12 @@
 import type { Options } from "npm:micromark@4.0.2";
-
-const importPrefix = typeof document === "object" ? "https://esm.sh/" : "npm:";
-const jsYaml = await import(`${importPrefix}js-yaml@4.1.0`);
-const { micromark } = await import(`${importPrefix}micromark@4.0.2`);
-const { gfm, gfmHtml } = await import(`${importPrefix}micromark-extension-gfm@3.0.0`);
-
 import { findFiles, readTextFile } from "./fs.ts";
 import { type Html, unsafeInnerHtml } from "./html.ts";
 
+const importLazy = (pkg: string) =>
+  import(typeof document === "object" ? `https://esm.sh/${pkg}?bundle` : `npm:${pkg}`)
+
 // from https://github.com/dworthen/js-yaml-front-matter/blob/master/src/index.js#L14
-const yamlFrontRe = /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?([\w\W]*)*/
+const yamlFrontRe = /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?([\w\W]*)*/;
 
 interface Md {
   content: Html;
@@ -20,8 +17,12 @@ interface Md {
  * Convert a markdown string (GFM, with YAML metadata) to an `Html` node
  * and an object for the metadata.
  */
-export const markdownToHtml = (md: string, opts?: Options): Md => {
-  const { bodyMd, meta } = parseYamlFrontmatter(md)
+export const markdownToHtml = async (md: string, opts?: Options): Promise<Md> => {
+  const [{ bodyMd, meta }, { micromark }, { gfm, gfmHtml }] = await Promise.all([
+    parseYamlFrontmatter(md),
+    importLazy("micromark@4.0.2"),
+    importLazy("micromark-extension-gfm@3.0.0"),
+  ]);
   const content = unsafeInnerHtml(
     micromark(bodyMd, {
       extensions: [gfm()],
@@ -47,27 +48,33 @@ export const readMarkdownFile = async (path: string, opts?: Options): Promise<Md
 export const readMarkdownFiles = async (
   pattern: string,
   opts?: Options,
-): Promise<Array<Md & {path: string}>> => {
+): Promise<Array<Md & { path: string }>> => {
   const paths = await findFiles(pattern);
-  const files = await Promise.all( paths.map(readTextFile) );
-  return files.map((file, i) => ({ path: paths[i], ...markdownToHtml(file, opts)}));
-}
+  return Promise.all(
+    paths.map(async (path, i) => {
+      const file = await readTextFile(path);
+      const md = await markdownToHtml(file, opts);
+      return { path: paths[i], ...md };
+    }),
+  );
+};
 
-const parseYamlFrontmatter = (md: string) => {
-  let meta = {}
-  let bodyMd = md
-  const results = yamlFrontRe.exec(md)
+const parseYamlFrontmatter = async (md: string) => {
+  let meta = {};
+  let bodyMd = md;
+  const results = yamlFrontRe.exec(md);
   try {
-    const yaml = results?.[2]
+    const yaml = results?.[2];
     if (yaml) {
-      const metaObj = jsYaml.load(yaml, { schema: jsYaml.JSON_SCHEMA })
-      if (typeof metaObj === 'object' && !(metaObj instanceof Array) ) {
-        bodyMd = results?.[3] || ''
-        meta = metaObj
+      const jsYaml = await importLazy("js-yaml@4.1.0");
+      const metaObj = jsYaml.load(yaml, { schema: jsYaml.JSON_SCHEMA });
+      if (typeof metaObj === "object" && !(metaObj instanceof Array)) {
+        bodyMd = results?.[3] || "";
+        meta = metaObj;
       }
     }
-  } catch(e) {
-    console.warn("Could not parse YAML", (e as Error).message)
+  } catch (e) {
+    console.warn("Could not parse YAML", (e as Error).message);
   }
-  return { bodyMd, meta }
-}
+  return { bodyMd, meta };
+};

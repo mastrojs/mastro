@@ -6,7 +6,6 @@
  * @module
  */
 
-import tsBlankSpace from "ts-blank-space";
 import { serveFile } from "@std/http/file-server";
 import { toFileUrl } from "@std/path";
 import { matchRoute } from "./router.ts";
@@ -21,12 +20,14 @@ const importRegex = /^import .*\.ts("|')(;)?$/gm;
  * don't serve `.ts` files with `content-type: text/javascript`, we need to run this
  * function on `.client.ts` files, to convert them to `.client.js` files.
  */
-export const tsToJs = (text: string): string =>
-  tsBlankSpace(text)
-    .replace(
-      importRegex,
-      (match, quote, semicolon) => match.slice(0, semicolon ? -5 : -4) + `.js${quote};`,
-    );
+export const tsToJs = (text: string): Promise<string> =>
+  import("ts-blank-space").then((tsBlankSpace) =>
+    tsBlankSpace.default(text)
+      .replace(
+        importRegex,
+        (match, quote, semicolon) => match.slice(0, semicolon ? -5 : -4) + `.js${quote};`,
+      )
+  );
 
 const fetch = async (req: Request): Promise<Response> => {
   const { pathname } = new URL(req.url);
@@ -43,7 +44,10 @@ const fetch = async (req: Request): Promise<Response> => {
         const { status, headers } = fileRes; // // 200 or 304 Not Modified, hopefully no range request
         headers.set("Content-Type", "text/javascript; charset=utf-8");
         headers.set("Accept-Ranges", "none");
-        return new Response(tsToJs(await fileRes.text()) || null, { status, headers });
+        return new Response(
+          await tsToJs(await fileRes.text()) || null,
+          { status, headers },
+        );
       }
     }
     const route = matchRoute(req.url);
