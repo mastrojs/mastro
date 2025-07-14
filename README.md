@@ -29,9 +29,9 @@ Follow [The Mastro Guide's _Setup_ section](https://mastrojs.github.io/guide/set
 
 If you prefer the command line, after [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either run:
 
-    deno run -A jsr:@mastrojs/mastro@0.0.7/init
+    deno run -A jsr:@mastrojs/mastro@0.0.9/init
 
-or download the contents of the [`examples/hello-world`](examples/hello-world/) folder. `cd` into the folder, then:
+or use the [template on GitHub](https://github.com/mastrojs/template-basic-deno). `cd` into the folder, then:
 
 Start the development server:
 

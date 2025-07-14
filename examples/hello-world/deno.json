@@ -1,9 +1,9 @@
 {
   "tasks": {
-    "start": "deno serve --watch=. --allow-read --allow-env jsr:@mastrojs/mastro@0.0.7/server",
+    "start": "deno serve --watch=. --allow-read --allow-env jsr:@mastrojs/mastro@0.0.9/server",
     "generate": "deno eval \"import 'mastro/generate';\""
   },
   "imports": {
-    "mastro": "jsr:@mastrojs/mastro@0.0.7"
+    "mastro": "jsr:@mastrojs/mastro@0.0.9"
   }
 }
