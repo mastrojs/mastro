@@ -1,42 +1,40 @@
 /**
  * This script initializes an empty Mastro project for deno.
- * Usage: deno run --allow-write jsr:@mastrojs/mastro@0.0.7/init
+ * Usage: deno run -A jsr:@mastrojs/mastro@0.0.9/init
  * @module
  */
 
-import * as path from "@std/path";
-
+const templateRepo = "template-basic-deno";
 const dir = prompt("What folder should we create for your new project?");
 
 if (dir) {
-  await Deno.mkdir(path.join(dir, "components"), { recursive: true });
-  await Deno.mkdir(path.join(dir, "routes"));
-  await Deno.writeTextFile(path.join(dir, "deno.json"), String.raw`{
-  "tasks": {
-    "start": "deno serve --watch=. --allow-env --allow-read jsr:@mastrojs/mastro@0.0.7/server",
-    "generate": "deno eval \"import 'mastro/generate';\""
-  },
-  "imports": {
-    "mastro": "jsr:@mastrojs/mastro@0.0.7"
+  // download zip file from GitHub
+  const res = await fetch(`https://github.com/mastrojs/${templateRepo}/archive/refs/heads/main.zip`);
+  const outDir = templateRepo + "-main"; // this cannot be changed and is determined by the zip file
+  const zipFile = outDir + ".zip";
+  if (res.ok && res.body) {
+    await Deno.writeFile(zipFile, res.body);
   }
-}
-`);
-  await Deno.writeTextFile(path.join(dir, "routes", "index.server.ts"), String.raw`import { html, htmlToResponse } from "mastro";
 
-export const GET = () =>
-  htmlToResponse(
-    html${"`"}
-      <!doctype html>
-      <title>${dir}</title>
-      <h1>${dir}</h1>
-    ${"`"}
-  );
-`)
-  const codeStyle = "color: blue";
-  console.log(`
+  // unzip (should work on unix and Windows 10 and later)
+  const command = new Deno.Command("tar", { args: ["-xf", zipFile] });
+  const { code, stdout, stderr } = await command.output();
+  const unzipSuccess = code === 0;
+  if (!unzipSuccess) {
+    console.log(new TextDecoder().decode(stdout));
+    console.error(new TextDecoder().decode(stderr));
+  }
+  await Deno.remove(zipFile);
+
+  if (unzipSuccess) {
+    await Deno.rename(outDir, dir);
+
+    const codeStyle = "color: blue";
+    console.log(`
 Success!
 
 Enter your project directory using %ccd ${dir}
 %cThen start the dev server with: %cdeno task start`
-  , codeStyle, "", codeStyle);
+    , codeStyle, "", codeStyle);
+  }
 }
