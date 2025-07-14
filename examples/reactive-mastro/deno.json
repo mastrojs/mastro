@@ -6,11 +6,12 @@
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
   },
-  "patch": ["../../"],
+  "links": ["../../"],
   "imports": {
     "mastro": "../../src/index.ts",
     "mastro/generate": "../../src/generate.ts",
     "mastro/server": "../../src/server.ts",
     "mastro/reactive": "../../src/reactive/reactive.ts"
-  }
+  },
+  "lock": false
 }

@@ -6,10 +6,11 @@
   "compilerOptions": {
     "lib": ["dom", "deno.ns"]
   },
-  "patch": ["../../"],
+  "links": ["../../"],
   "imports": {
     "mastro": "../../src/index.ts",
     "mastro/generate": "../../src/generate.ts",
     "mastro/server": "../../src/server.ts"
-  }
+  },
+  "lock": false
 }
