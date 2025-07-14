@@ -16,9 +16,9 @@
     "lineWidth": 90
   },
   "imports": {
-    "@std/fs": "jsr:@std/fs@^1.0.17",
-    "@std/path": "jsr:@std/path@^1.0.9",
-    "@std/http": "jsr:@std/http@^1.0.15",
+    "@std/fs": "jsr:@std/fs@^1.0.19",
+    "@std/path": "jsr:@std/path@^1.1.1",
+    "@std/http": "jsr:@std/http@^1.0.19",
     "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0",
     "ts-blank-space": "npm:ts-blank-space@0.6.1"
   }
