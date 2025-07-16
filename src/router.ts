@@ -1,11 +1,10 @@
 import { findFiles } from "./fs.ts";
 
-if (typeof URLPattern !== "function") {
+if (!globalThis.URLPattern) {
   // implemented in Chrome, Deno and Node >=23.8.0
   // to be implemented by all browsers soon:
   // see https://wpt.fyi/results/urlpattern?q=label%3Ainterop-2025-urlpattern
-  // should we add https://www.npmjs.com/package/urlpattern-polyfill in the mean-time?
-  throw Error("Please use a browser that implements URLPattern");
+  await import(`https://esm.sh/${'urlpattern-polyfill@10.1.0'}?bundle`);
 }
 
 export const paramRegex = /^\[([a-zA-Z0-9]+)\]/;
