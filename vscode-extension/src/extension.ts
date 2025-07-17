@@ -259,7 +259,7 @@ const getWebviewContent = async (
 
           const render = async (path) => {
             console.clear()
-            console.log('rendering ', path)
+            console.info('rendering ', path)
             pathInput.value = path
             backBtn.disabled = history.length < 1
 
@@ -432,12 +432,27 @@ const getImportMap = async (
   const isDev = context.extensionMode === vscode.ExtensionMode.Development;
   const getUrl = (devFile: string, exportName: string) => isDev
       ? webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", devFile)).toString()
+      // currently we don't esm.sh ?bundle because the two exports share some files
       : `https://esm.sh/jsr/@mastrojs/mastro@0.0.10/${exportName}`;
-  // currently we don't esm.sh ?bundle because the two exports share some files
+  const readImports = async (importMapPath: string): Promise<object> => {
+    try {
+      const bs = await vscode.workspace.fs.readFile(
+        rootFolder.with({ path: basePath + importMapPath }),
+      );
+      return JSON.parse(new TextDecoder().decode(bs))?.imports || {};
+    } catch (e) {
+      console.info('readImports', e)
+      return {}
+    }
+  };
+
   const imports: Record<string, string> = {
+    ...await readImports("/deno.json"),
+    ...await readImports("/import_map.json"),
     mastro: getUrl("index.js", ""),
     "mastro/generator": getUrl("generator.js", "generator"),
   };
+
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {
     if (uri.path.endsWith(".js")) {
       imports[uri.path.slice(basePath.length)] = webview.asWebviewUri(uri).toString();
