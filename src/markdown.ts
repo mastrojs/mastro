@@ -18,13 +18,13 @@ interface Md {
  * and an object for the metadata.
  */
 export const markdownToHtml = async (md: string, opts?: Options): Promise<Md> => {
-  const [{ bodyMd, meta }, { micromark }, { gfm, gfmHtml }] = await Promise.all([
+  const [{ body, meta }, { micromark }, { gfm, gfmHtml }] = await Promise.all([
     parseYamlFrontmatter(md),
     importLazy("micromark@4.0.2"),
     importLazy("micromark-extension-gfm@3.0.0"),
   ]);
   const content = unsafeInnerHtml(
-    micromark(bodyMd, {
+    micromark(body, {
       extensions: [gfm()],
       htmlExtensions: [gfmHtml()],
       ...opts,
@@ -59,9 +59,15 @@ export const readMarkdownFiles = async (
   );
 };
 
-const parseYamlFrontmatter = async (md: string) => {
+/**
+ * Converts a string possibly containing yaml frontmatter to a `{ meta, body }` object.
+ *
+ * - `meta` is an object with the parsed yaml.
+ * - `body` is a string with the rest of the input.
+ */
+export const parseYamlFrontmatter = async (md: string) => {
   let meta = {};
-  let bodyMd = md;
+  let body = md;
   const results = yamlFrontRe.exec(md);
   try {
     const yaml = results?.[2];
@@ -69,12 +75,12 @@ const parseYamlFrontmatter = async (md: string) => {
       const jsYaml = await importLazy("js-yaml@4.1.0");
       const metaObj = jsYaml.load(yaml, { schema: jsYaml.JSON_SCHEMA });
       if (typeof metaObj === "object" && !(metaObj instanceof Array)) {
-        bodyMd = results?.[3] || "";
+        body = results?.[3] || "";
         meta = metaObj;
       }
     }
   } catch (e) {
     console.warn("Could not parse YAML", (e as Error).message);
   }
-  return { bodyMd, meta };
+  return { body, meta };
 };
