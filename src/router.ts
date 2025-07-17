@@ -7,7 +7,7 @@ if (!globalThis.URLPattern) {
   await import(`https://esm.sh/${'urlpattern-polyfill@10.1.0'}?bundle`);
 }
 
-export const paramRegex = /^\[([a-zA-Z0-9]+)\]/;
+export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 
 const pathSegments = [];
 const suffix = typeof document === "object" ? "js" : "{ts,js}";
@@ -15,7 +15,9 @@ for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
   const segments = filePath.split("/").slice(2).map((segment) => {
     const param = segment.match(paramRegex)?.[1];
     if (param) {
-      return ":" + param;
+      return param.startsWith("...")
+        ? `:${param.slice(3)}(.*)?`
+        : `:${param}?`;
     } else if (segment === "index.server.ts" || segment === "index.server.js") {
       return;
     } else if (segment.endsWith(".server.ts") || segment.endsWith(".server.js")) {
