@@ -16,7 +16,7 @@ export const Layout = (props: Props) =>
         <script type="importmap">
           {
             "imports": {
-              "mastro/reactive": "https://esm.sh/jsr/@mastrojs/mastro@0.0.9/reactive?bundle"
+              "mastro/reactive": "https://esm.sh/jsr/@mastrojs/mastro@0.1.0/reactive?bundle"
             }
           }
         </script>
