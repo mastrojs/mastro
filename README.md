@@ -2,30 +2,30 @@
 
 A *m*inimal take on an *Astro*-like MPA web framework. There are four parts to it:
 
-- [The Mastro Guide](https://mastrojs.github.io/) that shows you how to build and publish your first webside – using only a browser and a GitHub account.
 - [Static site generator running in your browser](https://mastrojs.github.io/guide/setup/) in a _VS Code for the Web_ extension.
 - The Mastro web framework (server and static site generator) – see below.
 - [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny (2.8k min.gz) client-side reactive GUI library for your existing MPA or Mastro project.
+- [The Mastro Guide](https://mastrojs.github.io/) that shows you how to build and publish your first webside – using only a browser and a GitHub account.
 
 
-## Philosophy
+## Craft websites with care
 
-- **No magic and no bundler**: Mastro provides you with a handful of composable helper functions, and gives you full control over your HTML, CSS and JS. Nothing is auto-injected into your page. No complexing tooling is messing with your code before it reaches the browser.
+- **No bloat**: written in just [~700 lines](src/#readme) of TypeScript and with [minimal dependencies](deno.json), Mastro is a framework distilled to its essence. It loads fast even [within VS Code for the Web](https://mastrojs.github.io/guide/setup/) or the edge, like Deno Deploy (Node.js, Bun and Cloudflare Workers are in the works). If you ever outgrow it, simply fork and adjust it.
+
+- **No magic and no bundler**: full control over your HTML, CSS and JS. Nothing is auto-injected into your page. Mastro gives you composable functions, instead of complex tooling that messes with your code before it reaches the browser.
 
 - **No leaky abstractions**: while some JS meta-frameworks try to erase the boundary between client and server, Mastro makes it explicit which parts of your app run where and when.
 
 - **No client-side JavaScript** by default: create lean websites, that load blazingly fast. Leveraging native browser functionality instead of reinventing the wheel in JavaScript and [embracing an MPA architecture](https://mastrojs.github.io/reactive/why-reactive-mastro/).
 
-- **No bloat**: written in just [~700 lines](src/#readme) of TypeScript and with [minimal dependencies](deno.json), Mastro is easy to fork and adapt. It runs either as a static site generator as a [VS Code extension in your browser](https://mastrojs.github.io/guide/setup/), or on Deno (Node.js, Bun and Workers are in the works).
-
 
 ## How to run
 
-### _Visual Studio Code for the Web_ extension
+### _Visual Studio Code for the Web_ extension (SSG)
 
 Follow [The Mastro Guide's _Setup_ section](https://mastrojs.github.io/guide/setup/) to build and deploy your website to GitHub Pages for free – without ever leaving your browser.
 
-### Command line with Deno
+### Server or SSG with Deno on the command line
 
 If you prefer the command line, after [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either run:
 
@@ -41,6 +41,16 @@ Generate the static site:
 
     deno task generate
 
+To deploy the static site, [configure GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow) with the above line in the build step of your `.deploy.yml`.
+
+#### Deploy server to production
+
+[Join Deno Deploy<sup>EA</sup>](https://docs.deno.com/deploy/early-access/) (Early Access) and set up a [new app](https://app.deno.com/mastrojs/~/new) with the following build configuration:
+
+- Framework preset: No Preset
+- Install command: `deno install`
+- Build command: blank
+- Dynamic App -> Entrypoint: `server.ts`
 
 ## Contribute
 
