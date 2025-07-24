@@ -1,6 +1,6 @@
 {
   "name": "@mastrojs/mastro",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "exports": {
     ".": "./src/index.ts",
     "./generate": "./src/generate.ts",
