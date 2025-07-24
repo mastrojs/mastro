@@ -42,7 +42,9 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
       const text = await Deno.readTextFile("routes" + filePath);
       Deno.writeTextFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
     } else {
-      Deno.copyFile("routes" + filePath, outFolder + filePath);
+      const outPath = outFolder + filePath;
+      await Deno.mkdir(dirname(outPath), { recursive: true });
+      await Deno.copyFile("routes" + filePath, outPath);
     }
   }
 
