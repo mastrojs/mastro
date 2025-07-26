@@ -41,7 +41,7 @@ Generate the static site:
 
     deno task generate
 
-To deploy the static site, [configure GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow) with the above line in the build step of your `.deploy.yml`.
+To deploy the static site, [configure GitHub Pages](https://github.com/mastrojs/mastrojs.github.io/tree/main/.github/workflows/deploy.yml).
 
 #### Deploy server to production
 
