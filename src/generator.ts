@@ -68,7 +68,10 @@ export const generatePagesForRoute = async (
 
     if (filePath.split("/").some((segment) => segment.match(paramRegex))) {
       if (typeof getStaticPaths !== "function") {
-        throw Error(filePath + " should export a function named getStaticPaths");
+        throw Error(
+          filePath +
+            " should export a function named getStaticPaths, returning an array of strings.",
+        );
       }
       const paths = await getStaticPaths();
       if (Array.isArray(paths) && (paths.length === 0 || typeof paths[0] === "string")) {
