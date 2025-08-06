@@ -5,7 +5,7 @@ A *m*inimal take on an *Astro*-like MPA web framework. There are four parts to i
 - [Static site generator running in your browser](https://mastrojs.github.io/guide/setup/) in a _VS Code for the Web_ extension.
 - The Mastro web framework (server and static site generator) – see below.
 - [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny (2.8k min.gz) client-side reactive GUI library for your existing MPA or Mastro project.
-- [The Mastro Guide](https://mastrojs.github.io/) that shows you how to build and publish your first webside – using only a browser and a GitHub account.
+- [The Mastro Guide](https://mastrojs.github.io/) ([source](https://github.com/mastrojs/mastrojs.github.io)) shows you how to build and publish your first webside – using only a browser and a GitHub account – as well as dives into more advance topics in the later chapters.
 
 
 ## Craft websites with care
@@ -52,10 +52,6 @@ To deploy the static site, [configure GitHub Pages](https://github.com/mastrojs/
 - Build command: blank
 - Dynamic App -> Entrypoint: `server.ts`
 
-## Contribute
-
-Do you have an idea how Mastro could be improved? Something not working as expected? Don't hesitate to open [an issue](https://github.com/mastrojs/mastro/issues).
-
 
 ## Alternatives
 
@@ -82,9 +78,6 @@ here is a list of projects with a somewhat similar philosophy in alphabetical or
 What we believe differentiates Mastro, is that it's even simpler and even more minimal than the others.
 
 
-## TODOs
+## Community / Contribute
 
-- Support Node.js and test on Bun, Cloudflare
-- Asset handling (on server startup / static site generation?)
-  - support something like CSS Modules? Then again, read [this great article by Heydon Pickering](https://www.smashingmagazine.com/2016/11/css-inheritance-cascade-global-scope-new-old-worst-best-friends/) if you want to be convinced otherwise.
-  - image transformations/resizing
+Something not working as expected? Would you like to contribute? Do you have a suggestion? Please see [open issues](https://github.com/mastrojs/mastro/issues) and don't hesitate to open a new one to start a conversation!
