@@ -17,7 +17,7 @@ for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
     if (param) {
       return param.startsWith("...")
         ? `:${param.slice(3)}(.*)?`
-        : `:${param}?`;
+        : `:${param}`;
     } else if (segment === "index.server.ts" || segment === "index.server.js") {
       return;
     } else if (segment.endsWith(".server.ts") || segment.endsWith(".server.js")) {
