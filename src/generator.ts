@@ -16,23 +16,28 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
   const { exists } = await import("@std/fs/exists");
   const { dirname, toFileUrl } = await import("@std/path");
   const { tsToJs } = await import("./server.ts");
+  const fs = await import("node:fs/promises");
 
   if (await exists(outFolder, { isDirectory: true })) {
     await Deno.remove(outFolder, { recursive: true });
   }
 
   try {
-    for (const { filePath } of routes) {
+    await Promise.all(routes.map(async ({ filePath }) => {
       const module = await import(toFileUrl(Deno.cwd() + filePath).toString());
+      const pages = await generatePagesForRoute(filePath, module)
 
-      for (const file of await generatePagesForRoute(filePath, module)) {
-        if (file) {
-          const outFilePath = outFolder + file.outFilePath;
-          await Deno.mkdir(dirname(outFilePath), { recursive: true });
-          Deno.writeTextFile(outFilePath, file.output);
+      await Promise.all(pages.map(file =>
+        fs.mkdir(outFolder + file.outFileDir, { recursive: true })
+      ));
+
+      pages.map(async file => {
+        const output = await file.output;
+        if (output) {
+          Deno.writeTextFile(outFolder + file.outFileDir + file.outFileName, output);
         }
-      }
-    }
+      });
+    }));
   } catch (e) {
     console.error(e);
   }
@@ -61,7 +66,7 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
 export const generatePagesForRoute = async (
   filePath: string,
   module: any,
-): Promise<Array<{ outFilePath: string; output: string } | undefined>> => {
+): Promise<Array<{ outFileDir: string; outFileName: string; output: Promise<string  | undefined> }>> => {
   const { GET, getStaticPaths } = module;
   if (typeof GET === "function") {
     let urls = [new URL(filePathToUrlPath(filePath))];
@@ -86,7 +91,11 @@ export const generatePagesForRoute = async (
       }
     }
 
-    return Promise.all(urls.map((u) => generatePage(filePath, GET, u)));
+    return urls.map((u) => ({
+      outFileDir: ensureTrailingSlash(u.pathname),
+      outFileName: "index.html",
+      output: generatePage(filePath, GET, u)
+    }));
   } else {
     throw Error(filePath + " should export a function named GET");
   }
@@ -111,12 +120,7 @@ const generatePage = async (
 ) => {
   const res = await GET(new Request(url));
   if (res instanceof Response) {
-    const output = await res.text();
-    const path = url.pathname;
-    return {
-      outFilePath: ensureTrailingSlash(path) + "index.html",
-      output,
-    };
+    return res.text();
   } else {
     console.warn(filePath + ": GET must return a Response object");
   }
