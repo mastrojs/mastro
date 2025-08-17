@@ -245,13 +245,6 @@ const getWebviewContent = async (
             return insertNavigationInterceptScript(out)
           }
 
-          const getStaticFile = async (origPath, segment) => {
-            const path = (origPath === "/" ? "" : origPath) + segment + ".html"
-            return staticFiles[path]
-              ? postMessageAndAwaitAnswer({ type: "readTextFile", path: "/routes" + path })
-              : undefined
-          }
-
           const backBtn = document.getElementById("backBtn")
           const pathInput = document.getElementById("pathInput")
           const history = ${JSON.stringify(history)}
@@ -264,8 +257,9 @@ const getWebviewContent = async (
             backBtn.disabled = history.length < 1
 
             try {
-              const staticHtml = await getStaticFile(path, "") || await getStaticFile(path, "/index")
-              if (staticHtml) {
+              const staticPath = path.endsWith("/") ? (path + "index.html") : path;
+              if (staticFiles[staticPath]) {
+                const staticHtml = await postMessageAndAwaitAnswer({ type: "readTextFile", path: "/routes" + staticPath })
                 iframe.srcdoc = await transformOutput(path, staticHtml)
                 return
               }

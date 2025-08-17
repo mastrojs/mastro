@@ -33,8 +33,8 @@ const fetch = async (req: Request): Promise<Response> => {
   const { pathname } = new URL(req.url);
 
   try {
-    const fileRes = await getStaticFile(req, pathname) ||
-      await getStaticFile(req, pathname + ".html");
+    const staticPath = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
+    const fileRes = await getStaticFile(req, staticPath);
     if (fileRes) {
       return fileRes;
     }
