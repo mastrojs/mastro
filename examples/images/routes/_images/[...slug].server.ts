@@ -1,0 +1,10 @@
+import { createImagesRoute } from "mastro";
+
+export const { GET, getStaticPaths } = createImagesRoute({
+  hero: {
+    transform: image => image.resize(300, 300),
+  },
+  hero2x: {
+    transform: image => image.resize(600, 600),
+  }
+});

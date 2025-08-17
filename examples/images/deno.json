@@ -1,0 +1,16 @@
+{
+  "tasks": {
+    "start": "deno serve -A --watch=. ../../src/server.ts",
+    "generate": "deno eval 'import \"mastro/generate\"'"
+  },
+  "compilerOptions": {
+    "lib": ["dom", "deno.ns"]
+  },
+  "links": ["../../"],
+  "imports": {
+    "mastro": "../../src/index.ts",
+    "mastro/generate": "../../src/generate.ts",
+    "mastro/server": "../../src/server.ts"
+  },
+  "lock": false
+}
