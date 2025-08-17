@@ -1,0 +1,2 @@
+routes/image/*
+!routes/image/[...slug].server.ts
