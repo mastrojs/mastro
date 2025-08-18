@@ -4,7 +4,7 @@ if (!globalThis.URLPattern) {
   // implemented in Chrome, Deno and Node >=23.8.0
   // to be implemented by all browsers soon:
   // see https://wpt.fyi/results/urlpattern?q=label%3Ainterop-2025-urlpattern
-  await import(`https://esm.sh/${'urlpattern-polyfill@10.1.2'}?bundle`);
+  await import(`https://esm.sh/${'urlpattern-polyfill@10.1.3'}?bundle`);
 }
 
 export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
