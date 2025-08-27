@@ -36,14 +36,16 @@ export const readTextFile = (path: string): Promise<string> =>
  *
  * Supported patterns depend on the platform:
  *
- * - VSCode for the Web: [Glob Pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
- * - Deno: [expandGlob](https://jsr.io/@std/fs/doc/expand-glob/~/expandGlob)
+ * - [Deno](https://jsr.io/@std/fs/doc/expand-glob/~/expandGlob)
+ * - [VSCode for the Web](https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
+ *   (although currently [broken](https://github.com/microsoft/vscode/issues/249197))
  */
 export const findFiles = async (pattern: string): Promise<string[]> => {
   pattern = pattern.startsWith("/") ? pattern.slice(1) : pattern;
   if (typeof document === "object") {
     return vscodeExtensionFs.findFiles(pattern);
   } else {
+    // TODO: perhaps switch to https://nodejs.org/api/fs.html#fspromisesglobpattern-options
     const { expandGlob } = await import("@std/fs");
     const paths = [];
     for await (const file of expandGlob(pattern)) {
