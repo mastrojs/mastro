@@ -6,7 +6,7 @@
  */
 
 import { findFiles } from "./fs.ts";
-import { paramRegex, routes } from "./router.ts";
+import { paramRegex, routes, sep } from "./router.ts";
 
 /**
  * Generate all pages for the static site and write them to disk.
@@ -66,7 +66,7 @@ export const generatePagesForRoute = async (
   if (typeof GET === "function") {
     let urls = [new URL(filePathToUrlPath(filePath))];
 
-    if (filePath.split("/").some((segment) => segment.match(paramRegex))) {
+    if (filePath.split(sep).some((segment) => segment.match(paramRegex))) {
       if (typeof getStaticPaths !== "function") {
         throw Error(
           filePath +
@@ -124,7 +124,7 @@ const generatePage = async (
 
 const filePathToUrlPath = (path: string) => {
   path = removeRoutesAndServerTs(path);
-  if (path.endsWith("/index")) {
+  if (path.endsWith(sep + "index")) {
     path = path.slice(0, -5); // '/index' -> '/'
   }
   return urlPrefix + path;

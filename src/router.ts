@@ -7,12 +7,13 @@ if (!globalThis.URLPattern) {
   await import(`https://esm.sh/${'urlpattern-polyfill@10.1.3'}?bundle`);
 }
 
+export const sep = typeof document === "object" ? "/" : (await import("@std/path")).SEPARATOR;
 export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 
 const pathSegments = [];
 const suffix = typeof document === "object" ? "js" : "{ts,js}";
 for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
-  const segments = filePath.split("/").slice(2).map((segment) => {
+  const segments = filePath.split(sep).slice(2).map((segment) => {
     const param = segment.match(paramRegex)?.[1];
     if (param) {
       return param.startsWith("...")
@@ -42,6 +43,8 @@ export const routes: Readonly<Array<{ filePath: string; pattern: URLPattern }>> 
     const route = {
       filePath: r.filePath,
       pattern: new URLPattern({
+        // URLPattern only accepts forward slashes, but in other places we need to use `sep`
+        // see https://github.com/denoland/deno/pull/987#issuecomment-438573356
         pathname: `/${r.segments.join("/")}${r.segments.length === 0 ? '' : '/'}`,
       }),
     };
