@@ -5,7 +5,7 @@ A *m*inimal take on an *Astro*-like MPA web framework. There are four parts to i
 - [Static site generator running in your browser](https://mastrojs.github.io/guide/setup/) in a _VS Code for the Web_ extension.
 - The Mastro web framework (server and static site generator) – see below.
 - [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny (2.8k min.gz) client-side reactive GUI library for your existing MPA or Mastro project.
-- [The Mastro Guide](https://mastrojs.github.io/) ([source](https://github.com/mastrojs/mastrojs.github.io)) shows you how to build and publish your first webside – using only a browser and a GitHub account – as well as dives into more advance topics in the later chapters.
+- [The Mastro Guide](https://mastrojs.github.io/guide/) ([source](https://github.com/mastrojs/mastrojs.github.io)) shows you how to build and publish your first webside – using only a browser and a GitHub account – as well as dives into more advance topics in the later chapters.
 
 
 ## Craft websites with care
@@ -55,7 +55,7 @@ To deploy the static site, [configure GitHub Pages](https://github.com/mastrojs/
 
 ## Alternatives
 
-There are [many ways to build websites](http://localhost:4321/guide/why-html-css/#you-want-to-build-a-website).
+There are [many ways to build websites](https://mastrojs.github.io/guide/why-html-css/#you-want-to-build-a-website%3F).
 But if we limit ourselves to JavaScript server frameworks and static site generators (SSG),
 here is a list of projects with a somewhat similar philosophy in alphabetical order.
 (Are we missing one that should be on the list? Make a PR.)
