@@ -29,7 +29,10 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
         if (file) {
           const outFilePath = outFolder + file.outFilePath;
           await Deno.mkdir(dirname(outFilePath), { recursive: true });
-          Deno.writeTextFile(outFilePath, file.output);
+          const { body } = file.response;
+          if (body) {
+            Deno.writeFile(outFilePath, body);
+          }
         }
       }
     }
@@ -61,7 +64,7 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
 export const generatePagesForRoute = async (
   filePath: string,
   module: any,
-): Promise<Array<{ outFilePath: string; output: string } | undefined>> => {
+): Promise<Array<{ outFilePath: string; response: Response } | undefined>> => {
   const { GET, getStaticPaths } = module;
   if (typeof GET === "function") {
     let urls = [new URL(filePathToUrlPath(filePath))];
@@ -108,13 +111,12 @@ const generatePage = async (
   GET: (req: Request) => Promise<Response>,
   url: URL,
 ) => {
-  const res = await GET(new Request(url));
-  if (res instanceof Response) {
-    const output = await res.text();
+  const response = await GET(new Request(url));
+  if (response instanceof Response) {
     const path = url.pathname;
     return {
-      outFilePath: ensureTrailingSlash(path) + "index.html",
-      output,
+      outFilePath: path.endsWith("/") ? `${path}index.html` : path,
+      response,
     };
   } else {
     console.warn(filePath + ": GET must return a Response object");
@@ -133,5 +135,3 @@ const removeRoutesAndServerTs = (path: string) => path.slice(7, -10);
 
 // just a dummy prefix so `new URL` doesn't throw
 const urlPrefix = "http://localhost";
-
-const ensureTrailingSlash = (path: string) => path.endsWith("/") ? path : path + "/";

@@ -54,7 +54,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
             return;
           }
           case "generateFiles": {
-            const { files } = msg;
+            const files = msg.files as Array<{ outFilePath: string; response?: Response }>;
             try {
               outputChannel.show(true);
               try {
@@ -70,16 +70,15 @@ export const activate = async (context: vscode.ExtensionContext) => {
                 new Uint8Array(0),
               );
 
-              const encoder = new TextEncoder();
-              await Promise.all(files.map(async (file: any) => {
-                const { outFilePath, output } = file;
+              await Promise.all(files.map(async (file) => {
+                const { outFilePath, response } = file;
                 const fileUri = rootFolder.with({ path: basePath + "/docs" + outFilePath });
-                const contents = output
-                  ? encoder.encode(output)
-                  : await vscode.workspace.fs.readFile(
+                const contents = response
+                  ? response.bytes()
+                  : vscode.workspace.fs.readFile(
                       rootFolder.with({ path: basePath + "/routes" + outFilePath }),
                     );
-                return vscode.workspace.fs.writeFile(fileUri, contents);
+                return vscode.workspace.fs.writeFile(fileUri, await contents);
               }));
               outputChannel.appendLine('Updated docs/ folder. Click the "Source Control" icon on the left, then click "Commit & Push" to publish your changes.');
             } catch (e) {
