@@ -63,7 +63,7 @@ globalThis.customElements?.define(
         this.todos.set(todos);
         this.newTitle.set("");
 
-        const res = await fetchApi("POST", "/todo", newTodo);
+        const res = await fetchApi("POST", "/todo/", newTodo);
         if (!res.ok) {
           // if saving to server fails, rollback GUI
           this.todos.set(todos.slice(1));

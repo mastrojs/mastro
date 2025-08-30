@@ -17,7 +17,7 @@ export const GET = async (): Promise<Response> => {
         <ul>
           ${examples.map((ex) =>
           html`
-            <li><p><a href="${ex}/">${ex}</a></p></li>
+            <li><p><a href=${ex}>${ex}</a></p></li>
           `
         )}
         </ul>
