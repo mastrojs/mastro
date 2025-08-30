@@ -101,8 +101,7 @@ export const getStaticFilePaths = async (): Promise<string[]> =>
     .filter(isStaticFile).map((p) => p.slice(7));
 
 const isStaticFile = (p: string) =>
-  !p.endsWith(".server.ts") && !p.endsWith(".server.js") &&
-  !p.endsWith("/.DS_Store");
+  !p.endsWith(".server.ts") && !p.endsWith(".server.js");
 
 const generatePage = async (
   filePath: string,

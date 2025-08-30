@@ -527,4 +527,4 @@ const findFiles = async (
 }
 
 const isStaticFile = (p: string) =>
-  !p.endsWith(".server.ts") && !p.endsWith(".server.js") && !p.endsWith("/.DS_Store");
+  !p.endsWith(".server.ts") && !p.endsWith(".server.js");

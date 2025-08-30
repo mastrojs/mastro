@@ -49,7 +49,7 @@ export const findFiles = async (pattern: string): Promise<string[]> => {
     const { expandGlob } = await import("@std/fs");
     const paths = [];
     for await (const file of expandGlob(pattern)) {
-      if (file.isFile && !file.isSymlink) {
+      if (file.isFile && !file.isSymlink && !file.path.endsWith("/.DS_Store")) {
         const relativeToProjectRoot = file.path.slice(Deno.cwd().length);
         paths.push(relativeToProjectRoot);
       }
