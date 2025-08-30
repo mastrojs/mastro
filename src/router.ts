@@ -13,25 +13,30 @@ export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 const pathSegments = [];
 const suffix = typeof document === "object" ? "js" : "{ts,js}";
 for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
-  const segments = filePath.split(sep).slice(2).map((segment) => {
+  const fileSegments = filePath.split(sep).slice(2)
+  const segments = fileSegments.map((segment, i) => {
     const param = segment.match(paramRegex)?.[1];
     if (param) {
       return param.startsWith("...")
         ? `:${param.slice(3)}(.*)?`
         : `:${param}`;
-    } else if (segment === "index.server.ts" || segment === "index.server.js") {
-      return;
+    }
+    const parent = fileSegments[i-1];
+    if (segment === "index.server.ts" || segment === "index.server.js") {
+      return "";
+    } else if (parent && (segment === `(${parent}).server.ts` || segment === `(${parent}).server.js`)) {
+      return "";
     } else if (segment.endsWith(".server.ts") || segment.endsWith(".server.js")) {
       return segment.slice(0, -10);
     } else {
       return segment;
     }
-  }).filter((s) => s);
-  pathSegments.push({ filePath, segments });
+  });
+  pathSegments.unshift({ filePath, segments });
 }
 
 // TODO: sort this according to solid route precedence criteria
-pathSegments.sort((a, b) => a.segments.length - b.segments.length);
+// pathSegments.sort((a, b) => a.segments.length - b.segments.length);
 
 /**
  * Array containing all routes that Mastro found.
@@ -45,7 +50,7 @@ export const routes: Readonly<Array<{ filePath: string; pattern: URLPattern }>> 
       pattern: new URLPattern({
         // URLPattern only accepts forward slashes, but in other places we need to use `sep`
         // see https://github.com/denoland/deno/pull/987#issuecomment-438573356
-        pathname: `/${r.segments.join("/")}${r.segments.length === 0 ? '' : '/'}`,
+        pathname: "/" + r.segments.join("/"),
       }),
     };
     Object.freeze(route);
