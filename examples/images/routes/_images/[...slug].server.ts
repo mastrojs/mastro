@@ -1,4 +1,4 @@
-import { createImagesRoute } from "mastro";
+import { createImagesRoute } from "mastro/images";
 
 export const { GET, getStaticPaths } = createImagesRoute({
   hero: {

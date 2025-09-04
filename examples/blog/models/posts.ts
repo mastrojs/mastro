@@ -1,4 +1,5 @@
-import { type Html, readDir, readMarkdownFile } from 'mastro'
+import { type Html, readDir } from 'mastro'
+import { readMarkdownFile } from 'mastro/markdown'
 
 export interface Post {
   content: Html;

@@ -5,7 +5,9 @@
     ".": "./src/index.ts",
     "./generate": "./src/generate.ts",
     "./generator": "./src/generator.ts",
+    "./images": "./src/images.ts",
     "./init": "./src/init.ts",
+    "./markdown": "./src/markdown.ts",
     "./server": "./src/server.ts",
     "./reactive": "./src/reactive/reactive.ts"
   },
