@@ -3,7 +3,6 @@
   "version": "0.1.4",
   "exports": {
     ".": "./src/index.ts",
-    "./generate": "./src/generate.ts",
     "./generator": "./src/generator.ts",
     "./images": "./src/images.ts",
     "./init": "./src/init.ts",
@@ -20,6 +19,7 @@
   "imports": {
     "@std/fs": "jsr:@std/fs@^1.0.19",
     "@std/media-types": "jsr:@std/media-types@^1.1.0",
+    "@std/cli/parse-args": "jsr:@std/cli/parse-args@1.0.21",
     "@std/path": "jsr:@std/path@^1.1.1",
     "@std/http": "jsr:@std/http@^1.0.19",
     "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0",

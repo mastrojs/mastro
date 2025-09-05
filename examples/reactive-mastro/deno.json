@@ -1,7 +1,7 @@
 {
   "tasks": {
     "start": "deno run --watch=. --allow-env --allow-read --allow-net server.ts",
-    "generate": "deno eval \"import 'mastro/generate'\""
+    "generate": "deno run -A mastro/generator"
   },
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
@@ -9,7 +9,7 @@
   "links": ["../../"],
   "imports": {
     "mastro": "../../src/index.ts",
-    "mastro/generate": "../../src/generate.ts",
+    "mastro/generator": "../../src/generator.ts",
     "mastro/server": "../../src/server.ts",
     "mastro/reactive": "../../src/reactive/reactive.ts"
   },

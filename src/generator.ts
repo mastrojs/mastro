@@ -71,6 +71,15 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   console.info(`Generated static site and wrote to ${outFolder}/ folder.`);
 };
 
+if (typeof document === "undefined" && import.meta.main) {
+  const { parseArgs } = await import("@std/cli/parse-args");
+  const flags = parseArgs(Deno.args, {
+    boolean: ["pregenerateOnly"],
+    string: ["outFolder"],
+  });
+  generate(flags);
+}
+
 /**
  * Takes a file path for a route file on the local filesystem, runs the
  * static site generation logic and returns an array of output strings

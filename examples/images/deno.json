@@ -1,8 +1,8 @@
 {
   "tasks": {
     "start": "deno serve -A --watch=. ../../src/server.ts",
-    "pregenerate": "deno eval 'import { generate } from \"mastro/generator\"; generate({ pregenerateOnly: true })'",
-    "generate": "deno eval 'import \"mastro/generate\"'"
+    "generate": "deno run -A mastro/generator",
+    "pregenerate": "deno run -A mastro/generator --pregenerateOnly"
   },
   "compilerOptions": {
     "lib": ["dom", "deno.ns"]
@@ -11,7 +11,6 @@
   "imports": {
     "mastro": "../../src/index.ts",
     "mastro/images": "../../src/images.ts",
-    "mastro/generate": "../../src/generate.ts",
     "mastro/generator": "../../src/generator.ts",
     "mastro/server": "../../src/server.ts"
   },
