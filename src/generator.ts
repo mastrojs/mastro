@@ -8,14 +8,29 @@
 import { findFiles } from "./fs.ts";
 import { paramRegex, routes, sep } from "./router.ts";
 
+interface GenerateConfig {
+  /**
+   * Folder name for output folder that will be created. Default is `dist`.
+   */
+  outFolder?: string;
+  /**
+   * Pregenerate only routes with `export const pregenerate = true`.
+   * Useful as a build step for servers.
+   */
+  pregenerateOnly?: boolean;
+}
+
 /**
  * Generate all pages for the static site and write them to disk.
  * Can only be used with Deno and not the VSCode extension.
  */
-export const generate = async (outFolder = "dist"): Promise<void> => {
+export const generate = async (config?: GenerateConfig): Promise<void> => {
   const { exists } = await import("@std/fs/exists");
   const { dirname, toFileUrl } = await import("@std/path");
   const { tsToJs } = await import("./server.ts");
+
+  const { outFolder = "dist", pregenerateOnly = false } = config || {};
+  const pregenerateAll = !pregenerateOnly;
 
   if (await exists(outFolder, { isDirectory: true })) {
     await Deno.remove(outFolder, { recursive: true });
@@ -25,13 +40,15 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
     for (const { filePath } of routes) {
       const module = await import(toFileUrl(Deno.cwd() + filePath).toString());
 
-      for (const file of await generatePagesForRoute(filePath, module)) {
-        if (file) {
-          const outFilePath = outFolder + file.outFilePath;
-          await Deno.mkdir(dirname(outFilePath), { recursive: true });
-          const { body } = file.response;
-          if (body) {
-            Deno.writeFile(outFilePath, body);
+      if (pregenerateAll || module.pregenerate) {
+        for (const file of await generatePagesForRoute(filePath, module)) {
+          if (file) {
+            const outFilePath = outFolder + file.outFilePath;
+            await Deno.mkdir(dirname(outFilePath), { recursive: true });
+            const { body } = file.response;
+            if (body) {
+              Deno.writeFile(outFilePath, body);
+            }
           }
         }
       }
@@ -44,7 +61,7 @@ export const generate = async (outFolder = "dist"): Promise<void> => {
     if (filePath.endsWith(".client.ts")) {
       const text = await Deno.readTextFile("routes" + filePath);
       Deno.writeTextFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
-    } else {
+    } else if (pregenerateAll) {
       const outPath = outFolder + filePath;
       await Deno.mkdir(dirname(outPath), { recursive: true });
       await Deno.copyFile("routes" + filePath, outPath);
