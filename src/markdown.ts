@@ -1,3 +1,9 @@
+/**
+ * Module with helper function to generate HTML from markdown.
+ * Uses `micromark` with `micromark-extension-gfm` under the hood.
+ * @module
+ */
+
 import type { Options } from "npm:micromark@4.0.2";
 import { findFiles, readTextFile } from "./fs.ts";
 import { type Html, unsafeInnerHtml } from "./html.ts";

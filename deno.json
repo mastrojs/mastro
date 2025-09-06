@@ -19,7 +19,7 @@
   "imports": {
     "@std/fs": "jsr:@std/fs@^1.0.19",
     "@std/media-types": "jsr:@std/media-types@^1.1.0",
-    "@std/cli/parse-args": "jsr:@std/cli/parse-args@1.0.21",
+    "@std/cli/parse-args": "jsr:@std/cli@^1.0.21/parse-args",
     "@std/path": "jsr:@std/path@^1.1.1",
     "@std/http": "jsr:@std/http@^1.0.19",
     "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0",

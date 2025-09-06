@@ -1,19 +1,29 @@
+/**
+ * Module with helper function to transform images.
+ * Uses `@imagemagick/magick-wasm` under the hood.
+ * @module
+ */
+
 import { findFiles } from "./fs.ts";
 import { getParams } from "./router.ts";
 import { staticCacheControlVal } from "./server.ts";
 
 import { contentType } from "@std/media-types";
 import {
+  initializeImageMagick,
   ImageMagick,
   type IMagickImage,
-  initialize,
   MagickFormat,
-} from "https://deno.land/x/imagemagick_deno@0.0.31/mod.ts";
+} from "npm:@imagemagick/magick-wasm@0.0.35";
 
 export interface ImagePreset {
   format?: MagickFormat;
   transform: (image: IMagickImage) => void;
 }
+
+const wasmUrl = new URL(
+  "https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.35/dist/magick.wasm",
+);
 
 /**
  * Creates a route to transform images according to the specified presets.
@@ -41,8 +51,11 @@ export interface ImagePreset {
 export const createImagesRoute = (
   presets: Record<string, ImagePreset>,
   baseDir = "images/",
-) => {
-  const GET = async (req: Request): Promise<Response> => {
+): {
+    GET: (req: Request) => Promise<Response>;
+    getStaticPaths: () => Promise<string[]>;
+} => {
+  const GET = async (req: Request) => {
     const { slug } = getParams(req.url);
     if (!slug) {
       return new Response("404 not found", { status: 404 });
@@ -97,11 +110,12 @@ const splitAt = (
   index: number,
 ) => [str.substring(0, index), str.substring(index + 1)];
 
-let initialized = false;
+let inialized = false;
+
 const transformImage = async (path: string, preset: Required<ImagePreset>) => {
-  if (!initialized) {
+  if (!inialized) {
     await initialize();
-    initialized = true;
+    inialized = true;
   }
   const data = await Deno.readFile(path);
   return new Promise<Uint8Array>((resolve) =>
@@ -111,3 +125,23 @@ const transformImage = async (path: string, preset: Required<ImagePreset>) => {
     })
   );
 };
+
+const initialize = async () => {
+  if (typeof caches === "undefined") {
+    const response = await fetch(wasmUrl);
+    await initializeImageMagick(new Int8Array(await response.arrayBuffer()));
+    return;
+  }
+
+  const cache = await caches.open("magick_native");
+  const cached = await cache.match(wasmUrl);
+
+  if (cached) {
+    await initializeImageMagick(new Int8Array(await cached.arrayBuffer()));
+    return;
+  }
+
+  const response = await fetch(wasmUrl);
+  await cache.put(wasmUrl, response.clone());
+  await initializeImageMagick(new Int8Array(await response.arrayBuffer()));
+}
