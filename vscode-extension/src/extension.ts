@@ -422,11 +422,12 @@ const getImportMap = async (
   rootFolder: vscode.Uri,
   basePath: string,
 ) => {
+  const prodUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.2.1/";
   const isDev = context.extensionMode === vscode.ExtensionMode.Development;
   const getUrl = (devFile: string, exportName: string) => isDev
       ? webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", devFile)).toString()
       // currently we don't esm.sh ?bundle because the two exports share some files
-      : `https://esm.sh/jsr/@mastrojs/mastro@0.2.1/${exportName}`;
+      : (prodUrl + exportName);
   const readImports = async (importMapPath: string): Promise<object> => {
     try {
       const bs = await vscode.workspace.fs.readFile(
@@ -445,6 +446,9 @@ const getImportMap = async (
     mastro: getUrl("index.js", ""),
     "mastro/generator": getUrl("generator.js", "generator"),
   };
+  if (!isDev) {
+    imports["mastro/"] = prodUrl;
+  }
 
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {
     if (uri.path.endsWith(".js")) {
