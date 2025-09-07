@@ -8,7 +8,7 @@
 
 import { serveFile } from "@std/http/file-server";
 import { toFileUrl } from "@std/path";
-import { matchRoute } from "./router.ts";
+import { matchRoute } from "./core/router.ts";
 
 const importRegex = /^import .*\.ts("|')(;)?$/gm;
 

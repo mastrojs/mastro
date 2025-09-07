@@ -5,8 +5,8 @@
  */
 
 import type { Options } from "npm:micromark@4.0.2";
-import { findFiles, readTextFile } from "./fs.ts";
-import { type Html, unsafeInnerHtml } from "./html.ts";
+import { findFiles, readTextFile } from "./core/fs.ts";
+import { type Html, unsafeInnerHtml } from "./core/html.ts";
 
 const importLazy = (pkg: string) =>
   import(typeof document === "object" ? `https://esm.sh/${pkg}?bundle` : `npm:${pkg}`);

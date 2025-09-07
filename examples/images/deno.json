@@ -9,7 +9,7 @@
   },
   "links": ["../../"],
   "imports": {
-    "mastro": "../../src/index.ts",
+    "mastro": "../../src/core/index.ts",
     "mastro/images": "../../src/images.ts",
     "mastro/generator": "../../src/generator.ts",
     "mastro/server": "../../src/server.ts"

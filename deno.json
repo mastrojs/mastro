@@ -2,7 +2,7 @@
   "name": "@mastrojs/mastro",
   "version": "0.2.1",
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./src/core/index.ts",
     "./generator": "./src/generator.ts",
     "./images": "./src/images.ts",
     "./init": "./src/init.ts",

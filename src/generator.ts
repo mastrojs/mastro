@@ -5,8 +5,8 @@
  * @module
  */
 
-import { findFiles } from "./fs.ts";
-import { paramRegex, routes, sep } from "./router.ts";
+import { findFiles } from "./core/fs.ts";
+import { paramRegex, routes, sep } from "./core/router.ts";
 
 interface GenerateConfig {
   /**

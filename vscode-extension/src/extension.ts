@@ -422,12 +422,8 @@ const getImportMap = async (
   rootFolder: vscode.Uri,
   basePath: string,
 ) => {
-  const prodUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.2.1/";
-  const isDev = context.extensionMode === vscode.ExtensionMode.Development;
-  const getUrl = (devFile: string, exportName: string) => isDev
-      ? webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", devFile)).toString()
-      // currently we don't esm.sh ?bundle because the two exports share some files
-      : (prodUrl + exportName);
+  // currently we don't esm.sh ?bundle because the two exports share some files
+  const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.2.1/";
   const readImports = async (importMapPath: string): Promise<object> => {
     try {
       const bs = await vscode.workspace.fs.readFile(
@@ -443,11 +439,17 @@ const getImportMap = async (
   const imports: Record<string, string> = {
     ...await readImports("/deno.json"),
     ...await readImports("/import_map.json"),
-    mastro: getUrl("index.js", ""),
-    "mastro/generator": getUrl("generator.js", "generator"),
   };
-  if (!isDev) {
-    imports["mastro/"] = prodUrl;
+  if (vscode.ExtensionMode.Development === context.extensionMode) {
+    const getDevUrl = (path: string) =>
+        webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", path)).toString();
+    imports.mastro = getDevUrl("core/index.js");
+    imports["mastro/generator"] = getDevUrl("generator.js");
+    imports["mastro/markdown"] = getDevUrl("markdown.js");
+    imports["mastro/images"] = getDevUrl("images.js");
+  } else {
+    imports.mastro = mastroProdUrl;
+    imports["mastro/"] = mastroProdUrl;
   }
 
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {

@@ -31,7 +31,7 @@
     "publish": "npx @vscode/vsce publish minor",
     "vscode:prepublish": "npm run build",
     "build": "tsc -p ./",
-    "build-dev": "tsc -p ./ && tsc ../src/*.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions || true",
+    "build-dev": "tsc -p ./ && tsc ../src/**/*.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions || true",
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {

@@ -5,10 +5,10 @@
  */
 
 import * as signals from '@maverick-js/signals'
-import { renderToString } from '../html.ts'
+import { renderToString } from '../core/html.ts'
 import { parseArgs, parseBind } from "./reactive.util.ts";
 
-export * from '../html.ts'
+export * from '../core/html.ts'
 /**
  * Creates a new signal whose value is computed and returned by the given function.
  * The given compute function is only re-run when one of its dependencies are updated.

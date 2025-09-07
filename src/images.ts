@@ -4,8 +4,8 @@
  * @module
  */
 
-import { findFiles } from "./fs.ts";
-import { getParams } from "./router.ts";
+import { findFiles } from "./core/fs.ts";
+import { getParams } from "./core/router.ts";
 import { staticCacheControlVal } from "./server.ts";
 
 import { contentType } from "@std/media-types";

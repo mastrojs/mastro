@@ -8,7 +8,7 @@
   },
   "links": ["../../"],
   "imports": {
-    "mastro": "../../src/index.ts",
+    "mastro": "../../src/core/index.ts",
     "mastro/generator": "../../src/generator.ts",
     "mastro/server": "../../src/server.ts",
     "mastro/reactive": "../../src/reactive/reactive.ts"
