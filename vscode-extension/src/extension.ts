@@ -54,7 +54,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
             return;
           }
           case "generateFiles": {
-            const files = msg.files as Array<{ outFilePath: string; response?: Response }>;
+            const files = msg.files as Array<{ outFilePath: string; output: Uint8Array }>;
             try {
               outputChannel.show(true);
               try {
@@ -71,11 +71,11 @@ export const activate = async (context: vscode.ExtensionContext) => {
               );
 
               await Promise.all(files.map(async (file) => {
-                const { outFilePath, response } = file;
+                const { outFilePath, output } = file;
                 const fileUri = rootFolder.with({ path: basePath + "/docs" + outFilePath });
-                const contents = response
-                  ? response.bytes()
-                  : vscode.workspace.fs.readFile(
+                const contents = output
+                  ? output
+                  : await vscode.workspace.fs.readFile(
                       rootFolder.with({ path: basePath + "/routes" + outFilePath }),
                     );
                 return vscode.workspace.fs.writeFile(fileUri, await contents);
@@ -343,8 +343,14 @@ const getWebviewContent = async (
                   // we have to do the import here and cannot factor it out to mastro/generator
                   const module = await import(filePath)
                   try {
-                    const pages = await generatePagesForRoute(filePath, module)
-                    files.push(...pages.filter(p => p))
+                    for (const page of await generatePagesForRoute(filePath, module)) {
+                      if (page) {
+                        files.push({
+                          outFilePath: page.outFilePath,
+                          output: await page.response.bytes(),
+                        });
+                      }
+                    }
                   } catch (e) {
                     const error = "Failed to generate route " + filePath + ": " +
                       (e?.message || e?.code || JSON.stringify(e))
