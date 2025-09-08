@@ -29,7 +29,7 @@ Follow [The Mastro Guide's _Setup_ section](https://mastrojs.github.io/guide/set
 
 If you prefer the command line, after [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either run:
 
-    deno run -A jsr:@mastrojs/mastro@0.2.1/init
+    deno run -A jsr:@mastrojs/mastro@0.2.2/init
 
 or use the [template on GitHub](https://github.com/mastrojs/template-basic-deno). `cd` into the folder, then:
 
