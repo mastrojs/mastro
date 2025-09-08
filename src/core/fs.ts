@@ -9,26 +9,31 @@ const vscodeExtensionFs = typeof document === "object"
   : undefined;
 
 /**
+ * Path separator: `\` on Windows, `/` everywhere else.
+ */
+export const sep: "/" | "\\" = typeof document === "object" ? "/" : (await import("@std/path")).SEPARATOR;
+
+/**
  * Read the directory on the local file system and return its files,
  * non-recursive and ignoring symlinks.
  */
 export const readDir = (path: string): Promise<string[]> =>
   fs
-    ? fs.readdir(ensureNoLeadingSlash(path), { withFileTypes: true })
+    ? fs.readdir(noLeadingSep(path), { withFileTypes: true })
       .then((files) =>
         files.flatMap((file) =>
           file.isSymbolicLink() || file.isDirectory() ? [] : file.name
         )
       )
-    : vscodeExtensionFs.readDir(ensureLeadingSlash(path));
+    : vscodeExtensionFs.readDir(leadingSep(path));
 
 /**
  * Return the contents of a text file on the local file system as a string.
  */
 export const readTextFile = (path: string): Promise<string> =>
   fs
-    ? fs.readFile(ensureNoLeadingSlash(path), { encoding: "utf8" })
-    : vscodeExtensionFs.readTextFile(ensureLeadingSlash(path));
+    ? fs.readFile(noLeadingSep(path), { encoding: "utf8" })
+    : vscodeExtensionFs.readTextFile(leadingSep(path));
 
 /**
  * Return the file paths on the local file system,
@@ -58,7 +63,7 @@ export const findFiles = async (pattern: string): Promise<string[]> => {
   }
 };
 
-const ensureLeadingSlash = (path: string) =>
-  path.startsWith("/") ? path : "/" + path;
-const ensureNoLeadingSlash = (path: string) =>
-  path.startsWith("/") ? path.slice(1) : path;
+const leadingSep = (path: string) =>
+  path.startsWith(sep) ? path : "/" + path;
+const noLeadingSep = (path: string) =>
+  path.startsWith(sep) ? path.slice(1) : path;

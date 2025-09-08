@@ -1,4 +1,4 @@
-import { findFiles } from "./fs.ts";
+import { findFiles, sep } from "./fs.ts";
 
 if (!globalThis.URLPattern) {
   // implemented in Chrome, Deno and Node >=23.8.0
@@ -7,7 +7,6 @@ if (!globalThis.URLPattern) {
   await import(`https://esm.sh/${'urlpattern-polyfill@10.1.3'}?bundle`);
 }
 
-export const sep = typeof document === "object" ? "/" : (await import("@std/path")).SEPARATOR;
 export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 
 const pathSegments = [];
