@@ -137,15 +137,19 @@ const generatePage = async (
   GET: (req: Request) => Promise<Response>,
   url: URL,
 ) => {
-  const response = await GET(new Request(url));
-  if (response instanceof Response) {
-    const path = url.pathname;
-    return {
-      outFilePath: path.endsWith("/") ? `${path}index.html` : path,
-      response,
-    };
-  } else {
-    console.warn(filePath + ": GET must return a Response object");
+  try {
+    const response = await GET(new Request(url));
+    if (response instanceof Response) {
+      const path = url.pathname;
+      return {
+        outFilePath: path.endsWith("/") ? `${path}index.html` : path,
+        response,
+      };
+    } else {
+      console.warn(filePath + ": GET must return a Response object");
+    }
+  } catch (e) {
+    console.error(`\nFailed to generate page with path ${url.pathname}\n`, e);
   }
 };
 
