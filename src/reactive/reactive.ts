@@ -119,6 +119,9 @@ export class ReactiveElement extends HTMLElement {
                       // e.g. data-bind="props.myChildField = myParentField"
                       // @ts-ignore noImplicitAny
                       el[subprop] = this[fieldOrMethod]
+                    } else if (prop === 'attributes' && subprop) {
+                      // e.g. data-bind="attributes.myKey = myField"
+                      el.setAttribute(subprop, val)
                     } else if (subprop) {
                       // e.g. data-bind="dataset.myKey = myField"
                       // @ts-ignore noImplicitAny
