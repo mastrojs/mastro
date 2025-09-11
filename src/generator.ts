@@ -160,4 +160,4 @@ const filePathToUrlPath = (path: string) => {
 const removeRoutesAndServerTs = (path: string) => path.slice(7, -10);
 
 // just a dummy prefix so `new URL` doesn't throw
-const urlPrefix = "http://localhost";
+const urlPrefix = "http://127.0.0.1";
