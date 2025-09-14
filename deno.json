@@ -3,6 +3,7 @@
   "version": "0.2.2",
   "exports": {
     ".": "./src/core/index.ts",
+    "./feed": "./src/feed.ts",
     "./generator": "./src/generator.ts",
     "./images": "./src/images.ts",
     "./init": "./src/init.ts",
