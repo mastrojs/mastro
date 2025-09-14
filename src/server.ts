@@ -36,7 +36,7 @@ const fetch = async (req: Request): Promise<Response> => {
 
   try {
     const staticPath = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
-    const pregeneratedFile = isDev ? undefined : await getStaticFile(req, "dist" + staticPath);
+    const pregeneratedFile = isDev ? undefined : await getStaticFile(req, "generated" + staticPath);
     const fileRes = pregeneratedFile || await getStaticFile(req, "routes" + staticPath);
     if (fileRes) {
       return fileRes;

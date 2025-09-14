@@ -10,7 +10,7 @@ import { paramRegex, routes } from "./core/router.ts";
 
 interface GenerateConfig {
   /**
-   * Folder name for output folder that will be created. Default is `dist`.
+   * Folder name for output folder that will be created. Default is `generated`.
    */
   outFolder?: string;
   /**
@@ -29,7 +29,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   const { dirname, toFileUrl } = await import("@std/path");
   const { tsToJs } = await import("./server.ts");
 
-  const { outFolder = "dist", pregenerateOnly = false } = config || {};
+  const { outFolder = "generated", pregenerateOnly = false } = config || {};
   const pregenerateAll = !pregenerateOnly;
 
   if (await exists(outFolder, { isDirectory: true })) {
