@@ -55,10 +55,9 @@ To deploy the static site, [configure GitHub Pages](https://github.com/mastrojs/
 
 ## Alternatives
 
-There are [many ways to build websites](https://mastrojs.github.io/guide/why-html-css/#you-want-to-build-a-website%3F).
-But if we limit ourselves to JavaScript server frameworks and static site generators (SSG),
-here is a list of projects with a somewhat similar philosophy in alphabetical order.
-(Are we missing one that should be on the list? Make a PR.)
+Here's a list of server-side JavaScript frameworks with a somewhat similar philosophy in alphabetical order. (Are we missing one that should be on the list? Make a PR.)
+
+What we believe differentiates Mastro, is that it's even simpler than the others, yet no less powerful.
 
 |                                  | Output      | Router       | Templating               |   Bundler           |
 | -------------------------------- | ----------- | ------------ | ------------------------ | ------------------- |
@@ -72,10 +71,8 @@ here is a list of projects with a somewhat similar philosophy in alphabetical or
 | [h3](https://h3.dev/)            | Server      | programmatic | -                        | -                   |
 | [Haunty](https://haunty.org)     | SSG         | file-based   | mustache-like            | -                   |
 | [Hono](https://hono.dev)         | SSG/Server  | programmatic | html tagged template     | optionally esbuild  |
-| Mastro                           | SSG/Server  | file-based   | html tagged template     | -                   |
+| [Mastro](https://mastrojs.github.io/) | SSG/Server  | file-based   | html tagged template     | optionally esbuild  |
 | [Nue](https://nuejs.org)         | SSG         | file-based   | custom                   | -                   |
-
-What we believe differentiates Mastro, is that it's even simpler and even more minimal than the others.
 
 
 ## Community / Contribute
