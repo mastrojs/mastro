@@ -1,6 +1,6 @@
 /**
  * This script initializes an empty Mastro project for deno.
- * Usage: deno run -A jsr:@mastrojs/mastro@0.2.2/init
+ * Usage: deno run -A jsr:@mastrojs/mastro@0.3.1/init
  * @module
  */
 
