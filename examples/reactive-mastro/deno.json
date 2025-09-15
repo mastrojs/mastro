@@ -12,6 +12,5 @@
     "mastro/generator": "../../src/generator.ts",
     "mastro/server": "../../src/server.ts",
     "mastro/reactive": "../../src/reactive/reactive.ts"
-  },
-  "lock": false
+  }
 }

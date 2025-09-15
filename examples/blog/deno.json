@@ -12,6 +12,5 @@
     "mastro/markdown": "../../src/markdown.ts",
     "mastro/generator": "../../src/generator.ts",
     "mastro/server": "../../src/server.ts"
-  },
-  "lock": false
+  }
 }

@@ -13,6 +13,5 @@
     "mastro/images": "../../src/images.ts",
     "mastro/generator": "../../src/generator.ts",
     "mastro/server": "../../src/server.ts"
-  },
-  "lock": false
+  }
 }
