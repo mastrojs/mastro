@@ -1,11 +1,13 @@
-# Mastro
+# [Mastro](https://mastrojs.github.io/)
 
-A *m*inimal take on an *Astro*-like MPA web framework. There are four parts to it:
+The simplest web framework and site generator you've ever seen.
 
+There are four parts to it:
+
+- The Mastro web framework (server and static site generator).
 - [Static site generator running in your browser](https://mastrojs.github.io/guide/setup/) in a _VS Code for the Web_ extension.
-- The Mastro web framework (server and static site generator) – see below.
 - [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny (2.8k min.gz) client-side reactive GUI library for your existing MPA or Mastro project.
-- [The Mastro Guide](https://mastrojs.github.io/guide/) ([source](https://github.com/mastrojs/mastrojs.github.io)) shows you how to build and publish your first webside – using only a browser and a GitHub account – as well as dives into more advance topics in the later chapters.
+- [The Mastro Guide](https://mastrojs.github.io/guide/) ([source](https://github.com/mastrojs/mastrojs.github.io)) shows you how to build and publish your first webside, as well as dives into more advance topics in the later chapters.
 
 
 ## Craft websites with care
@@ -37,20 +39,14 @@ Start the development server:
 
     deno task start
 
-Generate the static site:
+To generate your whole static site:
 
     deno task generate
 
-To deploy the static site, [configure GitHub Pages](https://github.com/mastrojs/mastrojs.github.io/tree/main/.github/workflows/deploy.yml).
 
-#### Deploy server to production
+#### Deploy to production
 
-[Join Deno Deploy<sup>EA</sup>](https://docs.deno.com/deploy/early-access/) (Early Access) and set up a [new app](https://app.deno.com/mastrojs/~/new) with the following build configuration:
-
-- Framework preset: No Preset
-- Install command: `deno install`
-- Build command: blank
-- Dynamic App -> Entrypoint: `server.ts`
+To deploy your website, see [Different ways to run Mastro](https://mastrojs.github.io/guide/cli-install/#different-ways-to-run-mastro).
 
 
 ## Alternatives
