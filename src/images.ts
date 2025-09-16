@@ -16,8 +16,16 @@ import {
   MagickFormat,
 } from "npm:@imagemagick/magick-wasm@0.0.35";
 
+export type ImageFormat = MagickFormat;
+
+/**
+ * Preset to transform an image to the specified format, using a transform function
+ * which gets passed an [IMagickImage](https://github.com/dlemstra/magick-wasm/blob/82a4c4e45d5fda6c88becbaba8340df3f5d30c13/src/magick-image.ts#L81)
+ * on which you can methods like `.resize(64, 64)`;
+ */
 export interface ImagePreset {
-  format?: MagickFormat;
+  /** defaults to WEBP */
+  format?: ImageFormat;
   transform: (image: IMagickImage) => void;
 }
 

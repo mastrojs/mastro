@@ -300,6 +300,7 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@std/cli@^1.0.21",
       "jsr:@std/fs@^1.0.19",
       "jsr:@std/http@^1.0.19",
       "jsr:@std/media-types@^1.1.0",

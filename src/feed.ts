@@ -9,7 +9,10 @@
 import { type Html, html, renderToString } from "./core/html.ts";
 import { htmlToResponse } from "./core/responses.ts";
 
-interface AtomFeed {
+/**
+ * An Atom feed with an array of entries.
+ */
+export interface AtomFeed {
   author?: AtomAuthor;
   entries: AtomEntry[];
   /** Link to the feed itself. */

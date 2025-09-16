@@ -1,5 +1,11 @@
+/**
+ * HTML primitive values like strings and numbers.
+ *
+ * Note that we use [`String` objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)
+ * to store already properly escaped HTML.
+ */
 // deno-lint-ignore ban-types
-type HtmlPrimitive = String | string | number | undefined | null;
+export type HtmlPrimitive = String | string | number | undefined | null;
 
 /**
  * An `Html` node – i.e. what can be used with `html` tagged templates.

@@ -14,7 +14,10 @@ const importLazy = (pkg: string) =>
 // from https://github.com/dworthen/js-yaml-front-matter/blob/master/src/index.js#L14
 const yamlFrontRe = /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?([\w\W]*)*/;
 
-interface Md {
+/**
+ * Return type containing the generated HTML and the YAML metadata.
+ */
+export interface Md {
   content: Html;
   meta: Record<string, string>;
 }
