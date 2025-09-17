@@ -11,8 +11,7 @@ export const htmlResponse = (
 ): Response => {
   let payload;
   if (isAsyncIterable(body)) {
-    const encoder = new TextEncoder();
-    payload = ReadableStream.from(mapIterable(body, (chunk) => encoder.encode(chunk)));
+    payload = ReadableStream.from(toByteStream(body));
   } else {
     payload = body;
   }
@@ -60,16 +59,20 @@ export const jsonResponse = (
     },
   });
 
-/**
- * Maps over an `AsyncIterable`, just like you'd map over an array.
- */
-async function* mapIterable<T, R>(
-  iter: AsyncIterable<T>,
-  callback: (val: T, index: number) => R,
-): AsyncIterable<R> {
-  let i = 0;
-  for await (const val of iter) {
-    yield callback(val, i++);
+async function* toByteStream(iter: AsyncIterable<string>): AsyncIterable<Uint8Array> {
+  const encoder = new TextEncoder();
+  try {
+    for await (const val of iter) {
+      yield encoder.encode(val);
+    }
+  } catch (e) {
+    yield encoder.encode(` ${e}`);
+
+    // The idea here is to return a malformed chunk, so CDNs don't cache it
+    // TODO: test whether this actually works in today's CDNs
+    // see https://stackoverflow.com/questions/15305203/
+    // and https://github.com/withastro/astro/pull/12333
+    yield new Uint8Array([0]);
   }
 }
 

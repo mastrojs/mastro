@@ -74,7 +74,7 @@ export async function* renderToStream(node: Html): AsyncIterable<string> {
     for (let i = 0; i < node.length; i++) {
       yield* renderToStream(node[i]);
     }
-  } else if (isIterable(node)) {
+  } else if (isAsyncIterable(node)) {
     for await (const n of node) {
       yield* renderToStream(n);
     }
@@ -107,7 +107,7 @@ const escapeForAttribute = (str: string) =>
     .replaceAll('"', "&quot;");
 
 // deno-lint-ignore no-explicit-any
-const isIterable = <T>(val: any): val is AsyncIterable<T> =>
+const isAsyncIterable = <T>(val: any): val is AsyncIterable<T> =>
   val && typeof val[Symbol.asyncIterator] === "function";
 
 const endsWithEq = (prev: Html) =>
