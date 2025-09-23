@@ -11,7 +11,7 @@ export const GET = async () => {
       <script type="importmap">
       {
         "imports": {
-          "mastro/reactive": "https://esm.sh/jsr/@mastrojs/mastro@0.3.1/reactive?bundle"
+          "mastro/reactive": "https://esm.sh/jsr/@mastrojs/mastro@0.3.2/reactive?bundle"
         }
       }
       </script>

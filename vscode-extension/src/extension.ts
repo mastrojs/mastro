@@ -430,7 +430,7 @@ const getImportMap = async (
   basePath: string,
 ) => {
   // currently we don't esm.sh ?bundle because the two exports share some files
-  const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.3.1/";
+  const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.3.2/";
   const readImports = async (importMapPath: string): Promise<object> => {
     try {
       const bs = await vscode.workspace.fs.readFile(
