@@ -338,12 +338,13 @@ const getWebviewContent = async (
               const { generatePagesForRoute, getStaticFilePaths } = await import("mastro/generator")
 
               const files = (await getStaticFilePaths()).map(outFilePath => ({ outFilePath }))
-              for (const { filePath } of routes) {
+              for (const route of routes) {
+                const { filePath } = route
                 try {
                   // we have to do the import here and cannot factor it out to mastro/generator
                   const module = await import(filePath)
                   try {
-                    for (const page of await generatePagesForRoute(filePath, module)) {
+                    for (const page of await generatePagesForRoute(route, module)) {
                       if (page) {
                         files.push({
                           outFilePath: page.outFilePath,

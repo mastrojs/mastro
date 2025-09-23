@@ -37,11 +37,11 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   }
 
   try {
-    for (const { filePath } of routes) {
-      const module = await import(toFileUrl(Deno.cwd() + filePath).toString());
+    for (const route of routes) {
+      const module = await import(toFileUrl(Deno.cwd() + route.filePath).toString());
 
       if (pregenerateAll || module.pregenerate) {
-        for (const file of await generatePagesForRoute(filePath, module)) {
+        for (const file of await generatePagesForRoute(route, module)) {
           if (file) {
             const outFilePath = outFolder + file.outFilePath;
             await Deno.mkdir(dirname(outFilePath), { recursive: true });
@@ -88,38 +88,39 @@ if (typeof document === "undefined" && import.meta.main) {
  * and by the VSCode extension.
  */
 export const generatePagesForRoute = async (
-  filePath: string,
+  route: { filePath: string; pattern: URLPattern },
   module: any,
 ): Promise<Array<{ outFilePath: string; response: Response } | undefined>> => {
+  const { filePath } = route;
   const { GET, getStaticPaths } = module;
   if (typeof GET === "function") {
-    let urls = [new URL(filePathToUrlPath(filePath))];
-
-    if (filePath.split(sep).some((segment) => segment.match(paramRegex))) {
-      if (typeof getStaticPaths !== "function") {
-        throw Error(
-          filePath +
-            " should export a function named getStaticPaths, returning an array of strings.",
-        );
-      }
-      const paths = await getStaticPaths();
-      if (Array.isArray(paths) && (paths.length === 0 || typeof paths[0] === "string")) {
-        urls = paths.map((p) => {
-          if (p[0] !== "/") {
-            throw Error(filePath + "#getStaticPaths: paths must start with a slash (/)");
-          }
-          return new URL(urlPrefix + p);
-        });
-      } else {
-        throw Error(filePath + "#getStaticPaths must return an array of strings");
-      }
-    }
-
+    const urls = filePath.split(sep).some((segment) => segment.match(paramRegex))
+      ? await getStaticUrls(filePath, getStaticPaths)
+      : [new URL(urlPrefix + route.pattern.pathname)];
     return Promise.all(urls.map((u) => generatePage(filePath, GET, u)));
   } else {
     throw Error(filePath + " should export a function named GET");
   }
 };
+
+const getStaticUrls = async (filePath: string, getStaticPaths: unknown) => {
+  if (typeof getStaticPaths !== "function") {
+    throw Error(
+      filePath +
+        " should export a function named getStaticPaths, returning an array of strings.",
+    );
+  }
+  const paths = await getStaticPaths();
+  if (!Array.isArray(paths) || (paths.length > 0 && typeof paths[0] !== "string")) {
+    throw Error(filePath + "#getStaticPaths must return an array of strings");
+  }
+  return paths.map((p) => {
+    if (p[0] !== "/") {
+      throw Error(filePath + "#getStaticPaths: paths must start with a slash (/)");
+    }
+    return new URL(urlPrefix + p);
+  });
+}
 
 /**
  * Return the paths of all non-route files from the the local filesystem.
@@ -152,16 +153,6 @@ const generatePage = async (
     console.error(`\nFailed to generate page with path ${url.pathname}\n`, e);
   }
 };
-
-const filePathToUrlPath = (path: string) => {
-  path = removeRoutesAndServerTs(path);
-  if (path.endsWith(sep + "index")) {
-    path = path.slice(0, -5); // '/index' -> '/'
-  }
-  return urlPrefix + path;
-};
-
-const removeRoutesAndServerTs = (path: string) => path.slice(7, -10);
 
 // just a dummy prefix so `new URL` doesn't throw
 const urlPrefix = "http://127.0.0.1";
