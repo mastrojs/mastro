@@ -41,25 +41,24 @@ export const readTextFile = (path: string): Promise<string> =>
  *
  * Supported patterns depend on the platform:
  *
- * - [Deno](https://jsr.io/@std/fs/doc/expand-glob/~/expandGlob)
  * - [VSCode for the Web](https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
  *   (although currently [broken](https://github.com/microsoft/vscode/issues/249197))
+ * - [others](https://nodejs.org/api/fs.html#fspromisesglobpattern-options)
  */
 export const findFiles = async (pattern: string): Promise<string[]> => {
   pattern = pattern.startsWith("/") ? pattern.slice(1) : pattern;
-  if (typeof document === "object") {
-    return vscodeExtensionFs.findFiles(pattern);
-  } else {
-    // TODO: perhaps switch to https://nodejs.org/api/fs.html#fspromisesglobpattern-options
-    const { expandGlob } = await import("@std/fs");
+  if (fs) {
     const paths = [];
-    for await (const file of expandGlob(pattern)) {
-      if (file.isFile && !file.isSymlink && !file.path.endsWith(sep + ".DS_Store")) {
-        const relativeToProjectRoot = file.path.slice(Deno.cwd().length);
+    for await (const entry of fs.glob(pattern, { withFileTypes: true })) {
+      if (entry.isFile() && !entry.isSymbolicLink() && !entry.name.endsWith(sep + ".DS_Store")) {
+        const path = entry.parentPath + sep + entry.name;
+        const relativeToProjectRoot = path.slice(Deno.cwd().length);
         paths.push(relativeToProjectRoot);
       }
     }
     return paths;
+  } else {
+    return vscodeExtensionFs.findFiles(pattern);
   }
 };
 
