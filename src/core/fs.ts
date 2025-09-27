@@ -48,11 +48,12 @@ export const readTextFile = (path: string): Promise<string> =>
 export const findFiles = async (pattern: string): Promise<string[]> => {
   pattern = pattern.startsWith("/") ? pattern.slice(1) : pattern;
   if (fs) {
+    const process = await import("node:process");
     const paths = [];
     for await (const entry of fs.glob(pattern, { withFileTypes: true })) {
       if (entry.isFile() && !entry.isSymbolicLink() && !entry.name.endsWith(sep + ".DS_Store")) {
         const path = entry.parentPath + sep + entry.name;
-        const relativeToProjectRoot = path.slice(Deno.cwd().length);
+        const relativeToProjectRoot = path.slice(process.cwd().length);
         paths.push(relativeToProjectRoot);
       }
     }

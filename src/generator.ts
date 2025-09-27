@@ -4,6 +4,7 @@
  * by `deno task generate`.
  * @module
  */
+import process from "node:process";
 
 import { findFiles, sep } from "./core/fs.ts";
 import { paramRegex, routes } from "./core/router.ts";
@@ -38,7 +39,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
 
   try {
     for (const route of routes) {
-      const module = await import(toFileUrl(Deno.cwd() + route.filePath).toString());
+      const module = await import(toFileUrl(process.cwd() + route.filePath).toString());
 
       if (pregenerateAll || module.pregenerate) {
         for (const file of await generatePagesForRoute(route, module)) {

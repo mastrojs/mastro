@@ -6,6 +6,7 @@
  * @module
  */
 
+import process from "node:process";
 import { serveFile } from "@std/http/file-server";
 import { toFileUrl } from "@std/path";
 import { matchRoute } from "./core/router.ts";
@@ -55,7 +56,7 @@ const fetch = async (req: Request): Promise<Response> => {
     }
     const route = matchRoute(req.url);
     if (route) {
-      const modulePath = Deno.cwd() + route.filePath;
+      const modulePath = process.cwd() + route.filePath;
       const method = req.method.toUpperCase();
       console.info(`${method} ${req.url}, loading ${modulePath}`);
       const module = await import(toFileUrl(modulePath).toString());
