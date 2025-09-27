@@ -28,7 +28,6 @@ interface GenerateConfig {
 export const generate = async (config?: GenerateConfig): Promise<void> => {
   const fs = await import("node:fs/promises");
   const { dirname, toFileUrl } = await import("@std/path");
-  const { tsToJs } = await import("./server.ts");
 
   const { outFolder = "generated", pregenerateOnly = false } = config || {};
   const pregenerateAll = !pregenerateOnly;
@@ -42,10 +41,17 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
         for (const file of await generatePagesForRoute(route, module)) {
           if (file) {
             const outFilePath = outFolder + file.outFilePath;
-            await Deno.mkdir(dirname(outFilePath), { recursive: true });
+            await fs.mkdir(dirname(outFilePath), { recursive: true });
             const { body } = file.response;
             if (body) {
-              Deno.writeFile(outFilePath, body);
+              if (typeof Deno === "object") {
+                Deno.writeFile(outFilePath, body);
+              } else {
+                const { createWriteStream } = await import("node:fs");
+                const { Readable } = await import('node:stream');
+                // deno-lint-ignore no-explicit-any
+                Readable.fromWeb(body as any).pipe(createWriteStream(outFilePath));
+              }
             }
           }
         }
@@ -57,12 +63,13 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
 
   for (const filePath of await getStaticFilePaths()) {
     if (filePath.endsWith(".client.ts")) {
-      const text = await Deno.readTextFile("routes" + filePath);
-      Deno.writeTextFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
+      const { tsToJs } = await import("./server.ts");
+      const text = await fs.readFile("routes" + filePath, { encoding: "utf8" });
+      fs.writeFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
     } else if (pregenerateAll) {
       const outPath = outFolder + filePath;
-      await Deno.mkdir(dirname(outPath), { recursive: true });
-      await Deno.copyFile("routes" + filePath, outPath);
+      await fs.mkdir(dirname(outPath), { recursive: true });
+      await fs.copyFile("routes" + filePath, outPath);
     }
   }
 
@@ -70,12 +77,19 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
 };
 
 if (typeof document === "undefined" && import.meta.main) {
-  const { parseArgs } = await import("@std/cli/parse-args");
-  const flags = parseArgs(Deno.args, {
-    boolean: ["pregenerateOnly"],
-    string: ["outFolder"],
+  const { parseArgs } = await import("node:util");
+  const flags = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      outFolder: {
+        type: "string",
+      },
+      pregenerateOnly: {
+        type: "boolean",
+      },
+    }
   });
-  generate(flags);
+  generate(flags.values);
 }
 
 /**
