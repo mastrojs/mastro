@@ -18,7 +18,6 @@
     "lineWidth": 90
   },
   "imports": {
-    "@std/fs": "jsr:@std/fs@^1.0.19",
     "@std/media-types": "jsr:@std/media-types@^1.1.0",
     "@std/cli/parse-args": "jsr:@std/cli@^1.0.21/parse-args",
     "@std/path": "jsr:@std/path@^1.1.1",

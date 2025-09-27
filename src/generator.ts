@@ -26,17 +26,14 @@ interface GenerateConfig {
  * Can only be used with Deno and not the VSCode extension.
  */
 export const generate = async (config?: GenerateConfig): Promise<void> => {
-  const { exists } = await import("@std/fs/exists");
+  const fs = await import("node:fs/promises");
   const { dirname, toFileUrl } = await import("@std/path");
   const { tsToJs } = await import("./server.ts");
 
   const { outFolder = "generated", pregenerateOnly = false } = config || {};
   const pregenerateAll = !pregenerateOnly;
 
-  if (await exists(outFolder, { isDirectory: true })) {
-    await Deno.remove(outFolder, { recursive: true });
-  }
-
+  fs.rm(outFolder, { force: true, recursive: true });
   try {
     for (const route of routes) {
       const module = await import(toFileUrl(process.cwd() + route.filePath).toString());
