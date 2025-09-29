@@ -7,7 +7,6 @@
  */
 
 import process from "node:process";
-import { serveFile } from "@std/http/file-server";
 import { toFileUrl } from "@std/path";
 import { matchRoute } from "./core/router.ts";
 
@@ -102,6 +101,10 @@ const fetch = async (req: Request): Promise<Response> => {
 export default { fetch };
 
 const getStaticFile = async (req: Request, path: string) => {
+  const { serveFile } = await import(typeof Deno === "object"
+    ? "@std/http/file-server"
+    : "./node/serveFile.ts"
+  );
   const res = await serveFile(req, path);
   if (res.status === 404 || res.status === 405) {
     return;
