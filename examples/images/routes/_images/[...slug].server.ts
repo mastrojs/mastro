@@ -1,4 +1,4 @@
-import { createImagesRoute } from "mastro/images";
+import { createImagesRoute } from "@mastrojs/images";
 
 export const pregenerate = true;
 

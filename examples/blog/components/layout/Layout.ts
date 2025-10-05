@@ -1,4 +1,4 @@
-import { type Html, html } from "mastro";
+import { type Html, html } from "@mastrojs/mastro";
 import { Menu } from "./Menu.ts";
 
 interface Props {

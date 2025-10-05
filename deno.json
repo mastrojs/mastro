@@ -3,13 +3,9 @@
   "version": "0.3.13",
   "exports": {
     ".": "./src/core/index.ts",
-    "./feed": "./src/feed.ts",
     "./generator": "./src/generator.ts",
-    "./images": "./src/images.ts",
     "./init": "./src/init.ts",
-    "./markdown": "./src/markdown.ts",
-    "./server": "./src/server.ts",
-    "./reactive": "./src/reactive/reactive.ts"
+    "./server": "./src/server.ts"
   },
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
@@ -20,7 +16,6 @@
   "imports": {
     "@std/media-types": "jsr:@std/media-types@^1.1.0",
     "@std/http": "jsr:@std/http@^1.0.19",
-    "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0",
     "ts-blank-space": "npm:ts-blank-space@0.6.1"
   }
 }

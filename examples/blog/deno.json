@@ -1,16 +1,10 @@
 {
   "tasks": {
     "start": "deno serve -A --watch=. ../../src/server.ts",
-    "generate": "deno run -A mastro/generator"
+    "generate": "deno run -A @mastrojs/mastro/generator"
   },
   "compilerOptions": {
     "lib": ["dom", "deno.ns"]
   },
-  "links": ["../../"],
-  "imports": {
-    "mastro": "../../src/core/index.ts",
-    "mastro/markdown": "../../src/markdown.ts",
-    "mastro/generator": "../../src/generator.ts",
-    "mastro/server": "../../src/server.ts"
-  }
+  "links": ["../../", "../../../markdown"]
 }

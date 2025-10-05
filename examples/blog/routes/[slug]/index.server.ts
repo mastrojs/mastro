@@ -1,5 +1,5 @@
 import { Layout } from "../../components/layout/Layout.ts";
-import { html, htmlToResponse } from "mastro";
+import { html, htmlToResponse } from "@mastrojs/mastro";
 import { getPost, getPostSlugs } from "../../models/posts.ts";
 
 export const GET = async (req: Request): Promise<Response> => {
