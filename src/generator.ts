@@ -27,7 +27,8 @@ interface GenerateConfig {
  */
 export const generate = async (config?: GenerateConfig): Promise<void> => {
   const fs = await import("node:fs/promises");
-  const { dirname, toFileUrl } = await import("@std/path");
+  const { dirname } = await import("node:path");
+  const { pathToFileURL } = await import("node:url");
 
   const { outFolder = "generated", pregenerateOnly = false } = config || {};
   const pregenerateAll = !pregenerateOnly;
@@ -35,7 +36,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   fs.rm(outFolder, { force: true, recursive: true });
   try {
     for (const route of routes) {
-      const module = await import(toFileUrl(process.cwd() + route.filePath).toString());
+      const module = await import(pathToFileURL(process.cwd() + route.filePath).toString());
 
       if (pregenerateAll || module.pregenerate) {
         for (const file of await generatePagesForRoute(route, module)) {

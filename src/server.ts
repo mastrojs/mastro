@@ -7,7 +7,7 @@
  */
 
 import process from "node:process";
-import { toFileUrl } from "@std/path";
+import { pathToFileURL } from "node:url";
 import { matchRoute } from "./core/router.ts";
 
 const importRegex = /^import .*\.ts("|')(;)?$/gm;
@@ -58,7 +58,7 @@ const fetch = async (req: Request): Promise<Response> => {
       const modulePath = process.cwd() + route.filePath;
       const method = req.method.toUpperCase();
       console.info(`${method} ${req.url}, loading ${modulePath}`);
-      const module = await import(toFileUrl(modulePath).toString());
+      const module = await import(pathToFileURL(modulePath).toString());
       const handler = module[method];
       if (!handler) {
         return new Response(`No function ${method} exported by ${modulePath}`, {

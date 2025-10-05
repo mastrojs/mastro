@@ -11,7 +11,7 @@ const vscodeExtensionFs = typeof document === "object"
 /**
  * Path separator: `\` on Windows, `/` everywhere else.
  */
-export const sep: "/" | "\\" = typeof document === "object" ? "/" : (await import("@std/path")).SEPARATOR;
+export const sep: "/" | "\\" = typeof document === "object" ? "/" : (await import("node:path")).sep;
 
 /**
  * Read the directory on the local file system and return its files,
