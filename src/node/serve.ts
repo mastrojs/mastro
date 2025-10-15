@@ -24,7 +24,7 @@ import { Http2ServerResponse } from 'node:http2';
  * (MIT License)
  */
 export const serve = (
-  handler: (r: Request) => Promise<Response>,
+  handler: (r: Request) => Response | Promise<Response>,
   { port = 8000 } = {},
 ): void => {
   const server = createServer(async (req, res) => {
