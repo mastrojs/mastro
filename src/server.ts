@@ -99,7 +99,7 @@ const fetch = async (req: Request): Promise<Response> => {
  * See [fetch handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/)
  * and [Deno.ServeDefaultExport](https://docs.deno.com/api/deno/~/Deno.ServeDefaultExport).
  */
-export default { fetch };
+export default <{ fetch: (req: Request) => Promise<Response>; }>{ fetch };
 
 const getStaticFile = async (req: Request, path: string) => {
   const serveFile = typeof Deno === "object"
@@ -122,7 +122,7 @@ const getStaticFile = async (req: Request, path: string) => {
  * at the `DENO_DEPLOYMENT_ID` env variable and whether the host is local or not.
  */
 export const staticCacheControlVal = (req: Request): string | undefined => {
-    if (Deno.env.get("DENO_DEPLOYMENT_ID")) {
+    if (typeof Deno ==="object" && Deno.env.get("DENO_DEPLOYMENT_ID")) {
       // See https://docs.deno.com/deploy/early-access/reference/caching/
       // The idea is to have the CDN of Deno Deploy EA cache static assets forever (7d)
       // which is okay because deploys invalidate the cache.
