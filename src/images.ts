@@ -126,7 +126,7 @@ const transformImage = async (path: string, preset: Required<ImagePreset>) => {
     inialized = true;
   }
   const data = await Deno.readFile(path);
-  return new Promise<Uint8Array>((resolve) =>
+  return new Promise<Uint8Array<any>>((resolve) =>
     ImageMagick.read(data, (image: IMagickImage) => {
       preset.transform(image);
       image.write(preset.format, resolve);
