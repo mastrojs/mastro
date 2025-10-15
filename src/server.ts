@@ -9,6 +9,7 @@
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 import { matchRoute } from "./core/router.ts";
+import { serveFile as serveFileNode } from "./node/serveFile.ts";
 
 const importRegex = /^import .*\.ts("|')(;)?$/gm;
 
@@ -98,13 +99,13 @@ const fetch = async (req: Request): Promise<Response> => {
  * See [fetch handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/)
  * and [Deno.ServeDefaultExport](https://docs.deno.com/api/deno/~/Deno.ServeDefaultExport).
  */
-export default { fetch };
+const defaultExport: { fetch: (req: Request) => Promise<Response>; } = { fetch };
+export default defaultExport;
 
 const getStaticFile = async (req: Request, path: string) => {
-  const { serveFile } = await import(typeof Deno === "object"
-    ? "@std/http/file-server"
-    : "./node/serveFile.ts"
-  );
+  const serveFile = typeof Deno === "object"
+    ? (await import("@std/http/file-server")).serveFile
+    : serveFileNode;
   const res = await serveFile(req, path);
   if (res.status === 404 || res.status === 405) {
     return;
@@ -122,7 +123,7 @@ const getStaticFile = async (req: Request, path: string) => {
  * at the `DENO_DEPLOYMENT_ID` env variable and whether the host is local or not.
  */
 export const staticCacheControlVal = (req: Request): string | undefined => {
-    if (Deno.env.get("DENO_DEPLOYMENT_ID")) {
+    if (typeof Deno ==="object" && Deno.env.get("DENO_DEPLOYMENT_ID")) {
       // See https://docs.deno.com/deploy/early-access/reference/caching/
       // The idea is to have the CDN of Deno Deploy EA cache static assets forever (7d)
       // which is okay because deploys invalidate the cache.
