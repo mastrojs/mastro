@@ -35,7 +35,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   const pregenerateAll = !pregenerateOnly;
 
   await ensureDir(fs.stat("routes"));
-  fs.rm(outFolder, { force: true, recursive: true });
+  await fs.rm(outFolder, { force: true, recursive: true });
   try {
     for (const route of routes) {
       const module = await import(pathToFileURL(process.cwd() + route.filePath).toString());
@@ -82,7 +82,6 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
 if (typeof document === "undefined" && import.meta.main) {
   const { parseArgs } = await import("node:util");
   const flags = parseArgs({
-    args: process.argv.slice(2),
     options: {
       outFolder: {
         type: "string",
