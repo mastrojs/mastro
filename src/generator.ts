@@ -5,6 +5,7 @@
  * @module
  */
 import process from "node:process";
+import type { Stats } from "node:fs";
 
 import { findFiles, sep } from "./core/fs.ts";
 import { paramRegex, routes } from "./core/router.ts";
@@ -33,6 +34,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   const { outFolder = "generated", pregenerateOnly = false } = config || {};
   const pregenerateAll = !pregenerateOnly;
 
+  await ensureDir(fs.stat("routes"));
   fs.rm(outFolder, { force: true, recursive: true });
   try {
     for (const route of routes) {
@@ -166,6 +168,24 @@ const generatePage = async (
     console.error(`\nFailed to generate page with path ${url.pathname}\n`, e);
   }
 };
+
+const ensureDir = async (statsP: Promise<Stats>) => {
+  const noRoutesMsg = "No 'routes' folder found.\nAre you in the right place?";
+  try {
+    const routesDir = await statsP;
+    if (!routesDir.isDirectory()) {
+      console.error(noRoutesMsg);
+      process.exit(1);
+    }
+  } catch (e) {
+    if (e instanceof Error && 'code' in e && e.code === "ENOENT") {
+      console.error(noRoutesMsg);
+      process.exit(1);
+    } else {
+      throw e;
+    }
+  }
+}
 
 // just a dummy prefix so `new URL` doesn't throw
 const urlPrefix = "http://127.0.0.1";
