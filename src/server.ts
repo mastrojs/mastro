@@ -30,6 +30,9 @@ export const tsToJs = (text: string): Promise<string> =>
       )
   );
 
+/**
+ * Fetch handler to serve Mastro routes and static files
+ */
 const fetch = async (req: Request): Promise<Response> => {
   const url = new URL(req.url);
   const { pathname } = url
