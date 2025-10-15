@@ -1,3 +1,3 @@
-import server from 'mastro/server'
+import mastro from 'mastro/server'
 
-Deno.serve(server.fetch)
+Deno.serve(mastro.fetch)

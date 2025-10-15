@@ -14,9 +14,9 @@ import { Http2ServerResponse } from 'node:http2';
  * implemented using `node:http`. To start a server:
  *
  * ```
- * import { serve } from "mastro/node";
- * import server from "mastro/server";
- * serve(server.fetch);
+ * import { serve } from "@mastrojs/mastro/node";
+ * import mastro from "@mastrojs/mastro/server";
+ * serve(mastro.fetch);
  * ```
  *
  * lightly adapted from:
