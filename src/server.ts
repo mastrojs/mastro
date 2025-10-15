@@ -99,7 +99,8 @@ const fetch = async (req: Request): Promise<Response> => {
  * See [fetch handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/)
  * and [Deno.ServeDefaultExport](https://docs.deno.com/api/deno/~/Deno.ServeDefaultExport).
  */
-export default <{ fetch: (req: Request) => Promise<Response>; }>{ fetch };
+const defaultExport: { fetch: (req: Request) => Promise<Response>; } = { fetch };
+export default defaultExport;
 
 const getStaticFile = async (req: Request, path: string) => {
   const serveFile = typeof Deno === "object"
