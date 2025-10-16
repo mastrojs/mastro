@@ -27,24 +27,24 @@ There are four parts to it:
 
 Follow [The Mastro Guide's _Setup_ section](https://mastrojs.github.io/guide/setup/) to build and deploy your website to GitHub Pages for free – without ever leaving your browser.
 
-### Server or SSG with Deno on the command line
+### Server or SSG on the command line
 
-If you prefer the command line, after [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either run:
+If you prefer the command line for static site generation (SSG), or need to run a server, you need to install either [Deno](https://deno.com) (recommended), or [Node.js](https://nodejs.org).
 
-    deno run -A jsr:@mastrojs/mastro@0.3.2/init
+#### Deno
 
-or use the [template on GitHub](https://github.com/mastrojs/template-basic-deno). `cd` into the folder, then:
+After [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either run:
 
-Start the development server:
+    deno run -A jsr:@mastrojs/mastro@0.3.13/init
 
-    deno task start
+or use the [Mastro template for Deno](https://github.com/mastrojs/template-basic-deno).
 
-To generate your whole static site:
+#### Node.js
 
-    deno task generate
+Use the [Mastro template for Node.js](https://github.com/mastrojs/template-basic-node).
 
 
-#### Deploy to production
+## Deploy to production
 
 To deploy your website, see [Different ways to run Mastro](https://mastrojs.github.io/guide/cli-install/#different-ways-to-run-mastro).
 
