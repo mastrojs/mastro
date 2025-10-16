@@ -49,28 +49,6 @@ Use the [Mastro template for Node.js](https://github.com/mastrojs/template-basic
 To deploy your website, see [Different ways to run Mastro](https://mastrojs.github.io/guide/cli-install/#different-ways-to-run-mastro).
 
 
-## Alternatives
-
-Here's a list of server-side JavaScript frameworks with a somewhat similar philosophy in alphabetical order. (Are we missing one that should be on the list? Make a PR.)
-
-What we believe differentiates Mastro, is that it's even simpler than the others, yet no less powerful.
-
-|                                  | Output      | Router       | Templating               |   Bundler           |
-| -------------------------------- | ----------- | ------------ | ------------------------ | ------------------- |
-| [Adonis](https://adonisjs.com)   | SSG         | programmatic | EdgeJS/Pug/Nunjucks      | optionally Vite     |
-| [Astro](https://astro.build)     | SSG/Server  | file-based   | Astro (JSX-like)         | Vite                |
-| [Brisa](https://brisa.build)     | SSG/Server  | file-based   | JSX                      | Bun build           |
-| [Eleventy](https://www.11ty.dev) | SSG         | file-based   | Liquid/Nunjucks/WebC etc | optional            |
-| [Elysia](https://elysiajs.com)   | Server      | programmatic | JSX                      | Bun build
-| [Enhance](https://enhance.dev)   | Server      | file-based   | html tagged template     | optionally esbuild  |
-| [Fresh](https://fresh.deno.dev)  | Server      | file-based   | JSX                      | optionally esbuild  |
-| [h3](https://h3.dev/)            | Server      | programmatic | -                        | -                   |
-| [Haunty](https://haunty.org)     | SSG         | file-based   | mustache-like            | -                   |
-| [Hono](https://hono.dev)         | SSG/Server  | programmatic | html tagged template     | optionally esbuild  |
-| [Mastro](https://mastrojs.github.io/) | SSG/Server  | file-based   | html tagged template     | optionally esbuild  |
-| [Nue](https://nuejs.org)         | SSG         | file-based   | custom                   | -                   |
-
-
 ## Community / Contribute
 
 Something not working as expected? Would you like to contribute? Do you have a suggestion? Please see [open issues](https://github.com/mastrojs/mastro/issues) and don't hesitate to open a new one to start a conversation!
