@@ -8,7 +8,6 @@
     "./images": "./src/images.ts",
     "./init": "./src/init.ts",
     "./markdown": "./src/markdown.ts",
-    "./node": "./src/node/serve.ts",
     "./server": "./src/server.ts",
     "./reactive": "./src/reactive/reactive.ts"
   },
