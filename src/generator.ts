@@ -9,6 +9,7 @@ import type { Stats } from "node:fs";
 
 import { findFiles, sep } from "./core/fs.ts";
 import { paramRegex, routes } from "./core/router.ts";
+import { writeFile } from "./node/writeFile.ts";
 
 interface GenerateConfig {
   /**
@@ -47,14 +48,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
             await fs.mkdir(dirname(outFilePath), { recursive: true });
             const { body } = file.response;
             if (body) {
-              if (typeof Deno === "object") {
-                Deno.writeFile(outFilePath, body);
-              } else {
-                const { createWriteStream } = await import("node:fs");
-                const { Readable } = await import('node:stream');
-                // deno-lint-ignore no-explicit-any
-                Readable.fromWeb(body as any).pipe(createWriteStream(outFilePath));
-              }
+              writeFile(outFilePath, body);
             }
           }
         }
