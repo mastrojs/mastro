@@ -1,5 +1,5 @@
 import { Layout } from "../components/Layout.js";
-import { html, htmlToResponse } from "mastro";
+import { html, htmlToResponse } from "@mastrojs/mastro";
 
 export const GET = () =>
   htmlToResponse(

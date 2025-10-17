@@ -199,7 +199,7 @@ const getWebviewContent = async (
           }
 
           // after we've populated document.fs, we can import things that use it
-          const { routes, matchRoute } = await import("mastro")
+          const { routes, matchRoute } = await import("@mastrojs/mastro")
 
           const replaceAsync = async (str, regex, asyncFn) => {
             const promises = []
@@ -459,6 +459,7 @@ const getImportMap = async (
     imports["@mastrojs/mastro"] = mastroProdUrl;
     imports["@mastrojs/mastro/"] = mastroProdUrl;
     imports["@mastrojs/markdown"] = "https://esm.sh/jsr/@mastrojs/markdown@0.0.1?bundle";
+    imports["@mastrojs/markdown"] = "https://esm.sh/jsr/@mastrojs/reactive@0.4.0?bundle";
   }
 
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {

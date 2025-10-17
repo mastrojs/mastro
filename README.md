@@ -1,47 +1,42 @@
-# [Mastro](https://mastrojs.github.io/)
+# Mastro
 
 The simplest web framework and site generator you've ever seen.
 
-There are four parts to it:
+**[Website](https://mastrojs.github.io/)** | [Try Mastro online](https://github.dev/mastrojs/template-basic)
 
-- The Mastro web framework (server and static site generator).
-- [Static site generator running in your browser](https://mastrojs.github.io/guide/setup/) in a _VS Code for the Web_ extension.
-- [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny (2.8k min.gz) client-side reactive GUI library for your existing MPA or Mastro project.
-- [The Mastro Guide](https://mastrojs.github.io/guide/) ([source](https://github.com/mastrojs/mastrojs.github.io)) shows you how to build and publish your first webside, as well as dives into more advance topics in the later chapters.
+Static site generation and on-demand rendering of HTML or JSON – it all works exactly the same in Mastro: a file-based [router](https://mastrojs.github.io/guide/server-side-components-and-routing/#routing-and-page-handlers), and a handful of [composable functions](https://jsr.io/@mastrojs/mastro/doc) to return standard [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response/Response) objects.
+No magic, no config – just focus on building awesome websites.
 
-
-## Craft websites with care
-
-- **No bloat**: written in just [~700 lines](src/#readme) of TypeScript and with [minimal dependencies](deno.json), Mastro is a framework distilled to its essence. It loads fast even [within VS Code for the Web](https://mastrojs.github.io/guide/setup/) or the edge, like Deno Deploy (Node.js, Bun and Cloudflare Workers are in the works). If you ever outgrow it, simply fork and adjust it.
-
-- **No magic and no bundler**: full control over your HTML, CSS and JS. Nothing is auto-injected into your page. Mastro gives you composable functions, instead of complex tooling that messes with your code before it reaches the browser.
-
-- **No leaky abstractions**: while some JS meta-frameworks try to erase the boundary between client and server, Mastro makes it explicit which parts of your app run where and when.
-
-- **No client-side JavaScript** by default: create lean websites, that load blazingly fast. Leveraging native browser functionality instead of reinventing the wheel in JavaScript and [embracing an MPA architecture](https://mastrojs.github.io/reactive/why-reactive-mastro/).
+- **No bloat**: written in just [~700 lines](https://github.com/mastrojs/mastro/tree/main/src#readme) of TypeScript, Mastro is a framework distilled to its essence.
+- **No client-side JavaScript** (until you [add some](https://mastrojs.github.io/guide/interactivity-with-javascript-in-the-browser/)): create [MPA](https://mastrojs.github.io/guide/client-side-vs-server-side-javascript-static-vs-ondemand-spa-vs-mpa/) websites that load blazingly [fast](https://mastrojs.github.io/#fast-for-everyone).
+- **No bundler** (until you [add one](https://mastrojs.github.io/guide/bundling-assets-caching/)): your code arrives in the browser exactly how you wrote it.
+- **No magic**: use normal `<img>` and `<a>` tags referencing HTTP-first [assets](https://mastrojs.github.io/guide/bundling-assets-caching/#transforming-images).
+- **No VC-money**: this forces us to stay lean and prevents eventual enshitification.
+- **No hosting offer**: selling a service is not what we're interested in.
+- **No update treadmill**: we use web standards instead of relying on many [dependencies](https://jsr.io/@mastrojs/mastro/dependencies).
 
 
 ## How to run
 
-### _Visual Studio Code for the Web_ extension (SSG)
+### In the browser
 
-Follow [The Mastro Guide's _Setup_ section](https://mastrojs.github.io/guide/setup/) to build and deploy your website to GitHub Pages for free – without ever leaving your browser.
+Build and deploy your website to GitHub Pages for free – without installing anything: [Get started on GitHub.dev](https://github.dev/mastrojs/template-basic)
 
-### Server or SSG on the command line
+### Command line
 
-If you prefer the command line for static site generation (SSG), or need to run a server, you need to install either [Deno](https://deno.com) (recommended), or [Node.js](https://nodejs.org).
+If you prefer the command line, or need to run a server, install either [Deno](https://deno.com) (recommended), or [Node.js](https://nodejs.org).
 
 #### Deno
 
-After [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either run:
+After [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either use the [Mastro template for Deno](https://github.com/mastrojs/template-basic-deno) or run:
 
-    deno run -A jsr:@mastrojs/mastro@0.3.13/init
-
-or use the [Mastro template for Deno](https://github.com/mastrojs/template-basic-deno).
+    deno run -A jsr:@mastrojs/mastro@0.4.0/init
 
 #### Node.js
 
-Use the [Mastro template for Node.js](https://github.com/mastrojs/template-basic-node).
+Either use the [Mastro template for Node.js](https://github.com/mastrojs/template-basic-node) or run:
+
+    npx xjsr @mastrojs/mastro@0.4.0/init
 
 
 ## Deploy to production
@@ -49,6 +44,18 @@ Use the [Mastro template for Node.js](https://github.com/mastrojs/template-basic
 To deploy your website, see [Different ways to run Mastro](https://mastrojs.github.io/guide/cli-install/#different-ways-to-run-mastro).
 
 
+## Extensions
+
+The core of Mastro is tiny. But to get you up to speed on common needs, there is a growing list of tiny extensions that are tailored to be used with Mastro.
+
+- [@mastrojs/markdown](https://github.com/mastrojs/markdown)
+- [@mastrojs/images](https://github.com/mastrojs/images)
+- [@mastrojs/feed](https://github.com/mastrojs/feed)
+- [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny client-side reactive GUI library for your existing MPA or Mastro project.
+
+
 ## Community / Contribute
 
-Something not working as expected? Would you like to contribute? Do you have a suggestion? Please see [open issues](https://github.com/mastrojs/mastro/issues) and don't hesitate to open a new one to start a conversation!
+It’s still early days. But we’re looking to build an inclusive community of all kinds of people, united by a shared passion for crafting websites.
+
+Something not working as expected or confusing? Would you like to contribute or have a question? Please see [open issues](https://github.com/mastrojs/mastro/issues) and don't hesitate to open a new one to start a conversation!

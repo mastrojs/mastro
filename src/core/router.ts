@@ -89,7 +89,7 @@ export const matchRoute = (
  * For example in `routes/[slug].server.ts`:
  *
  * ```ts
- * import { getParams, html, htmlToResponse } from "mastro";
+ * import { getParams, html, htmlToResponse } from "@mastrojs/mastro";
  *
  * export const GET = async (req) => {
  *   const { slug } = getParams(req.url);

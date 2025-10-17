@@ -1,4 +1,4 @@
-import { html, htmlToResponse } from "mastro";
+import { html, htmlToResponse } from "@mastrojs/mastro";
 import { renderTodo } from "./todo-list.client.ts";
 import * as db from "../models/todo.ts";
 
@@ -11,7 +11,7 @@ export const GET = async () => {
       <script type="importmap">
       {
         "imports": {
-          "mastro/reactive": "https://esm.sh/jsr/@mastrojs/mastro@0.3.2/reactive?bundle"
+          "mastro/reactive": "https://esm.sh/jsr/@mastrojs/reactive@0.4.0?bundle"
         }
       }
       </script>

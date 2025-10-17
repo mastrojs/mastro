@@ -1,4 +1,4 @@
-import { html } from "mastro";
+import { html } from "@mastrojs/mastro";
 
 export const Layout = (props) =>
   html`

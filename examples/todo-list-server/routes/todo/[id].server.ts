@@ -1,4 +1,4 @@
-import { getParams, jsonResponse } from "mastro";
+import { getParams, jsonResponse } from "@mastrojs/mastro";
 import * as db from "../../models/todo.ts";
 
 export const PATCH = async (req: Request) => {

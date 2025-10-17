@@ -1,4 +1,4 @@
-import { computed, html, ReactiveElement, signal } from "mastro/reactive";
+import { computed, html, ReactiveElement, signal } from "@mastrojs/reactive";
 import type { Todo } from "../models/todo.ts";
 
 // exported so we can use it on the server as well

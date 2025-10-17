@@ -6,6 +6,7 @@
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
   },
   "imports": {
-    "mastro": "jsr:@mastrojs/mastro@0.3.2"
+    "@mastrojs/mastro": "jsr:@mastrojs/mastro@0",
+    "@mastrojs/reactive": "jsr:@mastrojs/reactive@0"
   }
 }

@@ -25,7 +25,7 @@ interface GenerateConfig {
 
 /**
  * Generate all pages for the static site and write them to disk.
- * Can only be used with Deno and not the VSCode extension.
+ * Can only be used with Deno or Node.js – not in the VSCode extension.
  */
 export const generate = async (config?: GenerateConfig): Promise<void> => {
   const fs = await import("node:fs/promises");

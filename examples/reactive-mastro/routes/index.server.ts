@@ -1,5 +1,5 @@
 import { Layout } from "../components/Layout.ts";
-import { html, htmlToResponse, readDir } from "mastro";
+import { html, htmlToResponse, readDir } from "@mastrojs/mastro";
 
 export const GET = async (): Promise<Response> => {
   const title = "Reactive Mastro demos";

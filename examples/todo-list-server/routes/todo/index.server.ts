@@ -1,4 +1,4 @@
-import { jsonResponse } from "mastro";
+import { jsonResponse } from "@mastrojs/mastro";
 import * as db from "../../models/todo.ts";
 
 export const POST = async (req: Request) => {

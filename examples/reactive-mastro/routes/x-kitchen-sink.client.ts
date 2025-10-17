@@ -1,4 +1,4 @@
-import { computed, html, ReactiveElement, signal } from 'mastro/reactive'
+import { computed, html, ReactiveElement, signal } from '@mastrojs/reactive'
 
 customElements.define('tab-switch', class extends ReactiveElement {
   userName = signal<string | undefined>(undefined)

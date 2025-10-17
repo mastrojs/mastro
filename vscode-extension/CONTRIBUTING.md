@@ -18,7 +18,7 @@ Since we're in a VS Code web extension (which is being run in a [web worker](htt
 
 #### WebviewPanel (server)
 
-The extension calls `vscode.window.createWebviewPanel` and sets its html to the result of `getWebviewContent`. This webview (effectively also just an iframe) replaces Deno as the place where the server-side code is run, i.e. where the static site generation takes place. Look out for:
+The extension calls `vscode.window.createWebviewPanel` and sets its html to the result of `getWebviewContent`. This webview (effectively also just an iframe) replaces Deno/Node.js as the place where the server-side code is run, i.e. where the static site generation takes place. Look out for:
 
 ```js
 const { GET } = await import(route.filePath)

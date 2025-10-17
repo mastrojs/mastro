@@ -1,4 +1,4 @@
-import { computed, html, ReactiveElement, signal } from 'mastro/reactive'
+import { computed, html, ReactiveElement, signal } from '@mastrojs/reactive'
 
 customElements.define('my-counter', class extends ReactiveElement {
   count = signal(parseInt(this.getAttribute('start') || '0', 10))

@@ -1,5 +1,5 @@
 import { Layout } from "../components/Layout.ts";
-import { html, htmlResponse, renderToStream } from "mastro";
+import { html, htmlResponse, renderToStream } from "@mastrojs/mastro";
 
 export const GET = () =>
   htmlResponse(renderToStream(

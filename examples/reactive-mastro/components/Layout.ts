@@ -1,4 +1,4 @@
-import { type Html, html } from "mastro";
+import { type Html, html } from "@mastrojs/mastro";
 
 interface Props {
   children: Html;
@@ -16,7 +16,7 @@ export const Layout = (props: Props) =>
         <script type="importmap">
           {
             "imports": {
-              "mastro/reactive": "https://esm.sh/jsr/@mastrojs/mastro@0.3.2/reactive?bundle"
+              "mastro/reactive": "https://esm.sh/jsr/@mastrojs/reactive@0.4.0?bundle"
             }
           }
         </script>

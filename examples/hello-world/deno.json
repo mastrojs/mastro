@@ -4,6 +4,6 @@
     "generate": "deno run -A mastro/generator"
   },
   "imports": {
-    "mastro": "jsr:@mastrojs/mastro@0.3.2"
+    "@mastrojs/mastro": "jsr:@mastrojs/mastro@0.3.2"
   }
 }

@@ -1,4 +1,4 @@
-import { ReactiveElement, signal } from 'mastro/reactive'
+import { ReactiveElement, signal } from '@mastrojs/reactive'
 
 customElements.define('simple-tabs', class extends ReactiveElement {
   activeTab = signal('home')
