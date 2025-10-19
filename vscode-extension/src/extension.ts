@@ -455,11 +455,10 @@ const getImportMap = async (
     imports["@mastrojs/images"] = getDevUrl("images.js");
   } else {
     // currently we don't esm.sh ?bundle because the two exports share some files
-    const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.3.2/";
+    const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.4.0/";
     imports["@mastrojs/mastro"] = mastroProdUrl;
     imports["@mastrojs/mastro/"] = mastroProdUrl;
-    imports["@mastrojs/markdown"] = "https://esm.sh/jsr/@mastrojs/markdown@0.0.1?bundle";
-    imports["@mastrojs/markdown"] = "https://esm.sh/jsr/@mastrojs/reactive@0.4.0?bundle";
+    imports["@mastrojs/markdown"] = "https://esm.sh/jsr/@mastrojs/markdown@0.0.7?bundle";
   }
 
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {
