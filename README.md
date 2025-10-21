@@ -36,7 +36,7 @@ After [installing Deno](https://docs.deno.com/runtime/getting_started/installati
 
 Either use the [Mastro template for Node.js](https://github.com/mastrojs/template-basic-node) or run:
 
-    npx xjsr @mastrojs/mastro@0.4.0/init
+    npx @mastrojs/init@latest
 
 
 ## Deploy to production
@@ -46,12 +46,12 @@ To deploy your website, see [Different ways to run Mastro](https://mastrojs.gith
 
 ## Extensions
 
-The core of Mastro is tiny. But to get you up to speed on common needs, there is a growing list of tiny extensions that are tailored to be used with Mastro.
+The core of Mastro is tiny. But to get you started quickly for common use-cases, there is a growing list of extensions that are tailored to be used with Mastro. Usually, it's just a single file wrapping a carefully chosen external dependency.
 
-- [@mastrojs/markdown](https://github.com/mastrojs/markdown)
-- [@mastrojs/images](https://github.com/mastrojs/images)
-- [@mastrojs/feed](https://github.com/mastrojs/feed)
-- [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny client-side reactive GUI library for your existing MPA or Mastro project.
+- [@mastrojs/markdown](https://github.com/mastrojs/markdown) – generate HTML from markdown
+- [@mastrojs/images](https://github.com/mastrojs/images) – transform images (resize, compress, etc)
+- [@mastrojs/feed](https://github.com/mastrojs/feed) – generate an Atom feed
+- [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny client-side reactive GUI library for MPAs
 
 
 ## Community / Contribute
