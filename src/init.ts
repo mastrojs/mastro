@@ -11,7 +11,8 @@ import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { writeFile } from "./node/writeFile.ts";
 
-const repoName = `template-basic-${typeof Deno === "object" ? "deno" : "node"}`;
+const isDeno = typeof Deno === "object";
+const repoName = `template-basic-${isDeno ? "deno" : "node"}`;
 const repoUrl = `https://github.com/mastrojs/${repoName}/archive/refs/heads/main.zip`;
 const zipFilePromise = fetch(repoUrl);
 
@@ -57,8 +58,8 @@ if (dir) {
       `
 Success!
 
-Enter your project directory using %ccd ${dir}
-%cThen start the dev server with: %cdeno task start`,
+Enter your project directory with: %ccd ${dir}${isDeno ? "" : "\n\nThen install dependencies with: pnpm install\n\n"}
+%cThen start the dev server with: %c${isDeno ? "deno task" : "pnpm run"} start`,
       codeStyle,
       "",
       codeStyle,
