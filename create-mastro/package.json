@@ -1,0 +1,24 @@
+{
+  "name": "@mastrojs/create-mastro",
+  "version": "0.0.3",
+  "type": "module",
+  "scripts": {
+    "npm-publish": "deno check && npm publish --access public"
+  },
+  "bin": {
+    "create-mastro": "index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git"
+  },
+  "author": "Mauro Bieg",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mastrojs/mastro/issues"
+  },
+  "homepage": "https://mastrojs.github.io/",
+  "volta": {
+    "node": "24.9.0"
+  }
+}
