@@ -3,3 +3,4 @@
 .vscode-test-web
 mastro/
 out/
+*.vsix

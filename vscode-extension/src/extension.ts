@@ -335,7 +335,7 @@ const getWebviewContent = async (
           document.getElementById("generateBtn").addEventListener("click", async () => {
             try {
               vscode.postMessage({ type: "clearOutputChannel" })
-              const { generatePagesForRoute, getStaticFilePaths } = await import("mastro/generator")
+              const { generatePagesForRoute, getStaticFilePaths } = await import("@mastrojs/mastro/generator")
 
               const files = (await getStaticFilePaths()).map(outFilePath => ({ outFilePath }))
               for (const route of routes) {
@@ -445,20 +445,18 @@ const getImportMap = async (
   const imports: Record<string, string> = {
     ...await readImports("/deno.json"),
     ...await readImports("/import_map.json"),
+    "@mastrojs/markdown": "https://esm.sh/jsr/@mastrojs/markdown@0.0.7?bundle",
   };
   if (vscode.ExtensionMode.Development === context.extensionMode) {
     const getDevUrl = (path: string) =>
         webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", path)).toString();
-    imports.mastro = getDevUrl("core/index.js");
+    imports["@mastrojs/mastro"] = getDevUrl("core/index.js");
     imports["@mastrojs/mastro/generator"] = getDevUrl("generator.js");
-    imports["@mastrojs/markdown"] = getDevUrl("markdown.js");
-    imports["@mastrojs/images"] = getDevUrl("images.js");
   } else {
     // currently we don't esm.sh ?bundle because the two exports share some files
     const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.4.0/";
     imports["@mastrojs/mastro"] = mastroProdUrl;
     imports["@mastrojs/mastro/"] = mastroProdUrl;
-    imports["@mastrojs/markdown"] = "https://esm.sh/jsr/@mastrojs/markdown@0.0.7?bundle";
   }
 
   for (const uri of await findFiles(rootFolder, basePath, "**/*")) {

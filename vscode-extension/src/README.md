@@ -1,5 +1,3 @@
-# Contributing to the extension
-
 This is a VS Code [Web Extension](https://code.visualstudio.com/api/extension-guides/web-extensions).
 
 ## Develop

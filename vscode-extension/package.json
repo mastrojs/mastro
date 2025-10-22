@@ -3,7 +3,7 @@
   "displayName": "Mastro",
   "description": "Build static websites in your browser using vscode.dev or github.dev",
   "icon": "icon.png",
-  "version": "0.12.0",
+  "version": "0.14.0",
   "publisher": "mastro",
   "repository": {
     "url": "https://github.com/mastrojs/mastro.git",
@@ -17,6 +17,13 @@
     "Education"
   ],
   "browser": "./out/extension.js",
+  "files": [
+    "LICENSE.md",
+    "icon.png",
+    "package.json",
+    "README.md",
+    "out/extension.js"
+  ],
   "contributes": {
     "commands": [
       {
@@ -30,16 +37,16 @@
     "open-in-browser": "npm run build-dev; vscode-test-web --open-devtools --extensionDevelopmentPath=. ../examples/hello-world/",
     "publish": "npx @vscode/vsce publish minor",
     "vscode:prepublish": "npm run build",
-    "build": "tsc -p ./",
-    "build-dev": "tsc -p ./ && tsc ../src/**/*.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions || true",
-    "watch": "tsc -watch -p ./"
+    "build": "tsc -p .",
+    "build-dev": "tsc -p . && tsc ../src/core/*.ts ../src/generator.ts ../../markdown/markdown.ts ../../images/images.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions || true",
+    "watch": "tsc -watch -p ."
   },
   "devDependencies": {
     "@types/vscode": "^1.96.0",
     "@vscode/test-web": "*",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
   },
   "volta": {
-    "node": "23.5.0"
+    "node": "24.9.0"
   }
 }
