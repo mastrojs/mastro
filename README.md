@@ -54,8 +54,10 @@ The core of Mastro is tiny. But to get you started quickly for common use-cases,
 - [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny client-side reactive GUI library for MPAs
 
 
-## Community / Contribute
+## Join the community / contribute
 
-It’s still early days. But we’re looking to build an inclusive community of all kinds of people, united by a shared passion for crafting websites.
+It's still early days. But we're looking to build an inclusive community of all kinds of people, united by a shared passion for crafting websites and learning new things.
 
-Something not working as expected or confusing? Would you like to contribute or have a question? Please see [open issues](https://github.com/mastrojs/mastro/issues) and don't hesitate to open a new one to start a conversation!
+If you have any questions, or want to talk about future plans, please start a [GitHub Discussion](https://github.com/mastrojs/mastro/discussions/).
+
+Something not working as expected or confusing? That's a bug: please open a [GitHub issue](https://github.com/mastrojs/mastro/issues/).
