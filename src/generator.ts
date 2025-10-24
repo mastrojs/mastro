@@ -9,7 +9,6 @@ import type { Stats } from "node:fs";
 
 import { findFiles, sep } from "./core/fs.ts";
 import { paramRegex, routes } from "./core/router.ts";
-import { writeFile } from "./node/writeFile.ts";
 
 interface GenerateConfig {
   /**
@@ -31,6 +30,22 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
   const { pathToFileURL } = await import("node:url");
+
+  const writeFile = async (path: string, data: ReadableStream<Uint8Array>) => {
+    if (typeof Deno === "object") {
+      return Deno.writeFile(path, data);
+    } else {
+      const { createWriteStream } = await import("node:fs");
+      const { Readable } = await import("node:stream");
+      return new Promise<void>((resolve, reject) =>
+        // deno-lint-ignore no-explicit-any
+        Readable.fromWeb(data as any)
+          .pipe(createWriteStream(path))
+          .on("finish", resolve)
+          .on("error", reject)
+      );
+    }
+  };
 
   const { outFolder = "generated", pregenerateOnly = false } = config || {};
   const pregenerateAll = !pregenerateOnly;
