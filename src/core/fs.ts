@@ -36,6 +36,14 @@ export const readTextFile = (path: string): Promise<string> =>
     : vscodeExtensionFs.readTextFile(leadingSep(path));
 
 /**
+ * Return the contents of a binary file on the local file system.
+ */
+export const readFile = (path: string): Promise<Uint8Array<ArrayBufferLike>> =>
+  fs
+    ? fs.readFile(noLeadingSep(path))
+    : vscodeExtensionFs.readFile(leadingSep(path));
+
+/**
  * Return the file paths on the local file system,
  * expanding glob patterns like `*` and `**`.
  *

@@ -102,6 +102,19 @@ export const activate = async (context: vscode.ExtensionContext) => {
             }
             return;
           }
+          case "readFile": {
+            const { path, requestId } = msg;
+            try {
+              const response = await vscode.workspace.fs.readFile(
+                rootFolder.with({ path: basePath + path }),
+              );
+              webview.postMessage({ type: "success", response, requestId });
+            } catch (e) {
+              const response = `readFile failed to find ${path}: ${(e as any)?.code || e}`
+              webview.postMessage({ type: "error", response, requestId });
+            }
+            return;
+          }
           case "readTextFile": {
             const { path, requestId } = msg;
             try {
@@ -195,6 +208,7 @@ const getWebviewContent = async (
           document.fs = {
             findFiles: pattern => postMessageAndAwaitAnswer({ type: "findFiles", pattern }),
             readDir: pathOfDir => postMessageAndAwaitAnswer({ type: "readDir", path: pathOfDir }),
+            readFile: path => postMessageAndAwaitAnswer({ type: "readFile", path }),
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
           }
 
