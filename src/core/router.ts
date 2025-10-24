@@ -30,11 +30,18 @@ for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
       return segment;
     }
   });
-  pathSegments.unshift({ filePath, segments });
+  pathSegments.push({ filePath, segments });
 }
 
-// TODO: sort this according to solid route precedence criteria
-// pathSegments.sort((a, b) => a.segments.length - b.segments.length);
+// TODO: sort this according to more solid route precedence criteria
+// currently, it's just reverse alphabetical order, which at least guarantees that
+// - [...slug] loses out over more specific routes that start with a lowercase char
+// - longer paths win over their prefixes.
+pathSegments.sort((a, b) => {
+  if (a.filePath < b.filePath) { return 1; }
+  if (a.filePath > b.filePath) { return -1; }
+  return 0;
+});
 
 /**
  * Array containing all routes that Mastro found.
