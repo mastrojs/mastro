@@ -34,6 +34,9 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   const writeFile = async (path: string, data: ReadableStream<Uint8Array>) => {
     if (typeof Deno === "object") {
       return Deno.writeFile(path, data);
+    } else if (process.versions.bun) {
+      // deno-lint-ignore no-explicit-any
+      return (globalThis as any).Bun.write(path, data);
     } else {
       const { createWriteStream } = await import("node:fs");
       const { Readable } = await import("node:stream");

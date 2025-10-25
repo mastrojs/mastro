@@ -17,6 +17,10 @@ import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { Readable } from "node:stream";
 
+const runtime = typeof Deno === "object"
+  ? "deno"
+  : (process.versions.bun ? "bun" : "node");
+
 /**
  * @param {string} path
  * @param {ReadableStream<Uint8Array<ArrayBuffer>>} data
@@ -25,6 +29,9 @@ import { Readable } from "node:stream";
 const writeFile = (path, data) => {
   if (typeof Deno === "object") {
     return Deno.writeFile(path, data);
+  } else if (runtime === "bun") {
+    // @ts-ignore
+    return Bun.write(path, data);
   } else {
     return new Promise((resolve, reject) =>
       // @ts-ignore
@@ -50,8 +57,7 @@ const execCmd = (cmd) =>
       }))
   );
 
-const isDeno = typeof Deno === "object";
-const repoName = `template-basic-${isDeno ? "deno" : "node"}`;
+const repoName = `template-basic-${runtime}`;
 const repoUrl = `https://github.com/mastrojs/${repoName}/archive/refs/heads/main.zip`;
 const zipFilePromise = fetch(repoUrl);
 
@@ -80,13 +86,21 @@ if (dir) {
   if (unzipSuccess) {
     await fs.rename(outDir, dir);
 
+    const bunOrPnpm = runtime === "bun" ? "bun" : "pnpm";
+    const installInstr = runtime === "deno"
+      ? ""
+      : `\n\nThen install dependencies with: ${bunOrPnpm} install\n`;
+    const startInstr = runtime === "deno"
+      ? "deno task start"
+      : `${bunOrPnpm} run start`;
+
     const codeStyle = "color: blue";
     console.log(
       `
 Success!
 
-Enter the newly created folder with: %ccd ${dir}${isDeno ? "" : "\n\nThen install dependencies with: pnpm install\n"}
-%cThen start the dev server with: %c${isDeno ? "deno task" : "pnpm run"} start`,
+Enter the newly created folder with: %ccd ${dir}${installInstr}
+%cThen start the dev server with: %c${startInstr}`,
       codeStyle,
       "",
       codeStyle,
