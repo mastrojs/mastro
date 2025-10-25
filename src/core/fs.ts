@@ -58,11 +58,21 @@ export const findFiles = async (pattern: string): Promise<string[]> => {
   if (fs) {
     const process = await import("node:process");
     const paths = [];
-    for await (const entry of fs.glob(pattern, { withFileTypes: true })) {
-      if (entry.isFile() && !entry.isSymbolicLink() && !entry.name.endsWith(sep + ".DS_Store")) {
-        const path = entry.parentPath + sep + entry.name;
-        const relativeToProjectRoot = path.slice(process.cwd().length);
-        paths.push(relativeToProjectRoot);
+    if (process.versions.bun) {
+      // until https://github.com/oven-sh/bun/issues/22018 is fixed
+      for await (const file of fs.glob(pattern)) {
+        const entry = await fs.lstat(file);
+        if (entry.isFile() && !entry.isSymbolicLink() && !file.endsWith(sep + ".DS_Store")) {
+          paths.push(sep + file)
+        }
+      }
+    } else {
+      for await (const entry of fs.glob(pattern, { withFileTypes: true })) {
+        if (entry.isFile() && !entry.isSymbolicLink() && !entry.name.endsWith(sep + ".DS_Store")) {
+          const path = entry.parentPath + sep + entry.name;
+          const relativeToProjectRoot = path.slice(process.cwd().length);
+          paths.push(relativeToProjectRoot);
+        }
       }
     }
     return paths;

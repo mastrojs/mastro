@@ -38,6 +38,12 @@ Either use the [Mastro template for Node.js](https://github.com/mastrojs/templat
 
     pnpm create @mastrojs/mastro@latest
 
+#### Bun
+
+Either use the [Mastro template for Bun](https://github.com/mastrojs/template-basic-bun) or run:
+
+    bun create @mastrojs/mastro@latest
+
 
 ## Deploy to production
 

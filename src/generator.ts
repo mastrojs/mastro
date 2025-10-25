@@ -35,6 +35,8 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
     if (typeof Deno === "object") {
       return Deno.writeFile(path, data);
     } else {
+      // Bun.write doesn't accept a ReadableStream
+      // and in my experiment failed silently when passed the original `Response` object.
       const { createWriteStream } = await import("node:fs");
       const { Readable } = await import("node:stream");
       return new Promise<void>((resolve, reject) =>

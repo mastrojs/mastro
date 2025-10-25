@@ -1,9 +1,9 @@
 import { findFiles, sep } from "./fs.ts";
 
-if (!globalThis.URLPattern) {
-  // to be implemented by all browsers soon:
-  // see https://wpt.fyi/results/urlpattern?q=label%3Ainterop-2025-urlpattern
-  await import(`https://esm.sh/${'urlpattern-polyfill@10.1.3'}?bundle`);
+// @ts-ignore: Bun and URLPattern
+if (typeof Bun === "object" && !globalThis.URLPattern) {
+  // until https://github.com/oven-sh/bun/issues/2286 is fixed
+  await import("urlpattern" + "-polyfill");
 }
 
 export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
