@@ -1,11 +1,5 @@
 import { findFiles, sep } from "./fs.ts";
 
-if (!globalThis.URLPattern) {
-  // to be implemented by all browsers soon:
-  // see https://wpt.fyi/results/urlpattern?q=label%3Ainterop-2025-urlpattern
-  await import(`https://esm.sh/${'urlpattern-polyfill@10.1.3'}?bundle`);
-}
-
 export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 
 const pathSegments = [];
