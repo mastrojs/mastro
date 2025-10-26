@@ -459,6 +459,8 @@ const getImportMap = async (
   const imports: Record<string, string> = {
     ...await readImports("/deno.json"),
     ...await readImports("/import_map.json"),
+    // @mastrojs/images is not yet supported, as we'd have to do something similar to `replaceStaticLinksWithDataUrls`, but presumably for `<img src="/_images/*`
+    // "@mastrojs/images": "https://esm.sh/jsr/@mastrojs/images@0.0.3?bundle",
     "@mastrojs/markdown": "https://esm.sh/jsr/@mastrojs/markdown@0.0.7?bundle",
   };
   if (vscode.ExtensionMode.Development === context.extensionMode) {

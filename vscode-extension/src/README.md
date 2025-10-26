@@ -8,7 +8,7 @@ See also [test your web extension](https://code.visualstudio.com/api/extension-g
 
 ### Architecture
 
-There are three levels of turtles, all containes within one file: `src/extension.ts` (that was we [don't need a bundler](https://code.visualstudio.com/api/working-with-extensions/bundling-extension)).
+There are three levels of turtles, all contained within one file: `src/extension.ts` (so we [don't need a bundler](https://code.visualstudio.com/api/working-with-extensions/bundling-extension)).
 
 #### Extension web worker
 
