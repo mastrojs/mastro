@@ -1,4 +1,11 @@
 /**
+ * This module contains a simple, selfcontained way to construct and properly escape
+ * HTML using JavaScript tagged template literals.
+ * It is exported separately for use in `@mastrojs/reactive`
+ * @module
+ */
+
+/**
  * HTML primitive values like strings and numbers.
  *
  * Note that we use [`String` objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)
@@ -59,9 +66,7 @@ export const html = (strings: TemplateStringsArray, ...params: Html[]): Html[] =
  * or React's `dangerouslySetInnerHTML`.
  */
 export const unsafeInnerHtml = (str: string): Html =>
-  // we're using a string object to mark something as HTML
-  // (as opposed to a string that still needs to be escaped)
-  // we could also use a plain object like `{ type: 'html', str }`
+  // Alternatively, we could also use a plain object like `{ type: 'html', str }`
   // but the String object's `.toString()` and `.valueOf()` behaviour are handy.
   new String(str);
 

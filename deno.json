@@ -4,6 +4,7 @@
   "exports": {
     ".": "./src/core/index.ts",
     "./generator": "./src/generator.ts",
+    "./html": "./src/core/html.ts",
     "./server": "./src/server.ts"
   },
   "compilerOptions": {
