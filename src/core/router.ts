@@ -1,16 +1,22 @@
-import { findFiles, sep } from "./fs.ts";
+import { findFiles, readTextFile, sep } from "./fs.ts";
 
 // @ts-ignore: Bun and URLPattern
 if (typeof Bun === "object" && !globalThis.URLPattern) {
   // until https://github.com/oven-sh/bun/issues/2286 is fixed
-  await import("urlpattern" + "-polyfill");
+  // use variable to prevent wrangler's esbuild from trying to bundle the import
+  const polyfill = "urlpattern-polyfill";
+  await import(polyfill);
 }
 
+export const wranglerRoutesName = ".pregenerated-routes.json";
 export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 
 const pathSegments = [];
 const suffix = typeof document === "object" ? "js" : "{ts,js}";
-for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
+const routeFiles: string[] = navigator.userAgent === "Cloudflare-Workers"
+  ? JSON.parse(await readTextFile(process.cwd() + "/" + wranglerRoutesName))
+  : await findFiles(`routes/**/*.server.${suffix}`);
+for (const filePath of routeFiles) {
   const fileSegments = filePath.split(sep).slice(2)
   const segments = fileSegments.map((segment, i) => {
     const param = segment.match(paramRegex)?.[1];

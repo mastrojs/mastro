@@ -9,7 +9,7 @@ import type { Stats } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles, sep } from "./core/fs.ts";
-import { paramRegex, routes } from "./core/router.ts";
+import { paramRegex, routes, wranglerRoutesName } from "./core/router.ts";
 
 interface GenerateConfig {
   /**
@@ -56,6 +56,10 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   await ensureDir(fs.stat("routes"));
   await fs.rm(outFolder, { force: true, recursive: true });
   try {
+    if (onlyPregenerate) {
+      await fs.writeFile(wranglerRoutesName, JSON.stringify(routes.map(r => r.filePath)));
+    }
+
     for (const route of routes) {
       const module = await import(pathToFileURL(process.cwd() + route.filePath).toString());
 

@@ -59,10 +59,19 @@ const fetch = async (req: Request): Promise<Response> => {
     }
     const route = matchRoute(req.url);
     if (route) {
-      const modulePath = process.cwd() + route.filePath;
+      const { filePath } = route;
+      const modulePath = process.cwd() + filePath;
       const method = req.method.toUpperCase();
       console.info(`${method} ${req.url}, loading ${modulePath}`);
-      const module = await import(pathToFileURL(modulePath).toString());
+      const module = navigator.userAgent === "Cloudflare-Workers"
+        // Wrangler uses esbuild, which includes dynamically imported files in the bundle
+        // if done right: see https://esbuild.github.io/api/#glob
+        // and we assume current file is at node_modules/.pnpm/@jsr+mastrojs__mastro@0.4.6/node_modules/@jsr/mastrojs__mastro/src/server.js
+        ? await import(
+          "../../../../../../../routes/" + filePath.slice(7, -10) + ".server." +
+            (filePath.endsWith(".ts") ? "ts" : "js")
+        )
+        : await import(pathToFileURL(modulePath).toString());
       const handler = module[method];
       if (!handler) {
         return new Response(`No function ${method} exported by ${modulePath}`, {
