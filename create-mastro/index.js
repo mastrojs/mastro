@@ -13,14 +13,17 @@
 import { exec } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import fs from "node:fs/promises";
+import { join } from "node:path";
 import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { Readable } from "node:stream";
 
+const userAgent = process.env.npm_config_user_agent;
+
 const runtime = typeof Deno === "object"
   ? "deno"
   // the usual ways to detect Bun don't appear to work in `bun create`
-  : (process.env.npm_config_user_agent?.startsWith("bun") ? "bun" : "node");
+  : (userAgent?.startsWith("bun/") ? "bun" : "node");
 
 /**
  * @param {string} path
@@ -84,13 +87,33 @@ if (dir) {
   if (unzipSuccess) {
     await fs.rename(outDir, dir);
 
-    const bunOrPnpm = runtime === "bun" ? "bun" : "pnpm";
+    const packageManager = (() => {
+      switch (userAgent?.split("/")[0]) {
+        case "pnpm": return "pnpm";
+        case "yarn": return "yarn";
+        case "bun": return "bun";
+        default: return "npm";
+      }
+    })();
+
+    if (packageManager === "npm") {
+      try {
+        const path = join(dir, "package.json");
+        const packageJson = JSON.parse(await fs.readFile(path, { encoding: "utf8" }));
+        packageJson.dependencies["@mastrojs/mastro"] = "npm:@jsr/mastrojs__mastro@^0";
+        await fs.writeFile(path, JSON.stringify(packageJson, null, 2));
+        await fs.writeFile(join(dir, ".npmrc"), "@jsr:registry=https://npm.jsr.io");
+      } catch (e) {
+        console.error(`Created folder ${dir} but failed to patch it for npm. Please use pnpm instead.`);
+      }
+    }
+
     const installInstr = runtime === "deno"
       ? ""
-      : `\n\nThen install dependencies with: ${bunOrPnpm} install\n`;
+      : `\n\nThen install dependencies with: ${packageManager} install\n`;
     const startInstr = runtime === "deno"
       ? "deno task start"
-      : `${bunOrPnpm} run start`;
+      : `${packageManager} run start`;
 
     const codeStyle = "color: blue";
     console.log(
