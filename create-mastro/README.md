@@ -2,7 +2,7 @@ Create a new [Mastro](https://mastrojs.github.io/) project. Usage:
 
  Deno:
 
-    deno run -A npm:@mastrojs/create-mastro@latest
+    deno run --reload -A npm:@mastrojs/create-mastro
 
  Node.js
 

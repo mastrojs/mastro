@@ -30,19 +30,21 @@ If you prefer the command line, or need to run a server, install either [Deno](h
 
 After [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either use the [Mastro template for Deno](https://github.com/mastrojs/template-basic-deno) or run:
 
-    deno run -A npm:@mastrojs/create-mastro@latest
+    deno run -A npm:@mastrojs/create-mastro@0.0.8
 
 #### Node.js
 
 Either use the [Mastro template for Node.js](https://github.com/mastrojs/template-basic-node) or run:
 
-    pnpm create @mastrojs/mastro@latest
+    pnpm create @mastrojs/mastro@0.0.8
+
+(`npm` and `yarn` also work, but `pnpm` is [recommended](https://jsr.io/docs/npm-compatibility).)
 
 #### Bun
 
 Either use the [Mastro template for Bun](https://github.com/mastrojs/template-basic-bun) or run:
 
-    bun create @mastrojs/mastro@latest
+    bun create @mastrojs/mastro@0.0.8
 
 
 ## Deploy to production
