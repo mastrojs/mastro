@@ -29,12 +29,12 @@ export type Html =
  * This makes sure things are properly escaped (unless `unsafeInnerHtml` is used).
  *
  * ```ts
- * import { html, renderToString } from "mastro/reactive";
+ * import { html, renderToString } from "@mastrojs/mastro";
  *
  * const myName = "World";
  * const myClass = "hero";
  *
- * const str = renderToString(
+ * const str = await renderToString(
  *   html`<h1 class=${myClass}>Hello ${myName}</h1>`
  * );
  * ```
