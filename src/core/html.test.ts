@@ -1,6 +1,6 @@
 import { assertEquals } from 'jsr:@std/assert'
-import { html, renderToStream, renderToString, unsafeInnerHtml } from './html.ts'
-import { htmlResponse } from "./responses.ts";
+import { html, renderToString, unsafeInnerHtml } from './html.ts'
+import { htmlToResponse } from "./responses.ts";
 
 Deno.test('html escaping', async () => {
   assertEquals(
@@ -75,7 +75,7 @@ Deno.test('html attributes', async () => {
 })
 
 Deno.test('htmlResponse', async () => {
-  const res = htmlResponse(renderToStream('hi'))
+  const res = htmlToResponse('hi')
   assertEquals(await res.text(), 'hi')
 
   const generator = async function* () {
@@ -83,6 +83,6 @@ Deno.test('htmlResponse', async () => {
     yield 'b'
     yield 'c'
   }
-  const asyncRes = htmlResponse(renderToStream(html`hi ${generator()}`))
+  const asyncRes = htmlToResponse(html`hi ${generator()}`)
   assertEquals(await asyncRes.text(), 'hi abc')
 })

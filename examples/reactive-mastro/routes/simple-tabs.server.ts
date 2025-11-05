@@ -1,8 +1,8 @@
 import { Layout } from "../components/Layout.ts"
-import { html, htmlResponse, renderToStream } from "@mastrojs/mastro";
+import { html, htmlToResponse } from "@mastrojs/mastro";
 
 export const GET = () =>
-  htmlResponse(renderToStream(
+  htmlToResponse(
     Layout({
       title: "Simple-tabs example",
       children: html`
@@ -24,4 +24,4 @@ export const GET = () =>
         <script type="module" src="/simple-tabs.client.js"></script>
         `
     })
-))
+)

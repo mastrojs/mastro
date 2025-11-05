@@ -98,7 +98,7 @@ export const matchRoute = (
  * ```ts
  * import { getParams, html, htmlToResponse } from "@mastrojs/mastro";
  *
- * export const GET = async (req) => {
+ * export const GET = (req) => {
  *   const { slug } = getParams(req.url);
  *   return htmlToResponse(html`Hello ${slug}`);
  * }

@@ -1,8 +1,8 @@
 import { Layout } from "../components/Layout.ts";
-import { html, htmlResponse, renderToStream } from "@mastrojs/mastro";
+import { html, htmlToResponse } from "@mastrojs/mastro";
 
 export const GET = () =>
-  htmlResponse(renderToStream(
+  htmlToResponse(
     Layout({
       title: "Server-initialized counter example",
       children: html`
@@ -25,4 +25,4 @@ export const GET = () =>
         <script type="module" src="/counter.client.js"></script>
         `,
     }),
-  ));
+  );

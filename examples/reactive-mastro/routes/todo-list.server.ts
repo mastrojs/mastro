@@ -1,8 +1,8 @@
 import { Layout } from "../components/Layout.ts"
-import { html, htmlResponse, renderToStream } from "@mastrojs/mastro";
+import { html, htmlToResponse } from "@mastrojs/mastro";
 
 export const GET = () =>
-  htmlResponse(renderToStream(
+  htmlToResponse(
     Layout({
       title: "Todo-list example",
       children: html`
@@ -18,4 +18,4 @@ export const GET = () =>
         <script type="module" src="/todo-list.client.js"></script>
         `
     })
-))
+)
