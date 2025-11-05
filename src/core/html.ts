@@ -71,30 +71,78 @@ export const unsafeInnerHtml = (str: string): Html =>
   new String(str);
 
 /**
- * Convert an `Html` node to a properly escaped `AsyncIterable<string>`.
+ * Convert an `Html` node to a properly escaped `Promise<string>`.
+ *
+ * See `renderToStream` for a more efficient but less ergonomic alternative.
  */
-export async function* renderToStream(node: Html): AsyncIterable<string> {
-  node = await node;
-  if (Array.isArray(node)) {
-    for (let i = 0; i < node.length; i++) {
-      yield* renderToStream(node[i]);
-    }
-  } else if (isAsyncIterable(node)) {
-    for await (const n of node) {
-      yield* renderToStream(n);
-    }
-  } else {
-    yield escape(node);
-  }
+export const renderToString = async (node: Html): Promise<string> => {
+  const s = renderToStream(node);
+  return typeof s === "string" ? s : (await Array.fromAsync(s)).join("");
 }
 
 /**
- * Convert an `Html` node to a properly escaped `Promise<string>`.
+ * Convert an `Html` node to a properly escaped stream.
+ * Returns an `AsyncIterable<string>` if there are Promises or AsyncIterables in the input,
+ * otherwise returns a `string`.
+ *
+ * The string case is a lot more efficient – especially when then passed to
+ * Mastro's `htmlResponse`, to construct a `Response`.
  */
-export const renderToString = async (node: Html): Promise<string> =>
-  typeof node !== "object" || node instanceof String
-    ? escape(node)
-    : (await Array.fromAsync(renderToStream(node))).join("");
+export const renderToStream = (node: Html): string | AsyncIterable<string> => {
+  let stack: Array<Html | AsyncIterator<Html>> = [node];
+  if (Array.isArray(node)) {
+    stack = node.flat(Infinity as 1);
+    if (!(stack.some((n) => n instanceof Promise || isAsyncIterable(n)))) {
+      // if there is nothing async, we can speed things up by an order of magnitude like this
+      let str = "";
+      for (let i = 0; i < stack.length; i++) {
+        // in my limited testing, this is faster than `stack.map(escape).join("")`
+        str += escape(stack[i] as HtmlPrimitive);
+      }
+      return str;
+    }
+  }
+
+  // reversing and using pop() is faster than using shift().
+  // However, we could investigate whether keeping a manual index would be better,
+  // but garbage collection would probably suffer.
+  stack.reverse();
+  return {
+    [Symbol.asyncIterator]() {
+      return {
+        next: async () => {
+          while (stack.length > 0) {
+            const nextUp = stack[stack.length - 1];
+            if (typeof nextUp === "object" && nextUp !== null && "next" in nextUp) {
+              // If an iterator is on top of the stack, consume its next element.
+              // But only pop the iterator itself from the stack when it's done.
+              const { value, done } = await nextUp.next();
+              if (done) {
+                stack.pop();
+              } else {
+                stack.push(value);
+              }
+            } else {
+              const current = await stack.pop();
+              if (Array.isArray(current)) {
+                for (let i = current.length - 1; i >= 0; i--) {
+                  stack.push(current[i]);
+                }
+              } else if (isAsyncIterable(current)) {
+                // push iterator on stack for future consumption
+                const iterator = current[Symbol.asyncIterator]();
+                stack.push(iterator);
+              } else {
+                return { value: escape(current as HtmlPrimitive), done: false };
+              }
+            }
+          }
+          return { value: undefined, done: true };
+        },
+      };
+    },
+  };
+};
 
 const escape = (n: HtmlPrimitive): string =>
   typeof n === "string"

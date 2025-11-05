@@ -1,4 +1,4 @@
-import { type Html, renderToStream, renderToString } from "./html.ts";
+import { type Html, renderToStream } from "./html.ts";
 
 /**
  * Create a standard Response object with `Content-Type: text/html` from a string
@@ -28,19 +28,9 @@ export const htmlResponse = (
 };
 
 /**
- * Create a standard Response object from an `Html` node through serializing to a `string` first.
- *
- * TODO: benchmark this against `htmlToStreamingResponse`
+ * Create a standard Response object from an `Html` node.
  */
-export const htmlToResponse = async (node: Html): Promise<Response> =>
-  htmlResponse(await renderToString(node));
-
-/**
- * Create a standard Response object from an `Html` node through a `ReadableStream`.
- *
- * TODO: benchmark this against `htmlToResponse`
- */
-export const htmlToStreamingResponse = (node: Html): Response =>
+export const htmlToResponse = (node: Html): Response =>
   htmlResponse(renderToStream(node));
 
 /**

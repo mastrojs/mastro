@@ -1,6 +1,6 @@
 import { Layout } from "../../examples/blog/components/layout/Layout.ts";
 import { html } from "./html.ts";
-import { htmlToResponse, htmlToStreamingResponse } from "./responses.ts";
+import { htmlToResponse } from "./responses.ts";
 
 const title = "Hello World";
 
@@ -29,15 +29,7 @@ const nodes = Layout({
 Deno.bench({
   name: "htmlToResponse",
   async fn() {
-    const res = await htmlToResponse(nodes);
-    await res.text();
-  },
-});
-
-Deno.bench({
-  name: "htmlToStreamingResponse",
-  async fn() {
-    const res = htmlToStreamingResponse(nodes);
+    const res = htmlToResponse(nodes);
     await res.text();
   },
 });
