@@ -11,7 +11,7 @@ export const htmlResponse = (
 ): Response => {
   let payload;
   if (isAsyncIterable(body)) {
-    payload = ReadableStream.from(toByteStream(body));
+    payload = toReadableStream(body);
   } else {
     payload = body;
   }
@@ -49,21 +49,36 @@ export const jsonResponse = (
     },
   });
 
-async function* toByteStream(iter: AsyncIterable<string>): AsyncIterable<Uint8Array> {
-  const encoder = new TextEncoder();
-  try {
-    for await (const val of iter) {
-      yield encoder.encode(val);
-    }
-  } catch (e) {
-    yield encoder.encode(` ${e}`);
+const toReadableStream = (iterable: AsyncIterable<string>) => {
+  // TODO: check back when and if something like the following works and is more performant:
+  // return ReadableStream.from(iterable.map(str => encoder.encode(str)));
 
-    // The idea here is to return a malformed chunk, so CDNs don't cache it
-    // TODO: test whether this actually works in today's CDNs
-    // see https://stackoverflow.com/questions/15305203/
-    // and https://github.com/withastro/astro/pull/12333
-    yield new Uint8Array([0]);
-  }
+  const encoder = new TextEncoder();
+  const iterator = iterable[Symbol.asyncIterator]();
+  return new ReadableStream({
+    async pull(controller) {
+      try {
+        const { value, done } = await iterator.next();
+        if (done) {
+          controller.close();
+        } else {
+          controller.enqueue(encoder.encode(value));
+        }
+      } catch (e) {
+        console.error(e);
+        controller.enqueue(encoder.encode(` ${e}`));
+
+        // The idea here is to return a malformed chunk, so CDNs don't cache the response
+        // TODO: test whether this actually works in today's CDNs
+        // see https://stackoverflow.com/questions/15305203/
+        // and https://github.com/withastro/astro/pull/12333
+        controller.enqueue(new Uint8Array([0]));
+      }
+    },
+    cancel() {
+      iterator.return?.();
+    },
+  });
 }
 
 // deno-lint-ignore no-explicit-any
