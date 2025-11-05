@@ -83,6 +83,29 @@ Deno.test('htmlResponse', async () => {
     yield 'b'
     yield 'c'
   }
-  const asyncRes = htmlToResponse(html`hi ${generator()}`)
-  assertEquals(await asyncRes.text(), 'hi abc')
+  const iteratorRes = htmlToResponse(html`hi ${generator()}`)
+  assertEquals(await iteratorRes.text(), 'hi abc')
+
+  const iterableRes = htmlToResponse(html`hi ${createAsyncIterable("there")}`)
+  assertEquals(await iterableRes.text(), "hi there")
 })
+
+/**
+ * Creates an `AsyncIterable<T>`, which (unlike the generator) is not an `AsyncIterator`
+ */
+const createAsyncIterable = <T>(value: T): AsyncIterable<T> => ({
+  [Symbol.asyncIterator]() {
+    let done = false;
+    return {
+      // deno-lint-ignore require-await
+      next: async () => {
+        if (done) {
+          return { value: undefined, done };
+        } else {
+          done = true;
+          return { value, done: false };
+        }
+      }
+    };
+  }
+});
