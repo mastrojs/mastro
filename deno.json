@@ -1,6 +1,9 @@
 {
   "name": "@mastrojs/mastro",
   "version": "0.5.0",
+  "tasks": {
+    "publish": "deno test src && deno bench src && deno publish"
+  },
   "exports": {
     ".": "./src/core/index.ts",
     "./generator": "./src/generator.ts",
