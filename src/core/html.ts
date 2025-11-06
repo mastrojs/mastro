@@ -46,14 +46,16 @@ export const html = (strings: TemplateStringsArray, ...params: Html[]): Html[] =
     const str = strings[i];
     output.push(unsafeInnerHtml(str));
     insideTag = (insideTag ? 1 : 0) + nrOf(str, "<") - nrOf(str, ">") === 1;
-    const p = params[i];
-    if (Array.isArray(p)) {
-      output.push(...p);
-    } else if (insideTag && endsWithEq(output.at(-1))) {
-      // add quotes around attribute for e.g. html`<div class=${'my class'}></div>`
-      output.push(unsafeInnerHtml('"'), p, unsafeInnerHtml('"'));
-    } else {
-      output.push(p);
+    if (i < params.length) {
+      const p = params[i];
+      if (Array.isArray(p)) {
+        output.push(...p);
+      } else if (insideTag && endsWithEq(output.at(-1))) {
+        // add quotes around attribute for e.g. html`<div class=${'my class'}></div>`
+        output.push(unsafeInnerHtml('"'), p, unsafeInnerHtml('"'));
+      } else {
+        output.push(p);
+      }
     }
   }
   return output;
