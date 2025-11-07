@@ -1,0 +1,12 @@
+{
+  "tasks": {
+    "start": "deno run --watch=. --allow-read --allow-net --allow-env server.ts",
+    "db-types": "kysely-codegen --dialect postgres --out-file ./db/types.ts"
+  },
+  "imports": {
+    "@mastrojs/mastro": "jsr:@mastrojs/mastro@^0",
+    "kysely": "npm:kysely@^0",
+    "pg": "npm:pg@^8",
+    "pg-cursor": "npm:pg-cursor@^2"
+  }
+}
