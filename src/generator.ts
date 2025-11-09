@@ -6,20 +6,21 @@
  */
 import process from "node:process";
 import type { Stats } from "node:fs";
+import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles, sep } from "./core/fs.ts";
 import { paramRegex, routes } from "./core/router.ts";
 
 interface GenerateConfig {
   /**
-   * Folder name for output folder that will be created. Default is `generated`.
+   * Name of output folder that will be created. Default is `generated`.
    */
   outFolder?: string;
   /**
-   * Pregenerate only routes with `export const pregenerate = true`.
+   * Only pregenerate routes with `export const pregenerate = true`.
    * Useful as a build step for servers.
    */
-  pregenerateOnly?: boolean;
+  onlyPregenerate?: boolean;
 }
 
 /**
@@ -49,8 +50,8 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
     }
   };
 
-  const { outFolder = "generated", pregenerateOnly = false } = config || {};
-  const pregenerateAll = !pregenerateOnly;
+  const { outFolder = "generated", onlyPregenerate = false } = config || {};
+  const pregenerateAll = !onlyPregenerate;
 
   await ensureDir(fs.stat("routes"));
   await fs.rm(outFolder, { force: true, recursive: true });
@@ -92,17 +93,35 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
 
 if (typeof document === "undefined" && import.meta.main) {
   const { parseArgs } = await import("node:util");
-  const flags = parseArgs({
-    options: {
-      outFolder: {
-        type: "string",
-      },
-      pregenerateOnly: {
-        type: "boolean",
-      },
-    }
-  });
-  generate(flags.values);
+
+  const options: { [opt: string]: ParseArgsOptionDescriptor & { description: string }; } = {
+    help: {
+      description: "Print this help page",
+      type: "boolean",
+      short: "h",
+    },
+    output: {
+      description: "Name of output folder that will be created, defaults to `generated`",
+      type: "string",
+    },
+    "only-pregenerate": {
+      description: "Only pregenerate routes with `export const pregenerate = true`",
+      type: "boolean",
+    },
+  };
+  const { values } = parseArgs({ options });
+
+  if (values.help) {
+    const keys = Object.keys(options);
+    const maxKeyLen = Math.max(...keys.map(k => k.length));
+    const opts = keys.map(key => ` --${key.padEnd(maxKeyLen)}  ${options[key].description}`);
+    console.info("Options:\n" + opts.join("\n"));
+  } else {
+    generate({
+      outFolder: values.output as string,
+      onlyPregenerate: !!values["only-pregenerate"],
+    });
+  }
 }
 
 /**

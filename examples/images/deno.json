@@ -2,7 +2,7 @@
   "tasks": {
     "start": "deno serve -A --watch=. ../../src/server.ts",
     "generate": "deno run -A @mastrojs/mastro/generator",
-    "pregenerate": "deno run -A @mastrojs/mastro/generator --pregenerateOnly"
+    "pregenerate": "deno run -A @mastrojs/mastro/generator --only-pregenerate"
   },
   "compilerOptions": {
     "lib": ["dom", "deno.ns"]
