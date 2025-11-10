@@ -4,14 +4,19 @@
  * by `deno task generate`.
  * @module
  */
-import process from "node:process";
+
 import type { Stats } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles, sep } from "./core/fs.ts";
-import { paramRegex, routes, wranglerRoutesName } from "./core/router.ts";
+import { paramRegex, pregeneratedRoutesName, routes } from "./core/router.ts";
 
 interface GenerateConfig {
+  /**
+   * Create a `.routes.json` file in current folder (not outFolder)
+   * for later use with esbuild. Default is `false`.
+   */
+  generateRoutesFile?: boolean;
   /**
    * Name of output folder that will be created. Default is `generated`.
    */
@@ -50,14 +55,14 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
     }
   };
 
-  const { outFolder = "generated", onlyPregenerate = false } = config || {};
+  const { generateRoutesFile, outFolder = "generated", onlyPregenerate = false } = config || {};
   const pregenerateAll = !onlyPregenerate;
 
   await ensureDir(fs.stat("routes"));
   await fs.rm(outFolder, { force: true, recursive: true });
   try {
-    if (onlyPregenerate) {
-      await fs.writeFile(wranglerRoutesName, JSON.stringify(routes.map(r => r.filePath)));
+    if (generateRoutesFile) {
+      await fs.writeFile(pregeneratedRoutesName, JSON.stringify(routes.map((r) => r.filePath)));
     }
 
     for (const route of routes) {
@@ -98,7 +103,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
 if (typeof document === "undefined" && import.meta.main) {
   const { parseArgs } = await import("node:util");
 
-  const options: { [opt: string]: ParseArgsOptionDescriptor & { description: string }; } = {
+  const options: { [opt: string]: ParseArgsOptionDescriptor & { description: string } } = {
     help: {
       description: "Print this help page",
       type: "boolean",
@@ -112,18 +117,29 @@ if (typeof document === "undefined" && import.meta.main) {
       description: "Only pregenerate routes with `export const pregenerate = true`",
       type: "boolean",
     },
+    "generate-routes": {
+      description: "Create a `.routes.json` file in current folder for later use with esbuild",
+      type: "boolean",
+    },
   };
-  const { values } = parseArgs({ options });
+  let values;
+  try {
+    values = parseArgs({ options }).values;
+  } catch (e: any) {
+    console.error(`\n${e.message || e}`);
+    process.exit(1);
+  }
 
   if (values.help) {
     const keys = Object.keys(options);
-    const maxKeyLen = Math.max(...keys.map(k => k.length));
-    const opts = keys.map(key => ` --${key.padEnd(maxKeyLen)}  ${options[key].description}`);
+    const maxKeyLen = Math.max(...keys.map((k) => k.length));
+    const opts = keys.map((key) => ` --${key.padEnd(maxKeyLen)}  ${options[key].description}`);
     console.info("Options:\n" + opts.join("\n"));
   } else {
     generate({
       outFolder: values.output as string,
       onlyPregenerate: !!values["only-pregenerate"],
+      generateRoutesFile: !!values["generate-routes"],
     });
   }
 }
@@ -168,7 +184,7 @@ const getStaticUrls = async (filePath: string, getStaticPaths: unknown) => {
     }
     return new URL(urlPrefix + p);
   });
-}
+};
 
 /**
  * Return the paths of all non-route files from the the local filesystem.
@@ -178,8 +194,7 @@ export const getStaticFilePaths = async (): Promise<string[]> =>
   (await findFiles("routes/**/*"))
     .filter(isStaticFile).map((p) => p.slice(7));
 
-const isStaticFile = (p: string) =>
-  !p.endsWith(".server.ts") && !p.endsWith(".server.js");
+const isStaticFile = (p: string) => !p.endsWith(".server.ts") && !p.endsWith(".server.js");
 
 const generatePage = async (
   filePath: string,
@@ -210,15 +225,15 @@ const ensureDir = async (statsP: Promise<Stats>) => {
       console.error(noRoutesMsg);
       process.exit(1);
     }
-  } catch (e) {
-    if (e instanceof Error && 'code' in e && e.code === "ENOENT") {
+  } catch (e: any) {
+    if (e.code === "ENOENT") {
       console.error(noRoutesMsg);
       process.exit(1);
     } else {
       throw e;
     }
   }
-}
+};
 
 // just a dummy prefix so `new URL` doesn't throw
 const urlPrefix = "http://127.0.0.1";

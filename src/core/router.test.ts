@@ -13,6 +13,11 @@ import { assertEquals } from "jsr:@std/assert";
         "/routes/blog/override.server.ts",
       ];
     },
+    readTextFile: () => {
+      const e: any = Error("File not found");
+      e.code = "ENOENT";
+      throw e;
+    }
   }
 }
 

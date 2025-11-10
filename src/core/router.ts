@@ -8,14 +8,30 @@ if (typeof Bun === "object" && !globalThis.URLPattern) {
   await import(polyfill);
 }
 
-export const wranglerRoutesName = ".pregenerated-routes.json";
 export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
+export const pregeneratedRoutesName = ".routes.json";
+
+const getRoutesFromFile = async () => {
+  try {
+    const str = await readTextFile(pregeneratedRoutesName);
+    const routes: string[] = JSON.parse(str);
+    if (Array.isArray(routes) && typeof routes[0] === "string") {
+      return routes;
+    } else {
+      throw Error(pregeneratedRoutesName + " did not contain a string array");
+    }
+  // deno-lint-ignore no-explicit-any
+  } catch (e: any) {
+    if (e.code !== "ENOENT") {
+      throw e;
+    }
+  }
+}
 
 const pathSegments = [];
 const suffix = typeof document === "object" ? "js" : "{ts,js}";
-const routeFiles: string[] = navigator.userAgent === "Cloudflare-Workers"
-  ? JSON.parse(await readTextFile("./" + wranglerRoutesName))
-  : await findFiles(`routes/**/*.server.${suffix}`);
+
+const routeFiles = await getRoutesFromFile() || await findFiles(`routes/**/*.server.${suffix}`);
 for (const filePath of routeFiles) {
   const fileSegments = filePath.split(sep).slice(2)
   const segments = fileSegments.map((segment, i) => {

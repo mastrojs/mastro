@@ -14,11 +14,12 @@ import { matchRoute } from "./core/router.ts";
  */
 const fetch = async (req: Request): Promise<Response> => {
   const url = new URL(req.url);
-  const { pathname } = url;
+  const isNotFavicon = url.pathname !== "/favicon.ico";
   const isDev = isDevServer(url);
+  const isCloudflare = navigator.userAgent === "Cloudflare-Workers";
 
   try {
-    if (navigator.userAgent !== "Cloudflare-Workers") {
+    if (!isCloudflare) {
       const { serveStaticFile } = await import("./staticFiles.ts");
       const fileRes = await serveStaticFile(req, isDev);
       if (fileRes) {
@@ -26,24 +27,19 @@ const fetch = async (req: Request): Promise<Response> => {
       }
     }
 
+    const method = req.method.toUpperCase();
     const route = matchRoute(req.url);
     if (route) {
       const { filePath } = route;
-      const modulePath = process.cwd() + filePath;
-      const method = req.method.toUpperCase();
-      console.info(`${method} ${req.url}, loading ${modulePath}`);
-      const module = navigator.userAgent === "Cloudflare-Workers"
-        // Wrangler uses esbuild, which includes dynamically imported files in the bundle
-        // if done right: see https://esbuild.github.io/api/#glob
-        // and we assume current file is at node_modules/.pnpm/@jsr+mastrojs__mastro@0.4.6/node_modules/@jsr/mastrojs__mastro/src/server.js
-        ? await import(
-          "../../../../../../../routes/" + filePath.slice(7, -10) + ".server." +
-            (filePath.endsWith(".ts") ? "ts" : "js")
-        )
-        : await import(pathToFileURL(modulePath).toString());
+      if (isDev) {
+        console.info(`${method} ${url.pathname + url.search} => ${filePath}`);
+      }
+      const module = isCloudflare
+        ? await relativeImport(filePath)
+        : await import(pathToFileURL(process.cwd() + filePath).toString());
       const handler = module[method];
       if (!handler) {
-        return new Response(`No function ${method} exported by ${modulePath}`, {
+        return new Response(`No function ${method} exported by ${filePath}`, {
           status: 405,
         });
       }
@@ -61,10 +57,13 @@ const fetch = async (req: Request): Promise<Response> => {
         throw Error(method + " must return a Response object");
       }
     } else {
+      if (isDev && isNotFavicon) {
+        console.info(`${method} ${url.pathname + url.search} => No route match`);
+      }
       return new Response("404 not found", { status: 404 });
     }
   } catch (e: any) {
-    if (pathname !== "/favicon.ico") {
+    if (isNotFavicon) {
       console.warn(e);
     }
     if (e.name === "NotFound" || e.code === "ENOENT") {
@@ -108,3 +107,19 @@ export const staticCacheControlVal = (req: Request): string | undefined => {
  */
 const isDevServer = (url: URL) =>
   url.hostname === "localhost"
+
+/**
+ * Wrangler uses esbuild, which can include dynamically imported files in the bundle
+ * if done right: see https://esbuild.github.io/api/#glob
+ * We assume current file is either at node_modules/@mastrojs/mastro/src/server.js or at
+ * node_modules/.pnpm/@jsr+mastrojs__mastro@0.4.6/node_modules/@jsr/mastrojs__mastro/src/server.js
+ */
+const relativeImport = (path: string) => {
+  const prefix = path.slice(7, -10);
+  const suffix = path.endsWith(".ts") ? "ts" : "js";
+  try {
+    return import(`../../../../routes/${prefix}.server.${suffix}`);
+  } catch {
+    return import(`../../../../../../../routes/${prefix}.server.${suffix}`);
+  }
+};

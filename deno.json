@@ -13,8 +13,13 @@
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
   },
+  "lint": {
+    "rules": {
+      "exclude": ["no-process-global"]
+    }
+  },
   "fmt": {
-    "lineWidth": 90
+    "lineWidth": 100
   },
   "imports": {
     "@std/media-types": "jsr:@std/media-types@^1.1.0",
