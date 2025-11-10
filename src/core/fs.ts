@@ -62,9 +62,9 @@ export const readFile = (path: string): Promise<Uint8Array<ArrayBufferLike>> =>
 export const findFiles = async (pattern: string): Promise<string[]> => {
   pattern = pattern.startsWith("/") ? pattern.slice(1) : pattern;
   if (fs) {
-    const process = await import("node:process");
     const paths = [];
-    if (process.versions.bun) {
+    // @ts-expect-error no type definitions for Bun
+    if (typeof Bun === "object") {
       // until https://github.com/oven-sh/bun/issues/22018 is fixed
       for await (const file of fs.glob(pattern)) {
         const entry = await fs.lstat(file);

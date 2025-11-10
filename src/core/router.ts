@@ -14,7 +14,7 @@ export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 const pathSegments = [];
 const suffix = typeof document === "object" ? "js" : "{ts,js}";
 const routeFiles: string[] = navigator.userAgent === "Cloudflare-Workers"
-  ? JSON.parse(await readTextFile(process.cwd() + "/" + wranglerRoutesName))
+  ? JSON.parse(await readTextFile("./" + wranglerRoutesName))
   : await findFiles(`routes/**/*.server.${suffix}`);
 for (const filePath of routeFiles) {
   const fileSegments = filePath.split(sep).slice(2)

@@ -82,7 +82,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
 
   for (const filePath of await getStaticFilePaths()) {
     if (filePath.endsWith(".client.ts")) {
-      const { tsToJs } = await import("./server.ts");
+      const { tsToJs } = await import("./staticFiles.ts");
       const text = await fs.readFile("routes" + filePath, { encoding: "utf8" });
       fs.writeFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
     } else if (pregenerateAll) {
