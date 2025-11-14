@@ -16,6 +16,8 @@ export const sep: "/" | "\\" = typeof document === "object" ? "/" : (await impor
 /**
  * Read the directory on the local file system and return its files,
  * non-recursive and ignoring symlinks.
+ *
+ * Input path needs to be relative to project root.
  */
 export const readDir = (path: string): Promise<string[]> =>
   fs
@@ -29,6 +31,8 @@ export const readDir = (path: string): Promise<string[]> =>
 
 /**
  * Return the contents of a text file on the local file system as a string.
+ *
+ * Input path needs to be relative to project root.
  */
 export const readTextFile = (path: string): Promise<string> =>
   fs
@@ -37,6 +41,8 @@ export const readTextFile = (path: string): Promise<string> =>
 
 /**
  * Return the contents of a binary file on the local file system.
+ *
+ * Input path needs to be relative to project root.
  */
 export const readFile = (path: string): Promise<Uint8Array<ArrayBufferLike>> =>
   fs
