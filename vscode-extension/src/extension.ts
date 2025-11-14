@@ -59,20 +59,20 @@ export const activate = async (context: vscode.ExtensionContext) => {
               outputChannel.show(true);
               try {
                 await vscode.workspace.fs.delete(
-                  rootFolder.with({ path: basePath + "/docs" }),
+                  rootFolder.with({ path: basePath + "/generated" }),
                   { recursive: true },
                 );
               } catch (e) {
                 // on github.dev, this throws when folder not there
               }
               await vscode.workspace.fs.writeFile(
-                rootFolder.with({ path: basePath + "/docs/.nojekyll" }),
+                rootFolder.with({ path: basePath + "/generated/.nojekyll" }),
                 new Uint8Array(0),
               );
 
               await Promise.all(files.map(async (file) => {
                 const { outFilePath, output } = file;
-                const fileUri = rootFolder.with({ path: basePath + "/docs" + outFilePath });
+                const fileUri = rootFolder.with({ path: basePath + "/generated" + outFilePath });
                 const contents = output
                   ? output
                   : await vscode.workspace.fs.readFile(
@@ -80,7 +80,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
                     );
                 return vscode.workspace.fs.writeFile(fileUri, await contents);
               }));
-              outputChannel.appendLine('Updated docs/ folder. Click the "Source Control" icon on the left, then click "Commit & Push" to publish your changes.');
+              outputChannel.appendLine('Updated generated/ folder. Click the "Source Control" icon on the left, then click "Commit & Push" to publish your changes.');
             } catch (e) {
               vscode.window.showErrorMessage(`${e}`);
             }
