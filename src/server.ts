@@ -46,7 +46,7 @@ const fetch = async (req: Request): Promise<Response> => {
       if (module.pregenerate && !isDev) {
         return new Response(
           "404 Route was hit on non-localhost but exports pregenerate=true. " +
-          "Did you forget to run generate as a build step?",
+            "Did you forget to run generate as a build step?",
           { status: 404 },
         );
       }
@@ -79,7 +79,7 @@ const fetch = async (req: Request): Promise<Response> => {
  * See [fetch handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/)
  * and [Deno.ServeDefaultExport](https://docs.deno.com/api/deno/~/Deno.ServeDefaultExport).
  */
-const defaultExport: { fetch: (req: Request) => Promise<Response>; } = { fetch };
+const defaultExport: { fetch: (req: Request) => Promise<Response> } = { fetch };
 export default defaultExport;
 
 /**
@@ -87,16 +87,16 @@ export default defaultExport;
  * at the `DENO_DEPLOYMENT_ID` env variable and whether the host is local or not.
  */
 export const staticCacheControlVal = (req: Request): string | undefined => {
-    if (typeof Deno ==="object" && Deno.env.get("DENO_DEPLOYMENT_ID")) {
-      // See https://docs.deno.com/deploy/early-access/reference/caching/
-      // The idea is to have the CDN of Deno Deploy EA cache static assets forever (7d)
-      // which is okay because deploys invalidate the cache.
-      // Browsers meanwhile would use etags to see whether the file has been updated.
-      return "s-maxage=604800";
-    } else if (isDevServer(new URL(req.url))) {
-       return "max-age=0";
-    }
-}
+  if (typeof Deno === "object" && Deno.env.get("DENO_DEPLOYMENT_ID")) {
+    // See https://docs.deno.com/deploy/early-access/reference/caching/
+    // The idea is to have the CDN of Deno Deploy EA cache static assets forever (7d)
+    // which is okay because deploys invalidate the cache.
+    // Browsers meanwhile would use etags to see whether the file has been updated.
+    return "s-maxage=604800";
+  } else if (isDevServer(new URL(req.url))) {
+    return "max-age=0";
+  }
+};
 
 /**
  * Attempts to determine whether we're running a development or production server.
@@ -105,8 +105,7 @@ export const staticCacheControlVal = (req: Request): string | undefined => {
  * but allows you to test production behaviour by connecting to `127.0.0.1` and
  * is easy to do without messing with environment variables.
  */
-const isDevServer = (url: URL) =>
-  url.hostname === "localhost"
+const isDevServer = (url: URL) => url.hostname === "localhost";
 
 /**
  * Wrangler uses esbuild, which can include dynamically imported files in the bundle
