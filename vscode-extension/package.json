@@ -3,7 +3,7 @@
   "displayName": "Mastro",
   "description": "Build static websites in your browser using vscode.dev or github.dev",
   "icon": "icon.png",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "publisher": "mastro",
   "repository": {
     "url": "https://github.com/mastrojs/mastro.git",
@@ -35,6 +35,7 @@
   },
   "scripts": {
     "open-in-browser": "npm run build-dev; vscode-test-web --open-devtools --extensionDevelopmentPath=. ../examples/hello-world/",
+    "package": "npx @vscode/vsce package",
     "publish": "npx @vscode/vsce publish minor",
     "vscode:prepublish": "npm run build",
     "build": "tsc -p .",

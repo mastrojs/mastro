@@ -96,9 +96,10 @@ export const activate = async (context: vscode.ExtensionContext) => {
                 type === vscode.FileType.File ? name : []
               );
               webview.postMessage({ type: "success", response, requestId });
-            } catch (e) {
-              const response = `readDir failed to find ${path}: ${(e as any)?.code || e}`
-              webview.postMessage({ type: "error", response, requestId });
+            } catch (e: any) {
+              const response = `readDir failed to find ${path}: ${e?.code || e}`;
+              const code = e?.code === "FileNotFound" ? "ENOENT" : e?.code;
+              webview.postMessage({ type: "error", code, response, requestId });
             }
             return;
           }
@@ -109,9 +110,10 @@ export const activate = async (context: vscode.ExtensionContext) => {
                 rootFolder.with({ path: basePath + path }),
               );
               webview.postMessage({ type: "success", response, requestId });
-            } catch (e) {
-              const response = `readFile failed to find ${path}: ${(e as any)?.code || e}`
-              webview.postMessage({ type: "error", response, requestId });
+            } catch (e: any) {
+              const response = `readFile failed to find ${path}: ${e?.code || e}`;
+              const code = e?.code === "FileNotFound" ? "ENOENT" : e?.code;
+              webview.postMessage({ type: "error", code, response, requestId });
             }
             return;
           }
@@ -123,9 +125,10 @@ export const activate = async (context: vscode.ExtensionContext) => {
               );
               const response = new TextDecoder().decode(bs);
               webview.postMessage({ type: "success", response, requestId });
-            } catch (e) {
-              const response = `readTextFile failed to find ${path}: ${(e as any)?.code || e}`
-              webview.postMessage({ type: "error", response, requestId });
+            } catch (e: any) {
+              const response = `readTextFile failed to find ${path}: ${e?.code || e}`;
+              const code = e?.code === "FileNotFound" ? "ENOENT" : e?.code;
+              webview.postMessage({ type: "error", code, response, requestId });
             }
             return;
           }
@@ -198,6 +201,10 @@ const getWebviewContent = async (
                 if (data?.requestId === requestId) {
                   if (data.type === "success") {
                     resolve(data.response)
+                  } else if (data.type === "error") {
+                    const err = Error(data.response);
+                    err.code = data.code;
+                    reject(err);
                   } else {
                     reject(data.response)
                   }
@@ -466,8 +473,8 @@ const getImportMap = async (
   if (vscode.ExtensionMode.Development === context.extensionMode) {
     const getDevUrl = (path: string) =>
         webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", path)).toString();
-    imports["@mastrojs/mastro"] = getDevUrl("core/index.js");
-    imports["@mastrojs/mastro/generator"] = getDevUrl("generator.js");
+    imports["@mastrojs/mastro"] = getDevUrl("mastro/src/core/index.js");
+    imports["@mastrojs/mastro/generator"] = getDevUrl("mastro/src/generator.js");
   } else {
     // currently we don't esm.sh ?bundle because the two exports share some files
     const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.4.0/";
