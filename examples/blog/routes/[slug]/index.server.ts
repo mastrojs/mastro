@@ -3,7 +3,6 @@ import { html, htmlToResponse } from "@mastrojs/mastro";
 import { getPost, getPostSlugs } from "../../models/posts.ts";
 
 export const GET = async (req: Request): Promise<Response> => {
-  console.log(req.url);
   const post = await getPost(new URL(req.url).pathname);
   const title = post.meta.title + " | My blog";
   return htmlToResponse(
