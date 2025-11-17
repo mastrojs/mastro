@@ -81,6 +81,43 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
   });
 }
 
+/**
+ * If you're hosting your website on the root (e.g `https://my-name.github.io`), you
+ * won't need this. But if you're hosting it in a sub-directory, which is common with GitHub Pages:
+ * (e.g. `https://my-name.github.io/my-repo`), then you need to prefix all absolute links that
+ * start with a slash with a `basePath`.
+ *
+ * For example in your `Layout.ts` file:
+ *
+ * ```ts
+ * import { ghPagesBasePath, html } from "@mastrojs/mastro";
+ *
+ * export const basePath = ghPagesBasePath();
+ * export const GET = () =>
+ *   html`<link href=${basePath + "/styles.css"}>`
+ * ```
+ *
+ * The above `basePath` variable will contain "/my-repo" when run on GitHub Actions.
+ *
+ * If you're not on GitHub Pages, but still hosting in a sub-directory, you can
+ * change the `generate` command in `deno.json` to `BASEPATH='/my-path' deno task generate`,
+ * and use that like:
+ *
+ * ```ts
+ * export const basePath = process.env.BASEPATH || "";
+ * ```
+ */
+export const ghPagesBasePath = (): string => {
+  if (typeof window === "undefined") {
+    // see https://docs.github.com/en/actions/reference/workflows-and-actions/variables
+    const repo = process.env.GITHUB_REPOSITORY?.split("/")[1];
+    if (repo && !repo.endsWith(".github.io")) {
+      return "/" + repo;
+    }
+  }
+  return "";
+};
+
 // deno-lint-ignore no-explicit-any
 const isAsyncIterable = <T>(val: any): val is AsyncIterable<T> =>
   val && typeof val[Symbol.asyncIterator] === "function";
