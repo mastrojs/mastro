@@ -12,7 +12,7 @@
  * to store already properly escaped HTML.
  */
 // deno-lint-ignore ban-types
-export type HtmlPrimitive = String | string | number | undefined | null;
+export type HtmlPrimitive = String | string | number | undefined | null | false;
 
 /**
  * An `Html` node – i.e. what can be used with `html` tagged templates.
@@ -149,7 +149,7 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
 const escape = (n: HtmlPrimitive): string =>
   typeof n === "string"
     ? escapeForAttribute(n)
-    : (n === undefined || n === null ? "" : n.toString());
+    : (n || typeof n === "number") ? n.toString() : "";
 
 const escapeForHtml = (st: string) =>
   st.replaceAll("&", "&amp;")

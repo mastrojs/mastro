@@ -2,15 +2,35 @@ import { assertEquals } from 'jsr:@std/assert'
 import { html, renderToString, unsafeInnerHtml } from './html.ts'
 import { htmlToResponse } from "./responses.ts";
 
-Deno.test('html escaping', async () => {
+Deno.test("html", async () => {
+  assertEquals(
+    await renderToString(html`<p>hi</p>`),
+    "<p>hi</p>",
+  )
+  assertEquals(
+    await renderToString(" hi "),
+    " hi ",
+  )
+  const items: string[] = [];
+  assertEquals(
+    await renderToString(items.length > 0 && items),
+    "",
+  )
   assertEquals(
     await renderToString(undefined),
-    '',
+    "",
   )
   assertEquals(
     await renderToString(null),
-    '',
+    "",
   )
+  assertEquals(
+    await renderToString(0),
+    "0",
+  )
+});
+
+Deno.test('html escaping', async () => {
   assertEquals(
     await renderToString('foo & <strong>bar</strong>'),
     'foo &amp; &lt;strong&gt;bar&lt;/strong&gt;',
