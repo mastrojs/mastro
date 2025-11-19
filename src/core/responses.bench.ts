@@ -1,3 +1,4 @@
+import "node:process";
 import { assertEquals } from "jsr:@std/assert";
 import { type Html, html } from "./html.ts";
 import { htmlToResponse } from "./responses.ts";
