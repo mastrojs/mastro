@@ -8,8 +8,8 @@ The simplest web framework and site generator yet.
 - **Static site generation and on-demand server rendering** of HTML or JSON [works all the same](https://mastrojs.github.io/docs/routing/#route-handlers).
 - **No bloat**: written in just [~700 lines](https://github.com/mastrojs/mastro/tree/main/src#readme) of TypeScript, Mastro feels like a framework but is just a library.
 - **No client-side JavaScript** (until you [add some](https://mastrojs.github.io/guide/interactivity-with-javascript-in-the-browser/)): create [MPA](https://mastrojs.github.io/guide/client-side-vs-server-side-javascript-static-vs-ondemand-spa-vs-mpa/) websites that load blazingly [fast](https://mastrojs.github.io/#fast-for-everyone).
-- **No bundler** (until you [add one](https://mastrojs.github.io/guide/bundling-assets-caching/)): your code arrives in the browser exactly how you wrote it.
-- **No magic**: use normal `<img>` and `<a>` tags referencing HTTP-first [assets](https://mastrojs.github.io/guide/bundling-assets-caching/#transforming-images).
+- **No bundler** (until you [add one](https://mastrojs.github.io/guide/bundling-assets/)): your code arrives in the browser exactly how you wrote it.
+- **No magic**: use normal `<img>` and `<a>` tags referencing HTTP-first [assets](https://mastrojs.github.io/guide/bundling-assets/#transforming-images).
 - **No VC-money**: no eventual enshitification – selling a service is not what we're interested in.
 - **No update treadmill**: we use web standards instead of relying on complex [dependencies](https://jsr.io/@mastrojs/mastro/dependencies).
 - **No lock-in**: swap out calls to the Mastro library later on. Or fork it – it's only [~700 lines](https://github.com/mastrojs/mastro/tree/main/src#readme) after all.
