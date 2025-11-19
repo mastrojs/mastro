@@ -24,7 +24,7 @@ export const readDir = (path: string): Promise<string[]> =>
     ? fs.readdir(noLeadingSep(path), { withFileTypes: true })
       .then((files) =>
         files.flatMap((file) =>
-          file.isSymbolicLink() || file.isDirectory() ? [] : file.name
+          file.isSymbolicLink() || file.isDirectory() || file.name[0] === "." ? [] : file.name
         )
       )
     : vscodeExtensionFs.readDir(leadingSep(path));
@@ -65,16 +65,17 @@ export const findFiles = async (pattern: string): Promise<string[]> => {
     const paths = [];
     // @ts-expect-error no type definitions for Bun
     if (typeof Bun === "object") {
+      const { basename } = await import("node:path");
       // until https://github.com/oven-sh/bun/issues/22018 is fixed
       for await (const file of fs.glob(pattern)) {
         const entry = await fs.lstat(file);
-        if (entry.isFile() && !entry.isSymbolicLink() && !file.endsWith(sep + ".DS_Store")) {
+        if (entry.isFile() && !entry.isSymbolicLink() && basename(file)[0] !== ".") {
           paths.push(sep + file)
         }
       }
     } else {
       for await (const entry of fs.glob(pattern, { withFileTypes: true })) {
-        if (entry.isFile() && !entry.isSymbolicLink() && !entry.name.endsWith(sep + ".DS_Store")) {
+        if (entry.isFile() && !entry.isSymbolicLink() && entry.name[0] !== ".") {
           const path = entry.parentPath + sep + entry.name;
           const relativeToProjectRoot = path.slice(process.cwd().length);
           paths.push(relativeToProjectRoot);
