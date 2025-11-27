@@ -19,7 +19,8 @@ const fetch = async (req: Request): Promise<Response> => {
   const isCloudflare = navigator.userAgent === "Cloudflare-Workers";
 
   try {
-    if (!isCloudflare) {
+    const method = req.method.toUpperCase();
+    if (method === "GET" && !isCloudflare) {
       const { serveStaticFile } = await import("./staticFiles.ts");
       const fileRes = await serveStaticFile(req, isDev);
       if (fileRes) {
@@ -27,7 +28,6 @@ const fetch = async (req: Request): Promise<Response> => {
       }
     }
 
-    const method = req.method.toUpperCase();
     const route = matchRoute(req.url);
     if (route) {
       const { filePath } = route;
