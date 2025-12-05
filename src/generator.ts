@@ -8,8 +8,8 @@
 import type { Stats } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
-import { findFiles, sep } from "./core/fs.ts";
-import { paramRegex, pregeneratedRoutesName, routes } from "./core/router.ts";
+import { findFiles } from "./core/fs.ts";
+import { getRoutes, hasRouteParams, type Route } from "./core/router.ts";
 
 interface GenerateConfig {
   /**
@@ -35,7 +35,6 @@ interface GenerateConfig {
 export const generate = async (config?: GenerateConfig): Promise<void> => {
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
-  const { pathToFileURL } = await import("node:url");
 
   const writeFile = async (path: string, data: ReadableStream<Uint8Array>) => {
     if (typeof Deno === "object") {
@@ -55,18 +54,14 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
     }
   };
 
-  const { generateRoutesFile, outFolder = "generated", onlyPregenerate = false } = config || {};
+  const { outFolder = "generated", onlyPregenerate = false } = config || {};
   const pregenerateAll = !onlyPregenerate;
 
   await ensureDir(fs.stat("routes"));
   await fs.rm(outFolder, { force: true, recursive: true });
   try {
-    if (generateRoutesFile) {
-      await fs.writeFile(pregeneratedRoutesName, JSON.stringify(routes.map((r) => r.filePath)));
-    }
-
-    for (const route of routes) {
-      const module = await import(pathToFileURL(process.cwd() + route.filePath).toString());
+    for (const route of await getRoutes()) {
+      const module = await route.module;
 
       if (pregenerateAll || module.pregenerate) {
         for (const file of await generatePagesForRoute(route, module)) {
@@ -117,10 +112,6 @@ if (typeof document === "undefined" && import.meta.main) {
       description: "Only pregenerate routes with `export const pregenerate = true`",
       type: "boolean",
     },
-    "generate-routes": {
-      description: "Create a `.routes.json` file in current folder for later use with esbuild",
-      type: "boolean",
-    },
   };
   let values;
   try {
@@ -139,7 +130,6 @@ if (typeof document === "undefined" && import.meta.main) {
     generate({
       outFolder: values.output as string,
       onlyPregenerate: !!values["only-pregenerate"],
-      generateRoutesFile: !!values["generate-routes"],
     });
   }
 }
@@ -152,18 +142,18 @@ if (typeof document === "undefined" && import.meta.main) {
  * and by the VSCode extension.
  */
 export const generatePagesForRoute = async (
-  route: { filePath: string; pattern: URLPattern },
-  module: any,
+  route: Route,
+  module: Record<string, unknown>,
 ): Promise<Array<{ outFilePath: string; response: Response } | undefined>> => {
-  const { filePath } = route;
+  const { name } = route;
   const { GET, getStaticPaths } = module;
   if (typeof GET === "function") {
-    const urls = filePath.split(sep).some((segment) => segment.match(paramRegex))
-      ? await getStaticUrls(filePath, getStaticPaths)
+    const urls = hasRouteParams(name)
+      ? await getStaticUrls(name, getStaticPaths)
       : [new URL(urlPrefix + route.pattern.pathname)];
-    return Promise.all(urls.map((u) => generatePage(filePath, GET, u)));
+    return Promise.all(urls.map((u) => generatePage(name, GET, u)));
   } else {
-    throw Error(filePath + " should export a function named GET");
+    throw Error(name + " should export a function named GET");
   }
 };
 
@@ -198,7 +188,8 @@ const isStaticFile = (p: string) => !p.endsWith(".server.ts") && !p.endsWith(".s
 
 const generatePage = async (
   filePath: string,
-  GET: (req: Request) => Promise<Response>,
+  // deno-lint-ignore ban-types
+  GET: Function,
   url: URL,
 ) => {
   try {

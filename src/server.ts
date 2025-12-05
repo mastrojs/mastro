@@ -6,8 +6,7 @@
  * @module
  */
 
-import { pathToFileURL } from "node:url";
-import { matchRoute } from "./core/router.ts";
+import { getRoutes } from "./core/router.ts";
 
 /**
  * Fetch handler to serve Mastro routes and static files
@@ -16,11 +15,10 @@ const fetch = async (req: Request): Promise<Response> => {
   const url = new URL(req.url);
   const isNotFavicon = url.pathname !== "/favicon.ico";
   const isDev = isDevServer(url);
-  const isCloudflare = navigator.userAgent === "Cloudflare-Workers";
 
   try {
     const method = req.method.toUpperCase();
-    if (method === "GET" && !isCloudflare) {
+    if (method === "GET" && navigator.userAgent !== "Cloudflare-Workers") {
       const { serveStaticFile } = await import("./staticFiles.ts");
       const fileRes = await serveStaticFile(req, isDev);
       if (fileRes) {
@@ -28,25 +26,23 @@ const fetch = async (req: Request): Promise<Response> => {
       }
     }
 
-    const route = matchRoute(req.url);
+    const routes = await getRoutes();
+    const route = routes.find((r) => r.pattern.exec(req.url));
     if (route) {
-      const { filePath } = route;
+      const module = await route.module;
       if (isDev) {
-        console.info(`${method} ${url.pathname + url.search} => ${filePath}`);
+        console.info(`${method} ${url.pathname + url.search} => ${route.name}`);
       }
-      const module = isCloudflare
-        ? await relativeImport(filePath)
-        : await import(pathToFileURL(process.cwd() + filePath).toString());
       const handler = module[method];
-      if (!handler) {
-        return new Response(`No function ${method} exported by ${filePath}`, {
+      if (typeof handler !== "function") {
+        return new Response(`No function ${method} exported by ${route.name}`, {
           status: 405,
         });
       }
       if (module.pregenerate && !isDev) {
         return new Response(
           "404 Route was hit on non-localhost but exports pregenerate=true. " +
-            "Did you forget to run generate as a build step?",
+            "Did you forget to run `mastro/generator --only-pregenerate` as a build step?",
           { status: 404 },
         );
       }
@@ -106,19 +102,3 @@ export const staticCacheControlVal = (req: Request): string | undefined => {
  * is easy to do without messing with environment variables.
  */
 const isDevServer = (url: URL) => url.hostname === "localhost";
-
-/**
- * Wrangler uses esbuild, which can include dynamically imported files in the bundle
- * if done right: see https://esbuild.github.io/api/#glob
- * We assume current file is either at node_modules/@mastrojs/mastro/src/server.js or at
- * node_modules/.pnpm/@jsr+mastrojs__mastro@0.4.6/node_modules/@jsr/mastrojs__mastro/src/server.js
- */
-const relativeImport = (path: string) => {
-  const prefix = path.slice(7, -10);
-  const suffix = path.endsWith(".ts") ? "ts" : "js";
-  try {
-    return import(`../../../../routes/${prefix}.server.${suffix}`);
-  } catch {
-    return import(`../../../../../../../routes/${prefix}.server.${suffix}`);
-  }
-};

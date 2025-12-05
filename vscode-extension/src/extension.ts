@@ -219,8 +219,7 @@ const getWebviewContent = async (
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
           }
 
-          // after we've populated document.fs, we can import things that use it
-          const { routes, matchRoute } = await import("@mastrojs/mastro")
+          const { routePathPatterns } = await import("@mastrojs/mastro")
 
           const replaceAsync = async (str, regex, asyncFn) => {
             const promises = []
@@ -285,10 +284,14 @@ const getWebviewContent = async (
               }
 
               const urlStr = "http://localhost" + path
-              const route = matchRoute(urlStr)
-              if (route) {
+              const routes = await routePathPatterns();
+              const route = routes.find(r => r.pattern.exec(urlStr));
+              if (route?.name.endsWith(".server.ts")) {
+                iframe.srcdoc = "<p>TypeScript files are currently not supported in the Mastro VSCode extension ("
+                  + filePath + ")</p>";
+              } else if (route) {
                 try {
-                  const { GET } = await import(route.filePath)
+                  const { GET } = await import(route.name);
                   if (typeof GET === "function") {
                     const res = await GET(new Request(urlStr))
                     if (res instanceof Response) {

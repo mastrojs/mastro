@@ -1,114 +1,95 @@
-import { findFiles, readTextFile, sep } from "./fs.ts";
+import { findFiles, sep } from "./fs.ts";
 
-// @ts-ignore: Bun and URLPattern
+// @ts-ignore: Bun doesn't implement URLPattern: https://github.com/oven-sh/bun/issues/2286
 if (typeof Bun === "object" && !globalThis.URLPattern) {
-  // until https://github.com/oven-sh/bun/issues/2286 is fixed
-  // use variable to prevent wrangler's esbuild from trying to bundle the import
+  // use variable to prevent esbuild from trying to bundle the import
   const polyfill = "urlpattern-polyfill";
   await import(polyfill);
 }
 
-export const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
-export const pregeneratedRoutesName = ".routes.json";
-
-const getRoutesFromFile = async () => {
-  try {
-    const str = await readTextFile(pregeneratedRoutesName);
-    const routes: string[] = JSON.parse(str);
-    if (Array.isArray(routes) && typeof routes[0] === "string") {
-      return routes;
-    } else {
-      throw Error(pregeneratedRoutesName + " did not contain a string array");
-    }
-  // deno-lint-ignore no-explicit-any
-  } catch (e: any) {
-    if (e.code !== "ENOENT") {
-      throw e;
-    }
-  }
+/**
+ * A Mastro Route
+ */
+export interface Route {
+  /** For file-based routes the `filePath`, e.g. `/routes/index.server.ts` */
+  name: string;
+  /**
+   * Module namespace object loaded by `import(route.name)`.
+   * To speed up server startup, we await the import promise only once the route is requested.
+   */
+  module: Promise<Record<string, unknown>> | Record<string, unknown>;
+  /** `URLPattern` with `pathname` set */
+  pattern: URLPattern;
 }
 
-const pathSegments = [];
-const suffix = typeof document === "object" ? "js" : "{ts,js}";
+let routes: Route[] | undefined;
 
-const routeFiles = await getRoutesFromFile() || await findFiles(`routes/**/*.server.${suffix}`);
-for (const filePath of routeFiles) {
-  const fileSegments = filePath.split(sep).slice(2)
-  const segments = fileSegments.map((segment, i) => {
-    const param = segment.match(paramRegex)?.[1];
+/**
+ * Routes getter
+ *
+ * If routes have not been previously set, it loads them from the `routes` directory.
+ */
+export const getRoutes = async (): Promise<Route[]> => {
+  if (!routes) {
+    routes = await getDefaultRoutes();
+  }
+  return routes;
+};
+
+/**
+ * Routes setter
+ */
+export const setRoutes = (newRoutes: Route[]): void => {
+  routes = newRoutes;
+};
+
+const getDefaultRoutes = async () => {
+  const { pathToFileURL } = await import("node:url");
+  return routePathPatterns().then((ps) =>
+    ps.map(({ name, pattern }) => ({
+      name,
+      module: import(pathToFileURL(process.cwd() + name).toString()),
+      pattern,
+    }))
+  );
+}
+
+/**
+ * Returns an array of the file-based routes from `routes/`, but without any loaded modules.
+ * Useful when using esbuild (e.g. with Cloudflare Wrangler).
+ * Also used in the Mastro vscode extension.
+ */
+export const routePathPatterns = async (): Promise<Array<Omit<Route, "module">>> => {
+  const suffix = typeof document === "object" ? "js" : "{ts,js}";
+  const routeFiles = await findFiles(`routes/**/*.server.${suffix}`);
+  const pathPatterns = routeFiles.map((name) => ({ name, pattern: toPattern(name) }));
+
+  // TODO: sort this according to more solid route precedence criteria
+  // currently, it's just reverse alphabetical order, which at least guarantees that
+  // - [...slug] loses out over more specific routes that start with a lowercase char
+  // - longer paths win over their prefixes.
+  return pathPatterns.sort((a, b) => a.name < b.name ? 1 : -1);
+};
+
+const toPattern = (filePath: string) => {
+  const pathParts = filePath.split(sep).slice(2);
+  const parts = pathParts.map((part, i) => {
+    const param = part.match(paramRegex)?.[1];
     if (param) {
-      return param.startsWith("...")
-        ? `:${param.slice(3)}(.*)?`
-        : `:${param}`;
+      return param.startsWith("...") ? `:${param.slice(3)}(.*)?` : `:${param}`;
+    } else if (part === "index.server.ts" || part === "index.server.js") {
+      return "";
     }
-    const parent = fileSegments[i-1];
-    if (segment === "index.server.ts" || segment === "index.server.js") {
+    const folder = pathParts[i - 1];
+    if (folder && (part === `(${folder}).server.ts` || part === `(${folder}).server.js`)) {
       return "";
-    } else if (parent && (segment === `(${parent}).server.ts` || segment === `(${parent}).server.js`)) {
-      return "";
-    } else if (segment.endsWith(".server.ts") || segment.endsWith(".server.js")) {
-      return segment.slice(0, -10);
+    } else if (part.endsWith(".server.ts") || part.endsWith(".server.js")) {
+      return part.slice(0, -10);
     } else {
-      return segment;
+      return part;
     }
   });
-  pathSegments.push({ filePath, segments });
-}
-
-// TODO: sort this according to more solid route precedence criteria
-// currently, it's just reverse alphabetical order, which at least guarantees that
-// - [...slug] loses out over more specific routes that start with a lowercase char
-// - longer paths win over their prefixes.
-pathSegments.sort((a, b) => {
-  if (a.filePath < b.filePath) { return 1; }
-  if (a.filePath > b.filePath) { return -1; }
-  return 0;
-});
-
-/**
- * Array containing all routes that Mastro found.
- * Useful for debugging. Also used by `matchRoute` below,
- * and the static site generator (both extension and `generator.ts`).
- */
-export const routes: Readonly<Array<{ filePath: string; pattern: URLPattern }>> = pathSegments.map(
-  (r) => {
-    const route = {
-      filePath: r.filePath,
-      pattern: new URLPattern({
-        // URLPattern only accepts forward slashes, but in other places we need to use `sep`
-        // see https://github.com/denoland/deno/pull/987#issuecomment-438573356
-        pathname: "/" + r.segments.join("/"),
-      }),
-    };
-    Object.freeze(route);
-    return route;
-  },
-);
-Object.freeze(routes);
-
-/**
- * Take the path of a URL and find the first matching route.
- * This function is mainly used internally by the Mastro server and static site generator.
- */
-export const matchRoute = (
-  urlPath: string,
-): { filePath: string; params: Record<string, string | undefined> } | undefined => {
-  for (const route of routes) {
-    const match = route.pattern.exec(urlPath);
-    if (match) {
-      const { filePath } = route;
-      if (typeof document === "object" && filePath.endsWith(".server.ts")) {
-        throw Error(
-          "TypeScript files are currently not supported in the " +
-            ` Mastro VSCode extension (${filePath})`,
-        );
-      }
-      return {
-        filePath,
-        params: match.pathname.groups || {},
-      };
-    }
-  }
+  return new URLPattern({ pathname: "/" + parts.join("/") });
 };
 
 /**
@@ -125,5 +106,21 @@ export const matchRoute = (
  *   return htmlToResponse(html`Hello ${slug}`);
  * }
  */
-export const getParams = (urlPath: string): Record<string, string | undefined> =>
-  matchRoute(urlPath)?.params || {};
+export const getParams = (urlPath: string): Record<string, string | undefined> => {
+  if (!routes) throw Error(`Call getRoutes or setRoutes once before getParams`);
+  for (const route of routes) {
+    const match = route.pattern.exec(urlPath);
+    if (match) {
+      return match.pathname.groups;
+    }
+  }
+  return {};
+};
+
+/**
+ * Returns true iff the given `filePath` contains dynamic route parameters.
+ */
+export const hasRouteParams = (filePath: string): boolean =>
+  filePath.split(sep).some((segment) => segment.match(paramRegex));
+
+const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;

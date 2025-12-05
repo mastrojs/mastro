@@ -8,4 +8,4 @@
 export * from "./fs.ts";
 export * from "./html.ts";
 export * from "./responses.ts";
-export { getParams, matchRoute, routes } from "./router.ts";
+export * from "./router.ts";
