@@ -1,4 +1,4 @@
-import { Layout } from "../components/Layout.ts"
+import { Layout } from "../../components/Layout.ts";
 import { html, htmlToResponse } from "@mastrojs/mastro";
 
 export const GET = () =>
@@ -11,11 +11,10 @@ export const GET = () =>
             <input data-bind="value=newTitle" data-oninput="updateNewTitle">
             <button>+</button>
           </form>
-          <ul data-bind="renderedTodos">
-          </ul>
+          <ul data-bind="renderedTodos"></ul>
         </todo-list>
 
         <script type="module" src="/todo-list.client.js"></script>
-        `
-    })
-)
+      `,
+    }),
+  );

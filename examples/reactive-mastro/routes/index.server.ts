@@ -1,13 +1,14 @@
 import { Layout } from "../components/Layout.ts";
-import { html, htmlToResponse, readDir } from "@mastrojs/mastro";
+import { findFiles, html, htmlToResponse } from "@mastrojs/mastro";
 
 export const GET = async (): Promise<Response> => {
   const title = "Reactive Mastro demos";
 
-  const examples = (await readDir("routes"))
-    .filter((name) => name.endsWith(".server.ts") && name !== "index.server.ts")
-    .map((name) => name.slice(0, -10))
-    .toSorted((a, b) => a > b ? 1 : -1);
+  const examples = (await findFiles("routes/**/*.server.ts"))
+    .flatMap((name) =>
+      name === "/routes/index.server.ts" ? [] : name.slice(8, -16)
+    )
+    .sort();
 
   return htmlToResponse(
     Layout({
@@ -16,10 +17,10 @@ export const GET = async (): Promise<Response> => {
         <h1>${title}</h1>
         <ul>
           ${examples.map((ex) =>
-          html`
-            <li><p><a href=${ex}>${ex}</a></p></li>
-          `
-        )}
+            html`
+              <li><p><a href="${ex + "/"}">${ex}</a></p></li>
+            `
+          )}
         </ul>
       `,
     }),

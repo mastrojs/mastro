@@ -1,7 +1,7 @@
 {
   "tasks": {
     "start": "deno run --watch=. --allow-env --allow-read --allow-net server.ts",
-    "generate": "deno run -A mastro/generator"
+    "generate": "deno run -A @mastrojs/mastro/generator"
   },
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]

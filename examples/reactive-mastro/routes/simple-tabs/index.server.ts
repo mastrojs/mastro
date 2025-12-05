@@ -1,4 +1,4 @@
-import { Layout } from "../components/Layout.ts"
+import { Layout } from "../../components/Layout.ts";
 import { html, htmlToResponse } from "@mastrojs/mastro";
 
 export const GET = () =>
@@ -22,6 +22,6 @@ export const GET = () =>
         </simple-tabs>
 
         <script type="module" src="/simple-tabs.client.js"></script>
-        `
-    })
-)
+      `,
+    }),
+  );

@@ -1,4 +1,4 @@
-import { Layout } from "../components/Layout.ts";
+import { Layout } from "../../components/Layout.ts";
 import { html, htmlToResponse } from "@mastrojs/mastro";
 
 export const GET = () =>
@@ -9,6 +9,6 @@ export const GET = () =>
         <my-counter></my-counter>
 
         <script type="module" src="/counter.client.js"></script>
-        `,
+      `,
     }),
   );
