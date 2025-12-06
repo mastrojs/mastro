@@ -5,13 +5,18 @@
  * @module
  */
 
+// deno-lint-ignore-file no-explicit-any
+
 import type { Stats } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles } from "./core/fs.ts";
 import { getRoutes, hasRouteParams, type Route } from "./core/router.ts";
 
-interface GenerateConfig {
+/**
+ * Config options for `generate`
+ */
+export interface GenerateConfig {
   /**
    * Create a `.routes.json` file in current folder (not outFolder)
    * for later use with esbuild. Default is `false`.
@@ -37,35 +42,16 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
 
-  const writeFile = async (path: string, data: ReadableStream<Uint8Array>) => {
-    if (typeof Deno === "object") {
-      return Deno.writeFile(path, data);
-    } else {
-      // Bun.write doesn't accept a ReadableStream
-      // and in my experiment failed silently when passed the original `Response` object.
-      const { createWriteStream } = await import("node:fs");
-      const { Readable } = await import("node:stream");
-      return new Promise<void>((resolve, reject) =>
-        // deno-lint-ignore no-explicit-any
-        Readable.fromWeb(data as any)
-          .pipe(createWriteStream(path))
-          .on("finish", resolve)
-          .on("error", reject)
-      );
-    }
-  };
-
   const { outFolder = "generated", onlyPregenerate = false } = config || {};
-  const pregenerateAll = !onlyPregenerate;
 
   await ensureDir(fs.stat("routes"));
   await fs.rm(outFolder, { force: true, recursive: true });
   await fs.mkdir(outFolder);
+
   try {
     for (const route of await getRoutes()) {
       const module = await route.module;
-
-      if (pregenerateAll || module.pregenerate) {
+      if (!onlyPregenerate || module.pregenerate) {
         for (const file of await generatePagesForRoute(route, module)) {
           if (file) {
             const outFilePath = outFolder + file.outFilePath;
@@ -96,6 +82,111 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
 
   console.info(`Generated static site and wrote to ${outFolder}/ folder.`);
 };
+
+/**
+ * Takes a file path for a route file on the local filesystem, runs the
+ * static site generation logic and returns an array of `Response`s with
+ * their respective output file paths. However, this function itself
+ * doesn't actually write anything to disk. Instead, it's called by `generate`
+ * and by the Mastro VSCode extension.
+ */
+export const generatePagesForRoute = async (
+  route: Route,
+  module: Record<string, unknown>,
+): Promise<Array<{ outFilePath: string; response: Response } | undefined>> => {
+  const { name } = route;
+  const { GET, getStaticPaths } = module;
+  if (typeof GET === "function") {
+    const urls = hasRouteParams(name)
+      ? await getStaticUrls(name, getStaticPaths)
+      : [new URL(urlPrefix + route.pattern.pathname)];
+    return Promise.all(urls.map((u) => generatePage(name, GET, u)));
+  } else {
+    throw Error(name + " should export a function named GET");
+  }
+};
+
+// deno-lint-ignore ban-types
+const generatePage = async (filePath: string, GET: Function, url: URL) => {
+  try {
+    const response = await GET(new Request(url));
+    if (response instanceof Response) {
+      const path = url.pathname;
+      const outFilePath = path.endsWith("/") ? `${path}index.html` : path;
+      return { outFilePath, response };
+    } else {
+      console.warn(filePath + ": GET must return a Response object");
+    }
+  } catch (e) {
+    console.error(`\nFailed to generate page with path ${url.pathname}\n`, e);
+  }
+};
+
+const getStaticUrls = async (filePath: string, getStaticPaths: unknown) => {
+  if (typeof getStaticPaths !== "function") {
+    throw Error(
+      filePath +
+        " should export a function named getStaticPaths, returning an array of strings.",
+    );
+  }
+  const paths = await getStaticPaths();
+  if (!Array.isArray(paths) || (paths.length > 0 && typeof paths[0] !== "string")) {
+    throw Error(filePath + "#getStaticPaths must return an array of strings");
+  }
+  return paths.map((p) => {
+    if (p[0] !== "/") {
+      throw Error(filePath + "#getStaticPaths: paths must start with a slash (/)");
+    }
+    return new URL(urlPrefix + p);
+  });
+};
+
+/**
+ * Return the paths of all non-route files from the the local filesystem.
+ * It's called by `generate` and by the VSCode extension.
+ */
+export const getStaticFilePaths = async (): Promise<string[]> =>
+  (await findFiles("routes/**/*")).filter(isStaticFile).map((p) => p.slice(7));
+
+const isStaticFile = (p: string) => !p.endsWith(".server.ts") && !p.endsWith(".server.js");
+
+const writeFile = async (path: string, data: ReadableStream<Uint8Array>) => {
+  if (typeof Deno === "object") {
+    return Deno.writeFile(path, data);
+  } else {
+    // Bun.write doesn't accept a ReadableStream
+    // and in my experiment failed silently when passed the original `Response` object.
+    const { createWriteStream } = await import("node:fs");
+    const { Readable } = await import("node:stream");
+    return new Promise<void>((resolve, reject) =>
+      Readable.fromWeb(data as any)
+        .pipe(createWriteStream(path))
+        .on("finish", resolve)
+        .on("error", reject)
+    );
+  }
+};
+
+const ensureDir = async (statsP: Promise<Stats>) => {
+  const noRoutesMsg = "No 'routes' folder found.\nAre you in the right place?";
+  try {
+    const routesDir = await statsP;
+    if (!routesDir.isDirectory()) {
+      console.error(noRoutesMsg);
+      process.exit(1);
+    }
+  } catch (e: any) {
+    if (e.code === "ENOENT") {
+      console.error(noRoutesMsg);
+      process.exit(1);
+    } else {
+      throw e;
+    }
+  }
+};
+
+// just a dummy prefix so `new URL` doesn't throw
+const urlPrefix = "http://127.0.0.1";
 
 if (typeof document === "undefined" && import.meta.main) {
   const { parseArgs } = await import("node:util");
@@ -135,98 +226,3 @@ if (typeof document === "undefined" && import.meta.main) {
     });
   }
 }
-
-/**
- * Takes a file path for a route file on the local filesystem, runs the
- * static site generation logic and returns an array of output strings
- * and their respective output file paths. However, this function itself
- * doesn't actually write anything to disk. Instead, it's called by `generate`
- * and by the VSCode extension.
- */
-export const generatePagesForRoute = async (
-  route: Route,
-  module: Record<string, unknown>,
-): Promise<Array<{ outFilePath: string; response: Response } | undefined>> => {
-  const { name } = route;
-  const { GET, getStaticPaths } = module;
-  if (typeof GET === "function") {
-    const urls = hasRouteParams(name)
-      ? await getStaticUrls(name, getStaticPaths)
-      : [new URL(urlPrefix + route.pattern.pathname)];
-    return Promise.all(urls.map((u) => generatePage(name, GET, u)));
-  } else {
-    throw Error(name + " should export a function named GET");
-  }
-};
-
-const getStaticUrls = async (filePath: string, getStaticPaths: unknown) => {
-  if (typeof getStaticPaths !== "function") {
-    throw Error(
-      filePath +
-        " should export a function named getStaticPaths, returning an array of strings.",
-    );
-  }
-  const paths = await getStaticPaths();
-  if (!Array.isArray(paths) || (paths.length > 0 && typeof paths[0] !== "string")) {
-    throw Error(filePath + "#getStaticPaths must return an array of strings");
-  }
-  return paths.map((p) => {
-    if (p[0] !== "/") {
-      throw Error(filePath + "#getStaticPaths: paths must start with a slash (/)");
-    }
-    return new URL(urlPrefix + p);
-  });
-};
-
-/**
- * Return the paths of all non-route files from the the local filesystem.
- * It's called by `generate` and by the VSCode extension.
- */
-export const getStaticFilePaths = async (): Promise<string[]> =>
-  (await findFiles("routes/**/*"))
-    .filter(isStaticFile).map((p) => p.slice(7));
-
-const isStaticFile = (p: string) => !p.endsWith(".server.ts") && !p.endsWith(".server.js");
-
-const generatePage = async (
-  filePath: string,
-  // deno-lint-ignore ban-types
-  GET: Function,
-  url: URL,
-) => {
-  try {
-    const response = await GET(new Request(url));
-    if (response instanceof Response) {
-      const path = url.pathname;
-      return {
-        outFilePath: path.endsWith("/") ? `${path}index.html` : path,
-        response,
-      };
-    } else {
-      console.warn(filePath + ": GET must return a Response object");
-    }
-  } catch (e) {
-    console.error(`\nFailed to generate page with path ${url.pathname}\n`, e);
-  }
-};
-
-const ensureDir = async (statsP: Promise<Stats>) => {
-  const noRoutesMsg = "No 'routes' folder found.\nAre you in the right place?";
-  try {
-    const routesDir = await statsP;
-    if (!routesDir.isDirectory()) {
-      console.error(noRoutesMsg);
-      process.exit(1);
-    }
-  } catch (e: any) {
-    if (e.code === "ENOENT") {
-      console.error(noRoutesMsg);
-      process.exit(1);
-    } else {
-      throw e;
-    }
-  }
-};
-
-// just a dummy prefix so `new URL` doesn't throw
-const urlPrefix = "http://127.0.0.1";
