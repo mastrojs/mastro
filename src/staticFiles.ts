@@ -22,6 +22,10 @@ export const tsToJs = (text: string): Promise<string> =>
 
 /**
  * Utility function for the server to serve static files as well.
+ *
+ * 1. look for matching file in `generated` folder
+ * 2. look for matching file in `routes` folder.
+ *     - if requested url ends in `.client.js`, transpile the corresponding `.ts` file
  */
 export const serveStaticFile = async (
   req: Request,

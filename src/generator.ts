@@ -22,7 +22,8 @@ interface GenerateConfig {
    */
   outFolder?: string;
   /**
-   * Only pregenerate routes with `export const pregenerate = true`.
+   * Only pregenerate routes with `export const pregenerate = true`,
+   * but still copy over static files (in case you want to serve those via CDN).
    * Useful as a build step for servers.
    */
   onlyPregenerate?: boolean;
@@ -86,7 +87,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
       const { tsToJs } = await import("./staticFiles.ts");
       const text = await fs.readFile("routes" + filePath, { encoding: "utf8" });
       fs.writeFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
-    } else if (pregenerateAll) {
+    } else {
       const outPath = outFolder + filePath;
       await fs.mkdir(dirname(outPath), { recursive: true });
       await fs.copyFile("routes" + filePath, outPath);
