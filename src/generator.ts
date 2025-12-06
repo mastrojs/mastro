@@ -59,6 +59,7 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
 
   await ensureDir(fs.stat("routes"));
   await fs.rm(outFolder, { force: true, recursive: true });
+  await fs.mkdir(outFolder);
   try {
     for (const route of await getRoutes()) {
       const module = await route.module;
