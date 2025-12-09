@@ -219,7 +219,15 @@ const getWebviewContent = async (
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
           }
 
-          const { routePathPatterns } = await import("@mastrojs/mastro")
+          const { getFileBasedRoutes } = await import("@mastrojs/mastro/generator")
+          const routes = await getFileBasedRoutes(name => {
+            try {
+              return import(name);
+            } catch (e) {
+              const error = "Failed to import route " + name + ": " + e;
+              vscode.postMessage({ type: "showErrorInOutputChannel", error });
+            }
+          });
 
           const replaceAsync = async (str, regex, asyncFn) => {
             const promises = []
@@ -283,17 +291,22 @@ const getWebviewContent = async (
                 return
               }
 
-              const urlStr = "http://localhost" + path
-              const routes = await routePathPatterns();
-              const route = routes.find(r => r.pattern.exec(urlStr));
+              const req = new Request("http://localhost" + path);
+              const route = routes.find((r) => {
+                const match = r.pattern.exec(req.url);
+                if (match) {
+                  req._params = match.pathname.groups;
+                }
+                return match;
+              });
               if (route?.name.endsWith(".server.ts")) {
                 iframe.srcdoc = "<p>TypeScript files are currently not supported in the Mastro VSCode extension ("
                   + filePath + ")</p>";
               } else if (route) {
                 try {
-                  const { GET } = await import(route.name);
-                  if (typeof GET === "function") {
-                    const res = await GET(new Request(urlStr))
+                  const { handler } = route;
+                  if (route.method === "GET" && typeof handler === "function") {
+                    const res = await handler(req);
                     if (res instanceof Response) {
                       const output = await res.text()
                       iframe.srcdoc = await transformOutput(path, output)
@@ -301,7 +314,7 @@ const getWebviewContent = async (
                       iframe.srcdoc = '<h2>Failed to render page</h2><p>GET must return a Response object</p>'
                     }
                   } else {
-                    iframe.srcdoc = '<p>' + route.filePath + ' must export a function named GET</p>'
+                    iframe.srcdoc = '<p>' + route.name + ' must export a function named GET</p>'
                   }
                 } catch (e) {
                   console.error(e)
@@ -363,26 +376,19 @@ const getWebviewContent = async (
 
               const files = (await getStaticFilePaths()).map(outFilePath => ({ outFilePath }))
               for (const route of routes) {
-                const { filePath } = route
+                const { name } = route;
                 try {
-                  // we have to do the import here and cannot factor it out to mastro/generator
-                  const module = await import(filePath)
-                  try {
-                    for (const page of await generatePagesForRoute(route, module)) {
-                      if (page) {
-                        files.push({
-                          outFilePath: page.outFilePath,
-                          output: await page.response.bytes(),
-                        });
-                      }
+                  for (const page of await generatePagesForRoute(route)) {
+                    if (page) {
+                      files.push({
+                        outFilePath: page.outFilePath,
+                        output: await page.response.bytes(),
+                      });
                     }
-                  } catch (e) {
-                    const error = "Failed to generate route " + filePath + ": " +
-                      (e?.message || e?.code || JSON.stringify(e))
-                    vscode.postMessage({ type: "showErrorInOutputChannel", error });
                   }
                 } catch (e) {
-                  const error = "Failed to import route " + filePath + ": " + e;
+                  const error = "Failed to generate route " + name + ": " +
+                    (e?.message || e?.code || JSON.stringify(e))
                   vscode.postMessage({ type: "showErrorInOutputChannel", error });
                 }
               }

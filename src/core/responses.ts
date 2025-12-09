@@ -1,6 +1,23 @@
 import { type Html, renderToStream } from "./html.ts";
 
 /**
+ * Take the path of a URL and extract its parameters.
+ * See the [Mastro Guide](https://mastrojs.github.io/guide/static-blog-from-markdown-files/#detail-pages).
+ *
+ * For example in `routes/[slug].server.ts`:
+ *
+ * ```ts
+ * import { getParams, html, htmlToResponse } from "@mastrojs/mastro";
+ *
+ * export const GET = (req) => {
+ *   const { slug } = getParams(req);
+ *   return htmlToResponse(html`Hello ${slug}`);
+ * }
+ */
+export const getParams = (req: Request): Record<string, string | undefined> =>
+  (req as any)._params || {};
+
+/**
  * Create a standard Response object with `Content-Type: text/html` from a string
  * or `AsyncIterable<string>` (in which case it will stream it).
  */

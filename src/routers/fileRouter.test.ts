@@ -23,11 +23,11 @@ import { assertEquals } from "jsr:@std/assert";
 
 Deno.test("route precedence order", async () => {
   // load router.ts only after `document.fs` has been patched.
-  const { getRoutes } = await import("./router.ts");
+  const { getRoutes } = await import("./fileRouter.ts");
   const routes = await getRoutes();
 
   // swalled errors from loading non-existing modules
-  routes.forEach(r => (r.module as Promise<unknown>).catch(() => {}));
+  // routes.forEach(r => (r.handler as Promise<unknown>).catch(() => {}));
 
   assertEquals(routes.map(r => r.name), [
     "/routes/index.server.ts",

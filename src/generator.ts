@@ -11,7 +11,9 @@ import type { Stats } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles } from "./core/fs.ts";
-import { getRoutes, hasRouteParams, type Route } from "./core/router.ts";
+import type { Route } from "./routers/common.ts";
+import { getRoutes } from "./routers/fileRouter.ts";
+export { getFileBasedRoutes } from "./routers/fileRouter.ts";
 
 /**
  * Config options for `generate`
@@ -32,27 +34,37 @@ export interface GenerateConfig {
    * Useful as a build step for servers.
    */
   onlyPregenerate?: boolean;
+  /**
+   * For use with the programmatic router. Default is to fall back on the file-based router.
+   */
+  routes?: Route[];
 }
 
 /**
  * Generate all pages for the static site and write them to disk.
  * Can only be used with Deno or Node.js – not in the VSCode extension.
  */
-export const generate = async (config?: GenerateConfig): Promise<void> => {
+export const generate = async (config: GenerateConfig | undefined = {}): Promise<void> => {
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
 
-  const { outFolder = "generated", onlyPregenerate = false } = config || {};
+  const fileBasedRouter = !config.routes;
+  const { outFolder = "generated", onlyPregenerate = false, routes = await getRoutes() } = config;
 
   await ensureDir(fs.stat("routes"));
   await fs.rm(outFolder, { force: true, recursive: true });
   await fs.mkdir(outFolder);
 
   try {
-    for (const route of await getRoutes()) {
-      const module = await route.module;
-      if (!onlyPregenerate || module.pregenerate) {
-        for (const file of await generatePagesForRoute(route, module)) {
+    for (const route of routes) {
+      if (route.method === "GET" && (!onlyPregenerate || route.pregenerate)) {
+        if (fileBasedRouter && typeof route.getStaticPaths !== "function") {
+          throw Error(
+            route.name +
+              " should export a function named getStaticPaths, returning an array of strings.",
+          );
+        }
+        for (const file of await generatePagesForRoute(route)) {
           if (file) {
             const outFilePath = outFolder + file.outFilePath;
             await fs.mkdir(dirname(outFilePath), { recursive: true });
@@ -92,53 +104,39 @@ export const generate = async (config?: GenerateConfig): Promise<void> => {
  */
 export const generatePagesForRoute = async (
   route: Route,
-  module: Record<string, unknown>,
 ): Promise<Array<{ outFilePath: string; response: Response } | undefined>> => {
-  const { name } = route;
-  const { GET, getStaticPaths } = module;
-  if (typeof GET === "function") {
-    const urls = hasRouteParams(name)
-      ? await getStaticUrls(name, getStaticPaths)
-      : [new URL(urlPrefix + route.pattern.pathname)];
-    return Promise.all(urls.map((u) => generatePage(name, GET, u)));
-  } else {
-    throw Error(name + " should export a function named GET");
-  }
+  const { name, getStaticPaths } = route;
+  const paths = getStaticPaths
+    ? validateGetStaticPaths(name, await getStaticPaths())
+    : [route.pattern.pathname];
+  return Promise.all(paths.map((p) => generatePage(route, new URL(urlPrefix + p))));
 };
 
-// deno-lint-ignore ban-types
-const generatePage = async (filePath: string, GET: Function, url: URL) => {
+const generatePage = async (route: Route, url: URL) => {
+  const { pathname } = url;
   try {
-    const response = await GET(new Request(url));
+    const req = new Request(url);
+    (req as any)._params = route.pattern.exec(url)?.pathname.groups;
+    const response = await route.handler(req);
     if (response instanceof Response) {
-      const path = url.pathname;
-      const outFilePath = path.endsWith("/") ? `${path}index.html` : path;
+      const outFilePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
       return { outFilePath, response };
     } else {
-      console.warn(filePath + ": GET must return a Response object");
+      console.warn(route.name + ": GET must return a Response object");
     }
   } catch (e) {
-    console.error(`\nFailed to generate page with path ${url.pathname}\n`, e);
+    console.error(`\nFailed to generate page with path ${pathname}\n`, e);
   }
 };
 
-const getStaticUrls = async (filePath: string, getStaticPaths: unknown) => {
-  if (typeof getStaticPaths !== "function") {
-    throw Error(
-      filePath +
-        " should export a function named getStaticPaths, returning an array of strings.",
-    );
-  }
-  const paths = await getStaticPaths();
+const validateGetStaticPaths = (name: string, paths: string[]) => {
   if (!Array.isArray(paths) || (paths.length > 0 && typeof paths[0] !== "string")) {
-    throw Error(filePath + "#getStaticPaths must return an array of strings");
+    throw Error(name + "#getStaticPaths must return an array of strings");
   }
-  return paths.map((p) => {
-    if (p[0] !== "/") {
-      throw Error(filePath + "#getStaticPaths: paths must start with a slash (/)");
-    }
-    return new URL(urlPrefix + p);
-  });
+  if (paths.some((p) => p[0] !== "/")) {
+    throw Error(name + "#getStaticPaths: paths must start with a slash (/)");
+  }
+  return paths;
 };
 
 /**
