@@ -1,4 +1,5 @@
-import { findFiles, sep } from "./fs.ts";
+import { findFiles, sep } from "../core/fs.ts";
+import { httpMethods, type Route } from "./common.ts";
 
 // @ts-ignore: Bun doesn't implement URLPattern: https://github.com/oven-sh/bun/issues/2286
 if (typeof Bun === "object" && !globalThis.URLPattern) {
@@ -7,22 +8,7 @@ if (typeof Bun === "object" && !globalThis.URLPattern) {
   await import(polyfill);
 }
 
-/**
- * A Mastro Route
- */
-export interface Route {
-  /** For file-based routes the `filePath`, e.g. `/routes/index.server.ts` */
-  name: string;
-  /**
-   * Module namespace object loaded by `import(route.name)`.
-   * To speed up server startup, we await the import promise only once the route is requested.
-   */
-  module: Promise<Record<string, unknown>> | Record<string, unknown>;
-  /** `URLPattern` with `pathname` set */
-  pattern: URLPattern;
-}
-
-let routes: Route[] | undefined;
+let routes: Promise<Route[]> | Route[] | undefined;
 
 /**
  * Routes getter
@@ -31,7 +17,9 @@ let routes: Route[] | undefined;
  */
 export const getRoutes = async (): Promise<Route[]> => {
   if (!routes) {
-    routes = await getDefaultRoutes();
+    const { pathToFileURL } = await import("node:url");
+    // don't await routes to speed up server startup
+    routes = getFileBasedRoutes((name) => import(pathToFileURL(process.cwd() + name).toString()));
   }
   return routes;
 };
@@ -43,23 +31,37 @@ export const setRoutes = (newRoutes: Route[]): void => {
   routes = newRoutes;
 };
 
-const getDefaultRoutes = async () => {
-  const { pathToFileURL } = await import("node:url");
-  return routePathPatterns().then((ps) =>
-    ps.map(({ name, pattern }) => ({
-      name,
-      module: import(pathToFileURL(process.cwd() + name).toString()),
-      pattern,
-    }))
-  );
-}
-
 /**
- * Returns an array of the file-based routes from `routes/`, but without any loaded modules.
+ * Returns an array of the file-based routes from `routes/`, loaded with the provided `loader`.
  * Useful when using esbuild (e.g. with Cloudflare Wrangler).
- * Also used in the Mastro vscode extension.
+ * Also used by the Mastro vscode extension.
  */
-export const routePathPatterns = async (): Promise<Array<Omit<Route, "module">>> => {
+export const getFileBasedRoutes = async (
+  loader: (name: string) => Promise<Record<string, unknown>>,
+): Promise<Route[]> => {
+  const ps = await routePathPatterns();
+  const modules = await Promise.all(ps.map(async ({ name, pattern }) => ({
+    module: await loader(name),
+    name,
+    pattern,
+  })));
+  return modules.flatMap(({ module, name, pattern }) =>
+    (typeof module.ALL === "function" ? ["ALL"] as const : httpMethods).flatMap((method) =>
+      module[method]
+        ? {
+          name,
+          handler: module[method],
+          method: method === "ALL" ? "all" : method,
+          pattern,
+          getStaticPaths: module.getStaticPaths,
+          pregenerate: module.pregenerate,
+        } as Route
+        : []
+    )
+  );
+};
+
+const routePathPatterns = async () => {
   const suffix = typeof document === "object" ? "js" : "{ts,js}";
   const routeFiles = await findFiles(`routes/**/*.server.${suffix}`);
   const pathPatterns = routeFiles.map((name) => ({ name, pattern: toPattern(name) }));
@@ -91,36 +93,5 @@ const toPattern = (filePath: string) => {
   });
   return new URLPattern({ pathname: "/" + parts.join("/") });
 };
-
-/**
- * Take the path of a URL and extract its parameters.
- * See the [Mastro Guide](https://mastrojs.github.io/guide/static-blog-from-markdown-files/#detail-pages).
- *
- * For example in `routes/[slug].server.ts`:
- *
- * ```ts
- * import { getParams, html, htmlToResponse } from "@mastrojs/mastro";
- *
- * export const GET = (req) => {
- *   const { slug } = getParams(req.url);
- *   return htmlToResponse(html`Hello ${slug}`);
- * }
- */
-export const getParams = (urlPath: string): Record<string, string | undefined> => {
-  if (!routes) throw Error(`Call getRoutes or setRoutes once before getParams`);
-  for (const route of routes) {
-    const match = route.pattern.exec(urlPath);
-    if (match) {
-      return match.pathname.groups;
-    }
-  }
-  return {};
-};
-
-/**
- * Returns true iff the given `filePath` contains dynamic route parameters.
- */
-export const hasRouteParams = (filePath: string): boolean =>
-  filePath.split(sep).some((segment) => segment.match(paramRegex));
 
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;

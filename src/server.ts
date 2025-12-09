@@ -1,45 +1,65 @@
 /**
- * This module exports a `fetch` handler that can be passed to
- * [Deno.serve](https://docs.deno.com/api/deno/~/Deno.serve),
- * or used directly with [deno serve](https://docs.deno.com/runtime/reference/cli/serve/)
- * command line interface.
+ * This module exports various ways to create a Mastro server.
  * @module
  */
 
-import { getRoutes } from "./core/router.ts";
+import type { Handler, Route } from "./routers/common.ts";
+export type { Handler, Route } from "./routers/common.ts";
+
+export * from "./routers/fileRouter.ts";
+export * from "./routers/programmaticRouter.ts";
 
 /**
- * Fetch handler to serve Mastro routes and static files
+ * Options for `createHandler`
  */
-const fetch = async (req: Request): Promise<Response> => {
+export interface CreateHandlerOpts {
+  routes?: Route[];
+  serveStaticFiles?: false;
+}
+
+/**
+ * Create fetch handler that serves Mastro routes and static files
+ */
+export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: Request) => {
+  const fileRouterPath = "./routers/fileRouter.ts"; // in variable to prevent bundling by esbuild
+  const {
+    routes = await import(fileRouterPath).then((mod) => mod.getRoutes()) as Route[],
+    serveStaticFiles = true,
+  } = opts || {};
   const url = new URL(req.url);
   const isNotFavicon = url.pathname !== "/favicon.ico";
   const isDev = isDevServer(url);
 
   try {
     const method = req.method.toUpperCase();
-    if (method === "GET" && navigator.userAgent !== "Cloudflare-Workers") {
-      const { serveStaticFile } = await import("./staticFiles.ts");
+    if (method === "GET" && serveStaticFiles) {
+      const modPath = "./staticFiles.ts"; // in variable to prevent bundling by esbuild
+      const { serveStaticFile } = await import(modPath);
       const fileRes = await serveStaticFile(req, isDev);
       if (fileRes) {
         return fileRes;
       }
     }
 
-    const routes = await getRoutes();
-    const route = routes.find((r) => r.pattern.exec(req.url));
+    const route = routes.find((r) => {
+      const match = r.pattern.exec(req.url);
+      if (match) {
+        (req as any)._params = match.pathname.groups;
+      }
+      return match;
+    });
+
     if (route) {
-      const module = await route.module;
       if (isDev) {
         console.info(`${method} ${url.pathname + url.search} => ${route.name}`);
       }
-      const handler = module[method];
-      if (typeof handler !== "function") {
+      const { handler, pregenerate } = route;
+      if (method !== route.method || typeof handler !== "function") {
         return new Response(`No function ${method} exported by ${route.name}`, {
           status: 405,
         });
       }
-      if (module.pregenerate && !isDev) {
+      if (pregenerate && !isDev) {
         return new Response(
           "404 Route was hit on non-localhost but exports pregenerate=true. " +
             "Did you forget to run `mastro/generator --only-pregenerate` as a build step?",
@@ -72,10 +92,11 @@ const fetch = async (req: Request): Promise<Response> => {
 
 /**
  * Default export with a `fetch` handler.
- * See [fetch handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/)
- * and [Deno.ServeDefaultExport](https://docs.deno.com/api/deno/~/Deno.ServeDefaultExport).
+ *
+ * Can be passed to [Deno.serve](https://docs.deno.com/api/deno/~/Deno.serve),
+ * or used directly with the [deno serve](https://docs.deno.com/runtime/reference/cli/serve/) CLI.
  */
-const defaultExport: { fetch: (req: Request) => Promise<Response> } = { fetch };
+const defaultExport: { fetch: Handler } = { fetch: createHandler() };
 export default defaultExport;
 
 /**
