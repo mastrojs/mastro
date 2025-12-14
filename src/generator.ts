@@ -10,13 +10,13 @@ import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
-import { getRoutes } from "./routers/fileRouter.ts";
+import { getRoutes, hasRouteParams } from "./routers/fileRouter.ts";
 export { getFileBasedRoutes } from "./routers/fileRouter.ts";
 
 /**
  * Config options for `generate`
  */
-export interface GenerateConfig {
+export interface GenerateOpts {
   /**
    * Create a `.routes.json` file in current folder (not outFolder)
    * for later use with esbuild. Default is `false`.
@@ -42,40 +42,38 @@ export interface GenerateConfig {
  * Generate all pages for the static site and write them to disk.
  * Can only be used with Deno or Node.js – not in the VSCode extension.
  */
-export const generate = async (config: GenerateConfig | undefined = {}): Promise<void> => {
+export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
 
-  const fileBasedRouter = !config.routes;
-  const { outFolder = "generated", onlyPregenerate = false, routes = await getRoutes() } = config;
+  const fileBasedRouter = !opts.routes;
+  const { outFolder = "generated", onlyPregenerate = false, routes = await getRoutes() } = opts;
 
-  await ensureDir(fs.stat("routes"));
+  if (fileBasedRouter && routes.length === 0) {
+    await ensureDir(fs.stat("routes"));
+  }
   await fs.rm(outFolder, { force: true, recursive: true });
   await fs.mkdir(outFolder);
 
-  try {
-    for (const route of routes) {
-      if (route.method === "GET" && (!onlyPregenerate || route.pregenerate)) {
-        if (fileBasedRouter && typeof route.getStaticPaths !== "function") {
-          throw Error(
-            route.name +
-              " should export a function named getStaticPaths, returning an array of strings.",
-          );
-        }
-        for (const file of await generatePagesForRoute(route)) {
-          if (file) {
-            const outFilePath = outFolder + file.outFilePath;
-            await fs.mkdir(dirname(outFilePath), { recursive: true });
-            const { body } = file.response;
-            if (body) {
-              writeFile(outFilePath, body);
-            }
+  for (const route of routes) {
+    const { name } = route;
+    if (route.method === "GET" && (!onlyPregenerate || route.pregenerate)) {
+      if (fileBasedRouter && hasRouteParams(name) && typeof route.getStaticPaths !== "function") {
+        throw Error(
+          name + " should export a function named getStaticPaths, returning an array of strings.",
+        );
+      }
+      for (const file of await generatePagesForRoute(route)) {
+        if (file) {
+          const outFilePath = outFolder + file.outFilePath;
+          await fs.mkdir(dirname(outFilePath), { recursive: true });
+          const { body } = file.response;
+          if (body) {
+            writeFile(outFilePath, body);
           }
         }
       }
     }
-  } catch (e) {
-    console.error(e);
   }
 
   for (const filePath of await getStaticFilePaths()) {
@@ -123,7 +121,7 @@ const generatePage = async (route: Route, url: URL) => {
       console.warn(route.name + ": GET must return a Response object");
     }
   } catch (e) {
-    console.error(`\nFailed to generate page with path ${pathname}\n`, e);
+    console.error(`\nFailed to generate path ${pathname} on route ${route.name}\n`, e);
   }
 };
 
@@ -172,12 +170,8 @@ const ensureDir = async (statsP: Promise<Stats>) => {
       process.exit(1);
     }
   } catch (e: any) {
-    if (e.code === "ENOENT") {
-      console.error(noRoutesMsg);
-      process.exit(1);
-    } else {
-      throw e;
-    }
+    console.error(e.code === "ENOENT" ? noRoutesMsg : e);
+    process.exit(1);
   }
 };
 
@@ -210,7 +204,7 @@ if (typeof document === "undefined" && import.meta.main) {
       const opts = keys.map((key) => ` --${key.padEnd(maxKeyLen)}  ${options[key].description}`);
       console.info("Options:\n" + opts.join("\n"));
     } else {
-      generate({
+      await generate({
         outFolder: values.output as string,
         onlyPregenerate: !!values["only-pregenerate"],
       });

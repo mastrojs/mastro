@@ -1,5 +1,5 @@
-import { generate, type GenerateConfig } from "../generator.ts";
-import { createHandler, CreateHandlerOpts } from "../server.ts";
+import { generate, type GenerateOpts } from "../generator.ts";
+import { createHandler, type CreateHandlerOpts } from "../server.ts";
 import type { Handler, HttpMethod, Route } from "./common.ts";
 
 /**
@@ -41,7 +41,7 @@ export class Mastro {
   }
 
   /** Generate static site */
-  generate(opts?: GenerateConfig) {
+  generate(opts?: GenerateOpts) {
     if (!opts) {
       opts = {};
     }

@@ -1,19 +1,11 @@
 import { findFiles, sep } from "../core/fs.ts";
 import { httpMethods, type Route } from "./common.ts";
 
-// @ts-ignore: Bun doesn't implement URLPattern: https://github.com/oven-sh/bun/issues/2286
-if (typeof Bun === "object" && !globalThis.URLPattern) {
-  // use variable to prevent esbuild from trying to bundle the import
-  const polyfill = "urlpattern-polyfill";
-  await import(polyfill);
-}
-
 let routes: Promise<Route[]> | Route[] | undefined;
 
 /**
- * Routes getter
- *
- * If routes have not been previously set, it loads them from the `routes` directory.
+ * Returns cached routes.
+ * If routes have not been previously loaded, it loads them from the `routes` directory.
  */
 export const getRoutes = async (): Promise<Route[]> => {
   if (!routes) {
@@ -25,13 +17,6 @@ export const getRoutes = async (): Promise<Route[]> => {
 };
 
 /**
- * Routes setter
- */
-export const setRoutes = (newRoutes: Route[]): void => {
-  routes = newRoutes;
-};
-
-/**
  * Returns an array of the file-based routes from `routes/`, loaded with the provided `loader`.
  * Useful when using esbuild (e.g. with Cloudflare Wrangler).
  * Also used by the Mastro vscode extension.
@@ -39,12 +24,19 @@ export const setRoutes = (newRoutes: Route[]): void => {
 export const getFileBasedRoutes = async (
   loader: (name: string) => Promise<Record<string, unknown>>,
 ): Promise<Route[]> => {
-  const ps = await routePathPatterns();
-  const modules = await Promise.all(ps.map(async ({ name, pattern }) => ({
-    module: await loader(name),
-    name,
-    pattern,
-  })));
+  const suffix = typeof document === "object" ? "js" : "{ts,js}";
+  const routeFiles = await findFiles(`routes/**/*.server.${suffix}`);
+
+  // Perhaps we should sort this according to more solid route precedence criteria.
+  // Currently, it's just reverse alphabetical order, which at least guarantees that
+  // - [...slug] loses out over more specific routes that start with a lowercase char
+  // - longer paths win over their prefixes.
+  routeFiles.sort((a, b) => a < b ? 1 : -1);
+
+  const modules = await Promise.all(routeFiles.map(async (name) => (
+    { module: await loader(name), name, pattern: toPattern(name) }
+  )));
+
   return modules.flatMap(({ module, name, pattern }) =>
     (typeof module.ALL === "function" ? ["ALL"] as const : httpMethods).flatMap((method) =>
       module[method]
@@ -59,18 +51,6 @@ export const getFileBasedRoutes = async (
         : []
     )
   );
-};
-
-const routePathPatterns = async () => {
-  const suffix = typeof document === "object" ? "js" : "{ts,js}";
-  const routeFiles = await findFiles(`routes/**/*.server.${suffix}`);
-  const pathPatterns = routeFiles.map((name) => ({ name, pattern: toPattern(name) }));
-
-  // TODO: sort this according to more solid route precedence criteria
-  // currently, it's just reverse alphabetical order, which at least guarantees that
-  // - [...slug] loses out over more specific routes that start with a lowercase char
-  // - longer paths win over their prefixes.
-  return pathPatterns.sort((a, b) => a.name < b.name ? 1 : -1);
 };
 
 const toPattern = (filePath: string) => {
@@ -93,5 +73,11 @@ const toPattern = (filePath: string) => {
   });
   return new URLPattern({ pathname: "/" + parts.join("/") });
 };
+
+/**
+ * Returns true iff the given `filePath` contains dynamic route parameters.
+ */
+export const hasRouteParams = (filePath: string): boolean =>
+  filePath.split(sep).some((segment) => segment.match(paramRegex));
 
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;

@@ -16,16 +16,16 @@ import { assertEquals } from "jsr:@std/assert";
       const e: any = Error("File not found");
       e.code = "ENOENT";
       throw e;
-    }
-  }
-}
+    },
+  },
+};
 
 Deno.test("fileRouter: route precedence order", async () => {
   // load router.ts only after `document.fs` has been patched.
   const { getFileBasedRoutes } = await import("./fileRouter.ts");
   const routes = await getFileBasedRoutes(() => Promise.resolve({ GET: () => {} }));
 
-  assertEquals(routes.map(r => r.name), [
+  assertEquals(routes.map((r) => r.name), [
     "/routes/index.server.ts",
     "/routes/blog/override.server.ts",
     "/routes/blog/index.server.ts",

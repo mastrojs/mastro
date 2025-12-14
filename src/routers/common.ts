@@ -1,3 +1,10 @@
+// @ts-ignore: Bun doesn't implement URLPattern: https://github.com/oven-sh/bun/issues/2286
+if (typeof Bun === "object" && !globalThis.URLPattern) {
+  // use variable to prevent esbuild from trying to bundle the import
+  const polyfill = "urlpattern-polyfill";
+  await import(polyfill);
+}
+
 /** Supported HTTP methods */
 export const httpMethods = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"] as const;
 
