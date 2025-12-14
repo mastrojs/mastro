@@ -161,7 +161,6 @@ const escapeForAttribute = (str: string) =>
     .replaceAll("'", "&#39;")
     .replaceAll('"', "&quot;");
 
-// deno-lint-ignore no-explicit-any
 const isAsyncIterable = <T>(val: any): val is AsyncIterable<T> =>
   val && typeof val[Symbol.asyncIterator] === "function";
 

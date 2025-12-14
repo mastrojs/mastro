@@ -1,6 +1,5 @@
 import { assertEquals } from "jsr:@std/assert";
 
-// deno-lint-ignore no-explicit-any
 (globalThis.document as any) = {
   fs: {
     findFiles: () => {

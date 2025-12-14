@@ -4,7 +4,6 @@ const fs = typeof document === "object"
 
 // we use document.fs because dnt would add a shim for window https://github.com/denoland/dnt/issues/454
 const vscodeExtensionFs = typeof document === "object"
-  // deno-lint-ignore no-explicit-any
   ? (document as any).fs
   : undefined;
 

@@ -11,11 +11,11 @@
     "./server": "./src/server.ts"
   },
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
+    "lib": ["deno.ns", "dom", "node"]
   },
   "lint": {
     "rules": {
-      "exclude": ["no-process-global"]
+      "exclude": ["no-explicit-any", "no-process-global"]
     }
   },
   "fmt": {

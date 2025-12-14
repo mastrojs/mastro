@@ -5,8 +5,6 @@
  * @module
  */
 
-// deno-lint-ignore-file no-explicit-any
-
 import type { Stats } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
@@ -204,23 +202,21 @@ if (typeof document === "undefined" && import.meta.main) {
       type: "boolean",
     },
   };
-  let values;
   try {
-    values = parseArgs({ options }).values;
+    const values = parseArgs({ options }).values;
+    if (values.help) {
+      const keys = Object.keys(options);
+      const maxKeyLen = Math.max(...keys.map((k) => k.length));
+      const opts = keys.map((key) => ` --${key.padEnd(maxKeyLen)}  ${options[key].description}`);
+      console.info("Options:\n" + opts.join("\n"));
+    } else {
+      generate({
+        outFolder: values.output as string,
+        onlyPregenerate: !!values["only-pregenerate"],
+      });
+    }
   } catch (e: any) {
     console.error(`\n${e.message || e}`);
     process.exit(1);
-  }
-
-  if (values.help) {
-    const keys = Object.keys(options);
-    const maxKeyLen = Math.max(...keys.map((k) => k.length));
-    const opts = keys.map((key) => ` --${key.padEnd(maxKeyLen)}  ${options[key].description}`);
-    console.info("Options:\n" + opts.join("\n"));
-  } else {
-    generate({
-      outFolder: values.output as string,
-      onlyPregenerate: !!values["only-pregenerate"],
-    });
   }
 }
