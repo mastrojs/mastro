@@ -27,7 +27,6 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
     serveStaticFiles = true,
   } = opts || {};
   const url = new URL(req.url);
-  const isNotFavicon = url.pathname !== "/favicon.ico";
   const isDev = isDevServer(url);
 
   try {
@@ -50,11 +49,9 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
     });
 
     if (route) {
-      if (isDev) {
-        console.info(`${method} ${url.pathname + url.search} => ${route.name}`);
-      }
       const { handler, pregenerate } = route;
       if (method !== route.method || typeof handler !== "function") {
+        if (isDev) log(req, `No function ${method} exported`);
         return new Response(`No function ${method} exported by ${route.name}`, {
           status: 405,
         });
@@ -68,20 +65,17 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
       }
       const res = await handler(req);
       if (res instanceof Response) {
+        if (isDev) log(req, route.name);
         return res;
       } else {
         throw Error(method + " must return a Response object");
       }
     } else {
-      if (isDev && isNotFavicon) {
-        console.info(`${method} ${url.pathname + url.search} => No route match`);
-      }
+      if (isDev && url.pathname !== "/favicon.ico") log(req, "No route match");
       return new Response("404 not found", { status: 404 });
     }
   } catch (e: any) {
-    if (isNotFavicon) {
-      console.warn(e);
-    }
+    console.warn(`\x1b[35m${req.method} ${req.url} => \x1b[0m`, e);
     if (e.name === "NotFound" || e.code === "ENOENT") {
       return new Response("404 not found", { status: 404 });
     } else {
@@ -123,3 +117,5 @@ export const staticCacheControlVal = (req: Request): string | undefined => {
  * is easy to do without messing with environment variables.
  */
 const isDevServer = (url: URL) => url.hostname === "localhost";
+
+const log = (req: Request, msg: string) => console.info(`${req.method} ${req.url} => ${msg}`);
