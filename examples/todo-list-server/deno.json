@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "start": "deno serve --watch=. --allow-read --allow-env jsr:@mastrojs/mastro@0.4.0/server"
+    "start": "deno serve --watch=. --allow-read --allow-env jsr:@mastrojs/mastro/server"
   },
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]

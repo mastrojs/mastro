@@ -486,7 +486,7 @@ const getImportMap = async (
     imports["@mastrojs/mastro/generator"] = getDevUrl("mastro/src/generator.js");
   } else {
     // currently we don't esm.sh ?bundle because the two exports share some files
-    const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.4.0/";
+    const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.6.1/";
     imports["@mastrojs/mastro"] = mastroProdUrl;
     imports["@mastrojs/mastro/"] = mastroProdUrl;
   }
