@@ -4,7 +4,7 @@
  */
 
 import type { Handler, Route } from "./routers/common.ts";
-export type { Handler, Route } from "./routers/common.ts";
+export type { Handler, HttpMethod, Route } from "./routers/common.ts";
 
 export * from "./routers/fileRouter.ts";
 export * from "./routers/programmaticRouter.ts";
@@ -21,7 +21,8 @@ export interface CreateHandlerOpts {
  * Create fetch handler that serves Mastro routes and static files
  */
 export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: Request) => {
-  const fileRouterPath = "./routers/fileRouter.ts"; // in variable to prevent bundling by esbuild
+  // in variable to prevent bundling by esbuild:
+  const fileRouterPath = `./routers/fileRouter.${suffix}`;
   const {
     routes = await import(fileRouterPath).then((mod) => mod.getRoutes()) as Route[],
     serveStaticFiles = true,
@@ -32,7 +33,7 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
   try {
     const method = req.method.toUpperCase();
     if (method === "GET" && serveStaticFiles) {
-      const modPath = "./staticFiles.ts"; // in variable to prevent bundling by esbuild
+      const modPath = `./staticFiles.${suffix}`; // in variable to prevent bundling by esbuild
       const { serveStaticFile } = await import(modPath);
       const fileRes = await serveStaticFile(req, isDev);
       if (fileRes) {
@@ -119,3 +120,6 @@ export const staticCacheControlVal = (req: Request): string | undefined => {
 const isDevServer = (url: URL) => url.hostname === "localhost";
 
 const log = (req: Request, msg: string) => console.info(`${req.method} ${req.url} => ${msg}`);
+
+// @ts-expect-error no type definitions for Bun
+const suffix = typeof Deno === "object" || typeof Bun === "object" ? "ts" : "js";

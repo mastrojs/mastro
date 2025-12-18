@@ -9,7 +9,7 @@ export class Mastro {
   private routes: Route[] = [];
 
   /** Add route */
-  addRoute(method: "all" | HttpMethod, pathname: string, handler: Handler) {
+  addRoute(method: "all" | HttpMethod, pathname: string, handler: Handler): this {
     this.routes.push({
       name: pathname,
       handler,
@@ -21,27 +21,27 @@ export class Mastro {
   }
 
   /** Add HTTP GET route */
-  get(pathname: string, handler: Handler) {
+  get(pathname: string, handler: Handler): this {
     return this.addRoute("GET", pathname, handler);
   }
 
   /** Add HTTP POST route */
-  post(pathname: string, handler: Handler) {
+  post(pathname: string, handler: Handler): this {
     return this.addRoute("POST", pathname, handler);
   }
 
   /** Add HTTP PUT route */
-  put(pathname: string, handler: Handler) {
+  put(pathname: string, handler: Handler): this {
     return this.addRoute("PUT", pathname, handler);
   }
 
   /** Add HTTP DELETE route */
-  delete(pathname: string, handler: Handler) {
+  delete(pathname: string, handler: Handler): this {
     return this.addRoute("DELETE", pathname, handler);
   }
 
   /** Generate static site */
-  generate(opts?: GenerateOpts) {
+  generate(opts?: GenerateOpts): Promise<void> {
     if (!opts) {
       opts = {};
     }
@@ -50,7 +50,7 @@ export class Mastro {
   }
 
   /** Create fetch handler */
-  createHandler(opts: CreateHandlerOpts = {}) {
+  createHandler(opts: CreateHandlerOpts = {}): Handler {
     opts.routes = this.routes;
     return createHandler(opts);
   }
