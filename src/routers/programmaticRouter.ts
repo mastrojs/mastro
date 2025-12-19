@@ -1,4 +1,4 @@
-import { generate, type GenerateOpts } from "../generator.ts";
+import type { GenerateOpts } from "../generator.ts";
 import { createHandler, type CreateHandlerOpts } from "../server.ts";
 import type { Handler, HttpMethod, Route } from "./common.ts";
 
@@ -41,7 +41,9 @@ export class Mastro {
   }
 
   /** Generate static site */
-  generate(opts?: GenerateOpts): Promise<void> {
+  async generate(opts?: GenerateOpts): Promise<void> {
+    const modPath = "../generator.ts"; // variable to prevent esbuild bundling
+    const { generate } = await import(modPath);
     if (!opts) {
       opts = {};
     }

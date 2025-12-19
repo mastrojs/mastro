@@ -219,8 +219,8 @@ const getWebviewContent = async (
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
           }
 
-          const { getFileBasedRoutes } = await import("@mastrojs/mastro/generator")
-          const routes = await getFileBasedRoutes(name => {
+          const { loadRoutes } = await import("@mastrojs/mastro")
+          const routes = await loadRoutes(name => {
             try {
               return import(name);
             } catch (e) {

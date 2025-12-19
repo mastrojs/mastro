@@ -8,4 +8,4 @@
 export * from "./fs.ts";
 export * from "./html.ts";
 export * from "./responses.ts";
-export { getFileBasedRoutes } from "../routers/fileRouter.ts";
+export { loadRoutes } from "../routers/fileRouter.ts";

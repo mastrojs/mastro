@@ -10,8 +10,7 @@ import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
-import { getRoutes, hasRouteParams } from "./routers/fileRouter.ts";
-export { getFileBasedRoutes } from "./routers/fileRouter.ts";
+import { loadRoutes, hasRouteParams } from "./routers/fileRouter.ts";
 
 /**
  * Config options for `generate`
@@ -47,7 +46,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   const { dirname } = await import("node:path");
 
   const fileBasedRouter = !opts.routes;
-  const { outFolder = "generated", onlyPregenerate = false, routes = await getRoutes() } = opts;
+  const { outFolder = "generated", onlyPregenerate = false, routes = await loadRoutes() } = opts;
 
   if (fileBasedRouter && routes.length === 0) {
     await ensureDir(fs.stat("routes"));

@@ -22,8 +22,8 @@ import { assertEquals } from "jsr:@std/assert";
 
 Deno.test("fileRouter: route precedence order", async () => {
   // load router.ts only after `document.fs` has been patched.
-  const { getFileBasedRoutes } = await import("./fileRouter.ts");
-  const routes = await getFileBasedRoutes(() => Promise.resolve({ GET: () => {} }));
+  const { loadRoutes } = await import("./fileRouter.ts");
+  const routes = await loadRoutes(() => Promise.resolve({ GET: () => {} }));
 
   assertEquals(routes.map((r) => r.name), [
     "/routes/index.server.ts",

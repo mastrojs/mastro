@@ -4,25 +4,26 @@ import { httpMethods, type Route } from "./common.ts";
 let routes: Promise<Route[]> | Route[] | undefined;
 
 /**
- * Returns cached routes.
- * If routes have not been previously loaded, it loads them from the `routes` directory.
+ * Returns an array of the file-based routes from `routes/`, loaded with the provided `loader`.
+ * Custom loader is useful when using esbuild (e.g. with Cloudflare Wrangler), or
+ * in the Mastro VSCode extension.
  */
-export const getRoutes = async (): Promise<Route[]> => {
+export const loadRoutes = async (
+  loader?: (fileName: string) => Promise<Record<string, unknown>>,
+): Promise<Route[]> => {
   if (!routes) {
-    const { pathToFileURL } = await import("node:url");
+    if (!loader) {
+      const { pathToFileURL } = await import("node:url");
+      loader = (fileName) => import(pathToFileURL(process.cwd() + fileName).toString());
+    }
     // don't await routes to speed up server startup
-    routes = getFileBasedRoutes((name) => import(pathToFileURL(process.cwd() + name).toString()));
+    routes = loadFileBasedRoutes(loader);
   }
   return routes;
 };
 
-/**
- * Returns an array of the file-based routes from `routes/`, loaded with the provided `loader`.
- * Useful when using esbuild (e.g. with Cloudflare Wrangler).
- * Also used by the Mastro vscode extension.
- */
-export const getFileBasedRoutes = async (
-  loader: (name: string) => Promise<Record<string, unknown>>,
+const loadFileBasedRoutes = async (
+  loader: (fileName: string) => Promise<Record<string, unknown>>,
 ): Promise<Route[]> => {
   const suffix = typeof document === "object" ? "js" : "{ts,js}";
   const routeFiles = await findFiles(`routes/**/*.server.${suffix}`);

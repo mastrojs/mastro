@@ -24,7 +24,7 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
   // in variable to prevent bundling by esbuild:
   const fileRouterPath = `./routers/fileRouter.${suffix}`;
   const {
-    routes = await import(fileRouterPath).then((mod) => mod.getRoutes()) as Route[],
+    routes = await import(fileRouterPath).then((mod) => mod.loadRoutes()) as Route[],
     serveStaticFiles = true,
   } = opts || {};
   const url = new URL(req.url);
