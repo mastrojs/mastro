@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 //@ts-check
 
 /**
@@ -20,10 +19,19 @@ import { Readable } from "node:stream";
 
 const userAgent = process.env.npm_config_user_agent;
 
-const runtime = typeof Deno === "object"
-  ? "deno"
-  // the usual ways to detect Bun don't appear to work in `bun create`
-  : (userAgent?.startsWith("bun/") ? "bun" : "node");
+const runtime = (() => {
+  if (typeof Deno === "object") {
+   return "deno"
+  } else if (userAgent?.startsWith("bun/")) {
+    // the usual ways to detect Bun don't appear to work in `bun create`
+    return "bun";
+  } else if (process.argv[2] === "--cloudflare") {
+    return "cloudflare";
+  } else {
+    return "node";
+  }
+})();
+
 
 /**
  * @param {string} path
