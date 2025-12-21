@@ -28,6 +28,7 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
     serveStaticFiles = true,
   } = opts || {};
   const url = new URL(req.url);
+  const logPrefix = `${req.method} ${url.pathname + url.search} => `;
   const isDev = isDevServer(url);
 
   try {
@@ -52,10 +53,9 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
     if (route) {
       const { handler, pregenerate } = route;
       if (method !== route.method || typeof handler !== "function") {
-        if (isDev) log(req, `No function ${method} exported`);
-        return new Response(`No function ${method} exported by ${route.name}`, {
-          status: 405,
-        });
+        const msg = `No ${method} handler function exported`;
+        if (isDev) console.info(logPrefix + msg);
+        return new Response(`${msg} by ${route.name}`, { status: 405});
       }
       if (pregenerate && !isDev) {
         return new Response(
@@ -66,17 +66,17 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
       }
       const res = await handler(req);
       if (res instanceof Response) {
-        if (isDev) log(req, route.name);
+        if (isDev) console.info(logPrefix + route.name);
         return res;
       } else {
         throw Error(method + " must return a Response object");
       }
     } else {
-      if (isDev && url.pathname !== "/favicon.ico") log(req, "No route match");
+      if (isDev && url.pathname !== "/favicon.ico") console.info(logPrefix + "No route match");
       return new Response("404 not found", { status: 404 });
     }
   } catch (e: any) {
-    console.warn(`\x1b[35m${req.method} ${req.url} => \x1b[0m`, e);
+    console.warn(`\x1b[35m${logPrefix}\x1b[0m`, e);
     if (e.name === "NotFound" || e.code === "ENOENT") {
       return new Response("404 not found", { status: 404 });
     } else {
@@ -118,8 +118,6 @@ export const staticCacheControlVal = (req: Request): string | undefined => {
  * is easy to do without messing with environment variables.
  */
 const isDevServer = (url: URL) => url.hostname === "localhost";
-
-const log = (req: Request, msg: string) => console.info(`${req.method} ${req.url} => ${msg}`);
 
 // @ts-expect-error no type definitions for Bun
 const suffix = typeof Deno === "object" || typeof Bun === "object" ? "ts" : "js";
