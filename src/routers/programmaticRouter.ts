@@ -2,6 +2,8 @@ import type { GenerateOpts } from "../generator.ts";
 import { createHandler, type CreateHandlerOpts } from "../server.ts";
 import type { Handler, HttpMethod, Route } from "./common.ts";
 
+export type RouteOpts = Pick<Route, "getStaticPaths" | "handler" | "pregenerate">;
+
 /**
  * Class to use as programmatic router (alternative to the file-based router).
  */
@@ -9,13 +11,15 @@ export class Mastro {
   private routes: Route[] = [];
 
   /** Add route */
-  addRoute(method: "all" | HttpMethod, pathname: string, handler: Handler): this {
+  addRoute(method: "all" | HttpMethod, pathname: string, opts: Handler | RouteOpts): this {
+    if (typeof opts === "function") {
+      opts = { handler: opts };
+    }
     this.routes.push({
       name: pathname,
-      handler,
       method,
       pattern: new URLPattern({ pathname }),
-      // TODO: getStaticPaths and pregenerate
+      ...opts,
     });
     return this;
   }
