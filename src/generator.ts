@@ -7,10 +7,12 @@
 
 import type { Stats } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
+import { extension } from "@std/media-types";
+import { extname } from "@std/path/posix/extname";
 
 import { findFiles } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
-import { loadRoutes, hasRouteParams } from "./routers/fileRouter.ts";
+import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
 
 /**
  * Config options for `generate`
@@ -114,7 +116,9 @@ const generatePage = async (route: Route, url: URL) => {
     (req as any)._params = route.pattern.exec(url)?.pathname.groups;
     const response = await route.handler(req);
     if (response instanceof Response) {
-      const outFilePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
+      const outFilePath = pathname.endsWith("/")
+        ? `${pathname}index.html`
+        : addExtension(pathname, response.headers);
       return { outFilePath, response };
     } else {
       console.warn(route.name + ": GET must return a Response object");
@@ -123,6 +127,9 @@ const generatePage = async (route: Route, url: URL) => {
     console.error(`\nFailed to generate path ${pathname} on route ${route.name}\n`, e);
   }
 };
+
+const addExtension = (path: string, headers: Headers) =>
+  extname(path) ? path : `${path}.${extension(headers.get("Content-Type") || "") || "html"}`;
 
 const validateGetStaticPaths = (name: string, paths: string[]) => {
   if (!Array.isArray(paths) || (paths.length > 0 && typeof paths[0] !== "string")) {
