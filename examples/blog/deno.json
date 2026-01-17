@@ -1,10 +1,10 @@
 {
   "tasks": {
-    "start": "deno serve -A --watch=. ../../src/server.ts",
+    "start": "deno serve --watch=. --allow-read --allow-env jsr:@mastrojs/mastro/server",
     "generate": "deno run -A @mastrojs/mastro/generator"
   },
-  "compilerOptions": {
-    "lib": ["dom", "deno.ns"]
-  },
-  "links": ["../../", "../../../markdown"]
+  "imports": {
+    "@mastrojs/markdown": "jsr:@mastrojs/markdown",
+    "@mastrojs/mastro": "jsr:@mastrojs/mastro"
+  }
 }
