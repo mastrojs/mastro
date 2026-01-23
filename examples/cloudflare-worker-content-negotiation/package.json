@@ -1,0 +1,26 @@
+{
+	"name": "my-first-worker",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"start": "deno serve --watch=. --allow-read --allow-env server.ts",
+		"dev": "pnpm run generate && wrangler dev",
+		"build": "pnpm run generate && wrangler build",
+		"generate": "node generator.ts",
+		"deploy": "wrangler deploy",
+		"check": "tsc",
+		"cf-typegen": "wrangler types"
+	},
+	"engines": {
+		"node": ">=24.12"
+	},
+	"dependencies": {
+		"@mastrojs/markdown": "jsr:^0.1.4",
+		"@mastrojs/mastro": "jsr:^0"
+	},
+	"devDependencies": {
+		"typescript": "^5.5.2",
+		"wrangler": "^4.56.0"
+	}
+}
