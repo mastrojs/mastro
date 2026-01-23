@@ -22,7 +22,7 @@ export interface CreateHandlerOpts {
  */
 export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: Request) => {
   // in variable to prevent bundling by esbuild:
-  const fileRouterPath = `./routers/fileRouter.${suffix}`;
+  const fileRouterPath = `./routers/fileRouter.${importSuffix}`;
   const {
     routes = await import(fileRouterPath).then((mod) => mod.loadRoutes()) as Route[],
     serveStaticFiles = true,
@@ -34,7 +34,7 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
   try {
     const method = req.method.toUpperCase();
     if (method === "GET" && serveStaticFiles) {
-      const modPath = `./staticFiles.${suffix}`; // in variable to prevent bundling by esbuild
+      const modPath = `./staticFiles.${importSuffix}`; // in variable to prevent bundling by esbuild
       const { serveStaticFile } = await import(modPath);
       const fileRes = await serveStaticFile(req, isDev);
       if (fileRes) {
@@ -119,5 +119,6 @@ export const staticCacheControlVal = (req: Request): string | undefined => {
  */
 const isDevServer = (url: URL) => url.hostname === "localhost";
 
+// Otherwise Node.js says "Stripping types is currently unsupported for files under node_modules"
 // @ts-expect-error no type definitions for Bun
-const suffix = typeof Deno === "object" || typeof Bun === "object" ? "ts" : "js";
+export const importSuffix = typeof Deno === "object" || typeof Bun === "object" ? "ts" : "js";
