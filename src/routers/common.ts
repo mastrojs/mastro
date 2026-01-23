@@ -41,3 +41,7 @@ export interface Route {
   /** When running a server, set this to `true` to still build this route statically. */
   pregenerate?: true;
 }
+
+// Otherwise Node.js says "Stripping types is currently unsupported for files under node_modules"
+// @ts-expect-error no type definitions for Bun
+export const importSuffix = typeof Deno === "object" || typeof Bun === "object" ? "ts" : "js";

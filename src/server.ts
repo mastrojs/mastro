@@ -3,7 +3,7 @@
  * @module
  */
 
-import type { Handler, Route } from "./routers/common.ts";
+import { importSuffix, type Handler, type Route } from "./routers/common.ts";
 export type { Handler, HttpMethod, Route } from "./routers/common.ts";
 
 export * from "./routers/fileRouter.ts";
@@ -131,7 +131,3 @@ export const staticCacheControlVal = (req: Request): string | undefined => {
  * is easy to do without messing with environment variables.
  */
 const isDevServer = (url: URL) => url.hostname === "localhost";
-
-// Otherwise Node.js says "Stripping types is currently unsupported for files under node_modules"
-// @ts-expect-error no type definitions for Bun
-export const importSuffix = typeof Deno === "object" || typeof Bun === "object" ? "ts" : "js";

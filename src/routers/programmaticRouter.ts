@@ -1,6 +1,6 @@
 import type { GenerateOpts } from "../generator.ts";
-import { createHandler, type CreateHandlerOpts, importSuffix } from "../server.ts";
-import type { Handler, HttpMethod, Route } from "./common.ts";
+import { createHandler, type CreateHandlerOpts } from "../server.ts";
+import { type Handler, type HttpMethod, importSuffix, type Route } from "./common.ts";
 
 /**
  * Either a plain `Handler` function, or an object with a `handler` and other fields.
