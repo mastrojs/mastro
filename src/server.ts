@@ -14,7 +14,7 @@ export * from "./routers/programmaticRouter.ts";
  */
 export interface CreateHandlerOpts {
   routes?: Route[];
-  serveStaticFiles?: false;
+  serveStaticFiles?: boolean;
 }
 
 /**

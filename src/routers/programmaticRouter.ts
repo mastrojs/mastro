@@ -2,7 +2,11 @@ import type { GenerateOpts } from "../generator.ts";
 import { createHandler, type CreateHandlerOpts, importSuffix } from "../server.ts";
 import type { Handler, HttpMethod, Route } from "./common.ts";
 
-export type RouteOpts = Pick<Route, "getStaticPaths" | "handler" | "pregenerate">;
+export type RouteOpts = {
+  handler: Handler;
+  getStaticPaths?: () => Promise<string[]> | string[];
+  pregenerate?: true;
+}
 
 /**
  * Class to use as programmatic router (alternative to the file-based router).
@@ -25,22 +29,22 @@ export class Mastro {
   }
 
   /** Add HTTP GET route */
-  get(pathname: string, handler: Handler): this {
+  get(pathname: string, handler: Handler | RouteOpts): this {
     return this.addRoute("GET", pathname, handler);
   }
 
   /** Add HTTP POST route */
-  post(pathname: string, handler: Handler): this {
+  post(pathname: string, handler: Handler | RouteOpts): this {
     return this.addRoute("POST", pathname, handler);
   }
 
   /** Add HTTP PUT route */
-  put(pathname: string, handler: Handler): this {
+  put(pathname: string, handler: Handler | RouteOpts): this {
     return this.addRoute("PUT", pathname, handler);
   }
 
   /** Add HTTP DELETE route */
-  delete(pathname: string, handler: Handler): this {
+  delete(pathname: string, handler: Handler | RouteOpts): this {
     return this.addRoute("DELETE", pathname, handler);
   }
 

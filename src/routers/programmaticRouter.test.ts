@@ -8,6 +8,7 @@ Deno.test("programmaticRouter", async () => {
     .post("/foo", () => new Response("posted"))
     .get("/blog/", () => new Response("blog index"))
     .get("/blog/:slug/", () => new Response("blog detail"))
+    .get("/test/", { handler: () => new Response("GET handler") })
     .createHandler();
 
   const access = async (path: string, method: HttpMethod = "GET") => {
@@ -20,4 +21,5 @@ Deno.test("programmaticRouter", async () => {
   assertEquals(await access("/foo"), { status: 405 });
   assertEquals(await access("/bar"), { status: 404 });
   assertEquals(await access("/blog/mypost/"), "blog detail");
+  assertEquals(await access("/test/"), "GET handler");
 });
