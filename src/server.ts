@@ -21,7 +21,11 @@ export interface CreateHandlerOpts {
 /**
  * Create fetch handler that serves Mastro routes and static files
  */
-export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: Request) => {
+export const createHandler = <E, C>(opts?: CreateHandlerOpts): Handler<E, C> => async (
+  req: Request,
+  env: E,
+  ctx: C,
+) => {
   // in variable to prevent bundling by esbuild:
   const fileRouterPath = `./routers/fileRouter.${importSuffix}`;
   const {
@@ -73,7 +77,7 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
           { status: 404 },
         );
       }
-      const res = await handler(req);
+      const res = await handler(req, env as any, ctx as any);
       if (res instanceof Response) {
         if (isDev) console.info(logPrefix + route.name);
         return res;
