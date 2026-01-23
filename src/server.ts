@@ -14,6 +14,7 @@ export * from "./routers/programmaticRouter.ts";
  */
 export interface CreateHandlerOpts {
   routes?: Route[];
+  /** defaults to true */
   serveStaticFiles?: boolean;
 }
 
@@ -34,9 +35,17 @@ export const createHandler = (opts?: CreateHandlerOpts): Handler => async (req: 
   try {
     const method = req.method.toUpperCase();
     if (method === "GET" && serveStaticFiles) {
-      const modPath = `./staticFiles.${importSuffix}`; // in variable to prevent bundling by esbuild
-      const { serveStaticFile } = await import(modPath);
-      const fileRes = await serveStaticFile(req, isDev);
+      // imports in variable to prevent bundling by esbuild
+      let mod
+      try {
+        const modPath = `./staticFiles.${importSuffix}`;
+        mod = await import(modPath);
+      } catch {
+        // when there's a package.json preset (as in the cloudflare template), Deno also needs .js
+        const modPath = `./staticFiles.js`;
+        mod = await import(modPath);
+      }
+      const fileRes = await mod.serveStaticFile(req, isDev);
       if (fileRes) {
         return fileRes;
       }
