@@ -14,11 +14,15 @@ import { createWriteStream } from "node:fs";
 import fs from "node:fs/promises";
 import { join } from "node:path";
 import { stdin, stdout } from "node:process";
+import readline from "node:readline";
 import { createInterface } from "node:readline/promises";
 import { Readable } from "node:stream";
 
-const userAgent = process.env.npm_config_user_agent;
+/**
+ * Constants
+ */
 
+const userAgent = process.env.npm_config_user_agent;
 const runtime = (() => {
   if (typeof Deno === "object") {
    return "deno"
@@ -31,6 +35,65 @@ const runtime = (() => {
     return "node";
   }
 })();
+const packageManager = (() => {
+  if (runtime === "deno") return "deno";
+  switch (userAgent?.split("/")[0]) {
+    case "pnpm": return "pnpm";
+    case "yarn": return "yarn";
+    case "bun": return "bun";
+    default: return "npm";
+  }
+})();
+
+
+/**
+ * Helper Functions
+ */
+
+/**
+ * @template {string} T
+ * @param {string} question
+ * @param {T[]} options
+ * @returns {Promise<T>}
+ */
+const select = async (question, options) =>
+  new Promise(resolve => {
+    let index = 0;
+
+    const render = () => {
+      console.clear();
+      console.log(question);
+      options.forEach((opt, i) => {
+        console.log(i === index ? `● ${opt}` : `\x1b[2m○ ${opt}\x1b[0m`);
+      });
+    }
+    render();
+
+    process.stdin.on("keypress", (_, key) => {
+      switch (key.name) {
+        case "c": {
+          if (key.ctrl) {
+            console.clear();
+            process.exit();
+          }
+          return;
+        }
+        case "up": {
+          index = (index - 1 + options.length) % options.length;
+          return render();
+        }
+        case "down": {
+          index = (index + 1) % options.length;
+          return render();
+        }
+        case "return": {
+          console.clear();
+          process.stdin.removeAllListeners("keypress");
+          return resolve(options[index]);
+        }
+      }
+    });
+  });
 
 
 /**
@@ -66,19 +129,12 @@ const execCmd = (cmd) =>
       }))
   );
 
-const repoName = `template-basic-${runtime}`;
-const repoUrl = `https://github.com/mastrojs/${repoName}/archive/refs/heads/main.zip`;
-const zipFilePromise = fetch(repoUrl);
-
-const rl = createInterface({ input: stdin, output: stdout, crlfDelay: Infinity });
-const dir = await rl.question("What folder should we create for your new project?\n");
-rl.close();
-stdin.destroy();
-
-if (dir) {
-  const outDir = repoName + "-main"; // this cannot be changed and is determined by the zip file
-  const zipFileName = outDir + ".zip";
-  const res = await zipFilePromise;
+/**
+ * @param { {fetchZipPromise: Promise<Response>; zipFileName: string } } opts
+ */
+const unzip = async (opts) => {
+  const { fetchZipPromise, zipFileName } = opts;
+  const res = await fetchZipPromise;
   if (res.ok && res.body) {
     await writeFile(zipFileName, res.body);
   }
@@ -92,28 +148,73 @@ if (dir) {
   }
   await fs.rm(zipFileName, { force: true, recursive: true });
 
-  if (unzipSuccess) {
-    await fs.rename(outDir, dir);
+  if (!unzipSuccess) {
+    process.exit(-1);
+  }
+}
 
-    const packageManager = (() => {
-      switch (userAgent?.split("/")[0]) {
-        case "pnpm": return "pnpm";
-        case "yarn": return "yarn";
-        case "bun": return "bun";
-        default: return "npm";
-      }
-    })();
+/**
+ * @param { string } dir
+ * @param { (dependencies: Record<string, string>) => void } cb
+ */
+const updateDeps = async (dir, cb) => {
+  const path = join(dir, runtime === "deno" ? "deno.json" : "package.json");
+  const json = JSON.parse(await fs.readFile(path, { encoding: "utf8" }));
+  cb(json[runtime === "deno" ? "imports" : "dependencies"]);
+  await fs.writeFile(path, JSON.stringify(json, null, 2));
+}
+
+
+/**
+ * Main function
+ */
+const main = async () => {
+  const repoName = `template-basic-${runtime}`;
+  const fetchZipPromise = fetch(`https://github.com/mastrojs/${repoName}/archive/refs/heads/main.zip`);
+
+  const rl = createInterface({ input: stdin, output: stdout, crlfDelay: Infinity });
+  const dir = await rl.question("What name should we use for your new project folder?\n");
+  if (dir) {
+    readline.emitKeypressEvents(process.stdin);
+    process.stdin.setRawMode(true);
+
+    const template = await select("Which template would you like to start with?", ["basic", "blog"]);
+    const templateFetchZipPromise = template === "basic"
+      ? undefined
+      : fetch(`https://github.com/mastrojs/mastro/archive/refs/heads/main.zip`);
+
+    const zipOutDir = repoName + "-main"; // this cannot be changed and is determined by the zip file
+    await unzip({ fetchZipPromise, zipFileName: zipOutDir + ".zip" });
+    await fs.rename(zipOutDir, dir);
 
     if (packageManager === "npm") {
       try {
-        const path = join(dir, "package.json");
-        const packageJson = JSON.parse(await fs.readFile(path, { encoding: "utf8" }));
-        packageJson.dependencies["@mastrojs/mastro"] = "npm:@jsr/mastrojs__mastro@^0";
-        await fs.writeFile(path, JSON.stringify(packageJson, null, 2));
+        await updateDeps(dir, dependencies => {
+          dependencies["@mastrojs/mastro"] = "npm:@jsr/mastrojs__mastro@^0";
+        });
         await fs.writeFile(join(dir, ".npmrc"), "@jsr:registry=https://npm.jsr.io");
       } catch (e) {
         console.error(`Created folder ${dir} but failed to patch it for npm. Please use pnpm instead.`);
       }
+    }
+
+    if (templateFetchZipPromise) {
+      // Update dir with things from @mastrojs/mastro's `examples/blog/` folder.
+
+      const templateOutDir = "mastro-main";
+      await unzip({ fetchZipPromise: templateFetchZipPromise, zipFileName: templateOutDir + ".zip" });
+
+      await Promise.all(["components", "data", "routes"].map(async folder => {
+        await fs.rm(join(dir, folder), { recursive: true, force: true });
+        return fs.rename(join(templateOutDir, "examples", "blog", folder), join(dir, folder));
+      }));
+      await updateDeps(dir, deps => {
+        deps["@mastrojs/markdown"] = packageManager === "npm"
+          ? "npm:@jsr/mastrojs__markdown@^0"
+          : "jsr:@mastrojs/markdown@^0";
+      });
+
+      await fs.rm(templateOutDir, { recursive: true });
     }
 
     const installInstr = runtime === "deno"
@@ -134,5 +235,9 @@ Enter the newly created folder with: %ccd ${dir}${installInstr}
       "",
       codeStyle,
     );
+
+    rl.close();
+    stdin.destroy();
   }
 }
+await main();
