@@ -6,6 +6,10 @@ export const GET = () =>
     Layout({
       title: "Home",
       children: html`
+        <nav>
+          <p>👉 <a href="/news/">News</a></p>
+        </nav>
+
         <h1>Common HTML elements</h1>
         <p>
           Let's go through the most important HTML elements to
