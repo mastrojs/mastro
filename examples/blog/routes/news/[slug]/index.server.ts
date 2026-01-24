@@ -1,8 +1,8 @@
 import { getParams, htmlToResponse, readDir } from "@mastrojs/mastro";
 import { readMarkdownFile } from "@mastrojs/markdown";
-import { Layout } from "../../../components/Layout.js";
+import { Layout } from "../../../components/Layout.ts";
 
-export const GET = async (req) => {
+export const GET = async (req: Request) => {
   const { slug } = getParams(req);
   const post = await readMarkdownFile(`data/posts/${slug}.md`);
   return htmlToResponse(

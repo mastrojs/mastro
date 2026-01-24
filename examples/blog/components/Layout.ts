@@ -1,10 +1,15 @@
-import { ghPagesBasePath, html } from "@mastrojs/mastro";
-import { Header } from "./Header.js";
-import { Footer } from "./Footer.js";
+import { ghPagesBasePath, html, type Html } from "@mastrojs/mastro";
+import { Header } from "./Header.ts";
+import { Footer } from "./Footer.ts";
 
 export const basePath = ghPagesBasePath();
 
-export const Layout = (props) =>
+interface Props {
+  title?: string;
+  children: Html;
+}
+
+export const Layout = (props: Props) =>
   html`
     <!doctype html>
     <html lang="en">
