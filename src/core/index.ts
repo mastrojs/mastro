@@ -1,7 +1,8 @@
 /**
- * This module is the main entry point and exports
- * all functions runnable in both Deno/Node.js and the browser
+ * `@mastrojs/mastro` is the main entry point and exports
+ * all functions runnable in both Deno/Node.js/Bun and the browser
  * (i.e. the VSCode extension environment).
+ * This is the only module you usually need to import from.
  * @module
  */
 

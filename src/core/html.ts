@@ -1,7 +1,9 @@
 /**
- * This module contains a simple, selfcontained way to construct and properly escape
+ * `@mastrojs/mastro/html` contains a selfcontained way to construct and properly escape
  * HTML using JavaScript tagged template literals.
- * It is exported separately for use in `@mastrojs/reactive`
+ * All its exports are also exported by the default `@mastrojs/mastro` module,
+ * and usually you should just use those. However, it is also exported separately here
+ * for use in `@mastrojs/reactive` or other projects where you only want its functionality.
  * @module
  */
 

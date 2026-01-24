@@ -1,5 +1,6 @@
 /**
- * This module exports various ways to create a Mastro server.
+ * This module exports various ways to create a
+ * [Mastro server](https://mastrojs.github.io/docs/install-setup/#start-a-server).
  * @module
  */
 
