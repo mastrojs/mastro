@@ -48,47 +48,62 @@ async function* widgetsIterable() {
   }
 }
 
-const expected = [
-  '',
-  '    <!DOCTYPE html>',
-  '    <html lang="en">',
-  '      <head>',
-  '        <meta charset="UTF-8">',
-  '        <title>Hello World</title>',
-  '        <link rel="icon" href="/favicon.ico">',
-  '      </head>',
-  '      <body>',
-  '        ',
-  '    <nav>',
-  '      <ul></ul>',
-  '    </nav>',
-  '  ',
-  '        <main>',
-  '          <h1>Hello World</h1>',
-  '          <ul>',
-  '            <li>foo 1</li><li>foo 2</li><li>foo 3</li><li>foo 4</li><li>foo 5</li>',
-  '          </ul>',
-  '        </main>',
-  '      </body>',
-  '    </html>',
-  '  ',
-].join("\n")
+export const SyncPage = () =>
+  htmlToResponse(
+    Layout({
+      children: html`
+        <h1>${title}</h1>
+        <ul>
+          ${widgets.map((w) =>
+            html`
+              <li>${w.title}</li>
+            `
+          )}
+        </ul>
+      `,
+      title,
+    }),
+  );
 
 Deno.bench({
   name: "Sync htmlToResponse",
   async fn() {
-    const res = htmlToResponse(
-      Layout({
-        children: html`
-          <h1>${title}</h1>
-          <ul>
-            ${widgets.map((w) => html`<li>${w.title}</li>`)}
-          </ul>
-        `,
-        title,
-      }),
-    );
-    assertEquals(await res.text(), expected);
+    const res = SyncPage();
+    assertEquals(await res.text(), [
+      '',
+      '    <!DOCTYPE html>',
+      '    <html lang="en">',
+      '      <head>',
+      '        <meta charset="UTF-8">',
+      '        <title>Hello World</title>',
+      '        <link rel="icon" href="/favicon.ico">',
+      '      </head>',
+      '      <body>',
+      '        ',
+      '    <nav>',
+      '      <ul></ul>',
+      '    </nav>',
+      '  ',
+      '        <main>',
+      '        <h1>Hello World</h1>',
+      '        <ul>',
+      '          ',
+      '              <li>foo 1</li>',
+      '            ',
+      '              <li>foo 2</li>',
+      '            ',
+      '              <li>foo 3</li>',
+      '            ',
+      '              <li>foo 4</li>',
+      '            ',
+      '              <li>foo 5</li>',
+      '            ',
+      '        </ul>',
+      '      </main>',
+      '      </body>',
+      '    </html>',
+      '  ',
+    ].join("\n"));
   },
 });
 
@@ -106,6 +121,30 @@ Deno.bench({
         title,
       }),
     );
-    assertEquals(await res.text(), expected);
+    assertEquals(await res.text(), [
+      '',
+      '    <!DOCTYPE html>',
+      '    <html lang="en">',
+      '      <head>',
+      '        <meta charset="UTF-8">',
+      '        <title>Hello World</title>',
+      '        <link rel="icon" href="/favicon.ico">',
+      '      </head>',
+      '      <body>',
+      '        ',
+      '    <nav>',
+      '      <ul></ul>',
+      '    </nav>',
+      '  ',
+      '        <main>',
+      '          <h1>Hello World</h1>',
+      '          <ul>',
+      '            <li>foo 1</li><li>foo 2</li><li>foo 3</li><li>foo 4</li><li>foo 5</li>',
+      '          </ul>',
+      '        </main>',
+      '      </body>',
+      '    </html>',
+      '  ',
+    ].join("\n"));
   },
 });
