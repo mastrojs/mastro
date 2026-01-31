@@ -164,6 +164,48 @@ const updateDeps = async (dir, cb) => {
   await fs.writeFile(path, JSON.stringify(json, null, 2));
 }
 
+/**
+ * @param { string } dir
+ */
+const addSveltiaFiles = async (dir) => {
+  const sveltiaConfig = `# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
+
+backend:
+  name: github
+  repo: user/repo
+
+media_folder: /routes/media
+public_folder: /media
+
+collections:
+  - name: posts
+    label: Posts
+    folder: /data/posts
+    fields:
+      - { label: Title, name: title, widget: string }
+      - { label: Body, name: body, widget: markdown }
+`;
+
+  const sveltiaIndexHtml = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Sveltia CMS</title>
+  </head>
+  <body>
+    <!--
+    You can also pin a version like https://unpkg.com/@sveltia/cms@0.129.2/dist/sveltia-cms.js
+    or innstead of loading from unpkg.com, download the file into your routes folder.
+    -->
+    <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
+  </body>
+</html>
+`;
+  await fs.mkdir(join(dir, "routes", "admin"));
+  await fs.writeFile(join(dir, "routes", "admin", "config.yml"), sveltiaConfig);
+  await fs.writeFile(join(dir, "routes", "admin", "index.html"), sveltiaIndexHtml);
+}
 
 /**
  * Main function
@@ -178,12 +220,19 @@ const main = async () => {
     readline.emitKeypressEvents(process.stdin);
     process.stdin.setRawMode(true);
 
-    const template = await select("Which template would you like to start with?", ["basic", "blog"]);
+    const template = await select("Which template do you want to start with?", ["basic", "blog"]);
     const templateFetchZipPromise = template === "basic"
       ? undefined
       : fetch(`https://github.com/mastrojs/mastro/archive/refs/heads/main.zip`);
 
-    const zipOutDir = repoName + "-main"; // this cannot be changed and is determined by the zip file
+    const addSveltia = template === "blog"
+      ? await select(
+          "Do you want to add a git-based CMS? This adds a routes/admin/ folder.",
+          ["No", "Add Sveltia CMS"],
+        ) === "Add Sveltia CMS"
+      : false;
+
+    const zipOutDir = repoName + "-main"; // cannot be changed and is determined by the zip file
     await unzip({ fetchZipPromise, zipFileName: zipOutDir + ".zip" });
     await fs.rename(zipOutDir, dir);
 
@@ -200,8 +249,7 @@ const main = async () => {
 
     if (templateFetchZipPromise) {
       // Update dir with things from @mastrojs/mastro's `examples/blog/` folder.
-
-      const templateOutDir = "mastro-main";
+      const templateOutDir = "mastro-main"; // determined by zip file
       await unzip({ fetchZipPromise: templateFetchZipPromise, zipFileName: templateOutDir + ".zip" });
 
       await Promise.all(["components", "data", "routes"].map(async folder => {
@@ -215,6 +263,10 @@ const main = async () => {
       });
 
       await fs.rm(templateOutDir, { recursive: true });
+
+      if (addSveltia) {
+        await addSveltiaFiles(dir);
+      }
     }
 
     const installInstr = runtime === "deno"
@@ -225,8 +277,7 @@ const main = async () => {
       : `${packageManager} run start`;
 
     const codeStyle = "color: blue";
-    console.log(
-      `
+    console.log(`
 Success!
 
 Enter the newly created folder with: %ccd ${dir}${installInstr}
