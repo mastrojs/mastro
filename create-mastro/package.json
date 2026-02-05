@@ -1,6 +1,6 @@
 {
   "name": "@mastrojs/create-mastro",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "type": "module",
   "scripts": {
     "npm-publish": "deno check && npm publish --access public"

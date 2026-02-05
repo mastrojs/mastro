@@ -203,8 +203,11 @@ collections:
 </html>
 `;
   await fs.mkdir(join(dir, "routes", "admin"));
-  await fs.writeFile(join(dir, "routes", "admin", "config.yml"), sveltiaConfig);
-  await fs.writeFile(join(dir, "routes", "admin", "index.html"), sveltiaIndexHtml);
+  await Promise.all([
+    fs.writeFile(join(dir, "routes", "admin", "config.yml"), sveltiaConfig),
+    fs.writeFile(join(dir, "routes", "admin", "index.html"), sveltiaIndexHtml),
+    fs.appendFile(join(dir, "README.md"), "\n\n## Sveltia CMS\n\nOpen <http://localhost:8000/admin/> in your browser.\n"),
+  ]);
 }
 
 /**
@@ -237,6 +240,7 @@ const main = async () => {
     await fs.rename(zipOutDir, dir);
 
     if (packageManager === "npm") {
+      // otherwise it's already correct from the template repo
       try {
         await updateDeps(dir, dependencies => {
           dependencies["@mastrojs/mastro"] = "npm:@jsr/mastrojs__mastro@^0";
@@ -257,7 +261,7 @@ const main = async () => {
         return fs.rename(join(templateOutDir, "examples", "blog", folder), join(dir, folder));
       }));
       await updateDeps(dir, deps => {
-        deps["@mastrojs/markdown"] = packageManager === "npm"
+        deps["@mastrojs/markdown"] = ["npm", "bun"].includes(packageManager)
           ? "npm:@jsr/mastrojs__markdown@^0"
           : "jsr:@mastrojs/markdown@^0";
       });
