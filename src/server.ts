@@ -4,7 +4,7 @@
  * @module
  */
 
-import { importSuffix, type Handler, type Route } from "./routers/common.ts";
+import { type Handler, importSuffix, type Route } from "./routers/common.ts";
 export type { Handler, HttpMethod, Route } from "./routers/common.ts";
 
 export * from "./routers/fileRouter.ts";
@@ -22,7 +22,8 @@ export interface CreateHandlerOpts {
 /**
  * Create fetch handler that serves Mastro routes and static files
  */
-export const createHandler = <E, C>(opts?: CreateHandlerOpts): Handler<E, C> => async (
+export const createHandler = <E, C>(opts?: CreateHandlerOpts): Handler<E, C> =>
+async (
   req: Request,
   env: E,
   ctx: C,
@@ -41,7 +42,7 @@ export const createHandler = <E, C>(opts?: CreateHandlerOpts): Handler<E, C> => 
     const method = req.method.toUpperCase();
     if (method === "GET" && serveStaticFiles) {
       // imports in variable to prevent bundling by esbuild
-      let mod
+      let mod;
       try {
         const modPath = `./staticFiles.${importSuffix}`;
         mod = await import(modPath);
@@ -69,7 +70,7 @@ export const createHandler = <E, C>(opts?: CreateHandlerOpts): Handler<E, C> => 
       if (method !== route.method || typeof handler !== "function") {
         const msg = `No ${method} handler function exported`;
         if (isDev) console.info(logPrefix + msg);
-        return new Response(`${msg} by ${route.name}`, { status: 405});
+        return new Response(`${msg} by ${route.name}`, { status: 405 });
       }
       if (pregenerate && !isDev) {
         return new Response(
@@ -105,7 +106,9 @@ export const createHandler = <E, C>(opts?: CreateHandlerOpts): Handler<E, C> => 
  * Can be passed to [Deno.serve](https://docs.deno.com/api/deno/~/Deno.serve),
  * or used directly with the [deno serve](https://docs.deno.com/runtime/reference/cli/serve/) CLI.
  */
-const defaultExport: { fetch: Handler } = { fetch: createHandler() };
+const defaultExport: { fetch: (req: Request) => Promise<Response> | Response } = {
+  fetch: createHandler<void, void>(),
+};
 export default defaultExport;
 
 /**
