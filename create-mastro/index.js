@@ -139,8 +139,9 @@ const unzip = async (opts) => {
     await writeFile(zipFileName, res.body);
   }
 
-  // unzip using the tar command (should work on unix and Windows 10 and later)
-  const { code, stdout, stderr } = await execCmd(`tar -xf ${zipFileName}`);
+  // FreeBSD tar (preinstalled on macOS and >= Win10) handles also zip files
+  const cmd = process.platform === "linux" ? "unzip " : "tar -xf ";
+  const { code, stdout, stderr } = await execCmd(cmd + zipFileName);
   const unzipSuccess = code === 0;
   if (!unzipSuccess) {
     console.log(stdout);
