@@ -6,7 +6,7 @@ export const GET = async (): Promise<Response> => {
 
   const examples = (await findFiles("routes/**/*.server.ts"))
     .flatMap((name) =>
-      name === "/routes/index.server.ts" ? [] : name.slice(8, -16)
+      name === "routes/index.server.ts" ? [] : name.slice(7, -16)
     )
     .sort();
 

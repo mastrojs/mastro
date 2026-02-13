@@ -146,7 +146,7 @@ const validateGetStaticPaths = (name: string, paths: string[]) => {
  * It's called by `generate` and by the VSCode extension.
  */
 export const getStaticFilePaths = async (): Promise<string[]> =>
-  (await findFiles("routes/**/*")).filter(isStaticFile).map((p) => p.slice(7));
+  (await findFiles("routes/**/*")).filter(isStaticFile).map((p) => p.slice(6));
 
 const isStaticFile = (p: string) => !p.endsWith(".server.ts") && !p.endsWith(".server.js");
 

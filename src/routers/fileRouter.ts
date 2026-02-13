@@ -14,7 +14,7 @@ export const loadRoutes = async (
   if (!routes) {
     if (!loader) {
       const { pathToFileURL } = await import("node:url");
-      loader = (fileName) => import(pathToFileURL(process.cwd() + fileName).toString());
+      loader = (fileName) => import(pathToFileURL(process.cwd() + sep + fileName).toString());
     }
     // don't await routes to speed up server startup
     routes = loadFileBasedRoutes(loader);
@@ -55,7 +55,7 @@ const loadFileBasedRoutes = async (
 };
 
 const toPattern = (filePath: string) => {
-  const pathParts = filePath.split(sep).slice(2);
+  const pathParts = filePath.split(sep).slice(1);
   const parts = pathParts.map((part, i) => {
     const param = part.match(paramRegex)?.[1];
     if (param) {

@@ -49,34 +49,39 @@ export const readFile = (path: string): Promise<Uint8Array<ArrayBufferLike>> =>
     : vscodeExtensionFs.readFile(leadingSep(path));
 
 /**
- * Return the file paths on the local file system,
- * expanding glob patterns like `*` and `**`.
+ * Return the file paths on the local file system, relative to the current working directory,
+ * expanding glob patterns like `*` and `**`. Do not pass it untrusted input.
  *
- * Supported patterns depend on the platform:
+ * Returned paths don't start with a slash (or other path separator).
  *
- * - [VSCode for the Web](https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
- *   (although currently [broken](https://github.com/microsoft/vscode/issues/249197))
- * - [others](https://nodejs.org/api/fs.html#fspromisesglobpattern-options)
+ * Except for when using the Mastro VSCode extension, this is a thin wrapper around
+ * [fs.glob](https://nodejs.org/api/fs.html#fspromisesglobpattern-options).
+ *
+ * In [VSCode for the Web](https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
+ * there is a [bug](https://github.com/microsoft/vscode/issues/249197) and we had to roll our own.
  */
 export const findFiles = async (pattern: string): Promise<string[]> => {
+  // best-effort input validation for unix paths
   pattern = pattern.startsWith("/") ? pattern.slice(1) : pattern;
+  if (pattern.startsWith("../") || pattern.includes("/../")) {
+    throw Error("findFiles pattern must not include ../");
+  }
   if (fs) {
     const paths = [];
     // @ts-expect-error no type definitions for Bun
     if (typeof Bun === "object") {
-      const { basename } = await import("node:path");
       // until https://github.com/oven-sh/bun/issues/22018 is fixed
       for await (const file of fs.glob(pattern)) {
         const entry = await fs.lstat(file);
-        if (entry.isFile() && !entry.isSymbolicLink() && basename(file)[0] !== ".") {
-          paths.push(sep + file)
+        if (entry.isFile()) {
+          paths.push(file)
         }
       }
     } else {
       for await (const entry of fs.glob(pattern, { withFileTypes: true })) {
-        if (entry.isFile() && !entry.isSymbolicLink() && entry.name[0] !== ".") {
+        if (entry.isFile()) {
           const path = entry.parentPath + sep + entry.name;
-          const relativeToProjectRoot = path.slice(process.cwd().length);
+          const relativeToProjectRoot = path.slice(process.cwd().length + 1);
           paths.push(relativeToProjectRoot);
         }
       }
