@@ -2,7 +2,7 @@
   "name": "@mastrojs/mastro",
   "version": "0.6.4",
   "tasks": {
-    "publish": "deno test src && deno bench src && deno publish"
+    "publish": "deno test -RWE src && deno bench -RWE src && deno publish"
   },
   "exports": {
     ".": "./src/core/index.ts",
