@@ -44,7 +44,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
             const { pattern, requestId } = msg;
             const response = [];
             for (const uri of await findFiles(rootFolder, basePath, pattern)) {
-              response.push(uri.path.slice(basePathLen));
+              response.push(uri.path.slice(basePathLen + 1));
             }
             webview.postMessage({ type: "success", response, requestId });
             return;
@@ -78,7 +78,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
                   : await vscode.workspace.fs.readFile(
                       rootFolder.with({ path: basePath + "/routes" + outFilePath }),
                     );
-                return vscode.workspace.fs.writeFile(fileUri, await contents);
+                return vscode.workspace.fs.writeFile(fileUri, contents);
               }));
               outputChannel.appendLine('Updated generated/ folder. Click the "Source Control" icon on the left, then click "Commit & Push" to publish your changes.');
             } catch (e) {
@@ -222,7 +222,7 @@ const getWebviewContent = async (
           const { loadRoutes } = await import("@mastrojs/mastro")
           const routes = await loadRoutes(name => {
             try {
-              return import(name);
+              return import("/" + name);
             } catch (e) {
               const error = "Failed to import route " + name + ": " + e;
               vscode.postMessage({ type: "showErrorInOutputChannel", error });
@@ -299,10 +299,7 @@ const getWebviewContent = async (
                 }
                 return match;
               });
-              if (route?.name.endsWith(".server.ts")) {
-                iframe.srcdoc = "<p>TypeScript files are currently not supported in the Mastro VSCode extension ("
-                  + filePath + ")</p>";
-              } else if (route) {
+              if (route) {
                 try {
                   const { handler } = route;
                   if (route.method === "GET" && typeof handler === "function") {
@@ -476,17 +473,16 @@ const getImportMap = async (
     ...await readImports("/deno.json"),
     ...await readImports("/import_map.json"),
     // @mastrojs/images is not yet supported, as we'd have to do something similar to `replaceStaticLinksWithDataUrls`, but presumably for `<img src="/_images/*`
-    // "@mastrojs/images": "https://esm.sh/jsr/@mastrojs/images@0.0.3?bundle",
-    "@mastrojs/markdown": "https://esm.sh/jsr/@mastrojs/markdown@0.0.7?bundle",
+    "@mastrojs/markdown": "https://esm.sh/jsr/@mastrojs/markdown@0.1.5?bundle",
   };
-  if (vscode.ExtensionMode.Development === context.extensionMode) {
+  if (false && vscode.ExtensionMode.Development === context.extensionMode) {
     const getDevUrl = (path: string) =>
         webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "mastro", path)).toString();
     imports["@mastrojs/mastro"] = getDevUrl("mastro/src/core/index.js");
     imports["@mastrojs/mastro/generator"] = getDevUrl("mastro/src/generator.js");
   } else {
     // currently we don't esm.sh ?bundle because the two exports share some files
-    const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.6.1/";
+    const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.7.0/";
     imports["@mastrojs/mastro"] = mastroProdUrl;
     imports["@mastrojs/mastro/"] = mastroProdUrl;
   }
@@ -529,7 +525,9 @@ const findFiles = async (
       const entries = await vscode.workspace.fs.readDirectory(
         rootFolder.with({ path: basePath + path })
       )
-      return entries.map(([name, type]) => [path + "/" + name, type] as const)
+      return entries
+        .filter(([name]) => !name.startsWith("."))
+        .map(([name, type]) => [path + "/" + name, type] as const)
     } catch (e) {
       console.warn(e)
       return []
