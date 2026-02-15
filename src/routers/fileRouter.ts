@@ -25,8 +25,17 @@ export const loadRoutes = async (
 const loadFileBasedRoutes = async (
   loader: (fileName: string) => Promise<Record<string, unknown>>,
 ): Promise<Route[]> => {
-  const suffix = typeof document === "object" ? "js" : "{ts,js}";
-  const routeFiles = await findFiles(`routes/**/*.server.${suffix}`);
+  const pattern = `routes/**/*.server.${typeof document === "object" ? "js" : "{ts,js}"}`;
+  const routeFiles = await findFiles(pattern);
+  if (routeFiles.length === 0) {
+    console.warn([
+      "",
+      "WARNING: No route files found!",
+      `  searched for ${pattern} in current working directory.`,
+      "  see https://mastrojs.github.io/docs/routing/",
+      "",
+    ].join("\n"));
+  }
 
   // Perhaps we should sort this according to more solid route precedence criteria.
   // Currently, it's just reverse alphabetical order, which at least guarantees that
