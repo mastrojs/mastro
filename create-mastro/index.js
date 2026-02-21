@@ -197,7 +197,7 @@ collections:
   <body>
     <!--
     You can also pin a version like https://unpkg.com/@sveltia/cms@0.129.2/dist/sveltia-cms.js
-    or innstead of loading from unpkg.com, download the file into your routes folder.
+    or instead of loading from unpkg.com, download the file and save it in your routes folder.
     -->
     <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
   </body>
