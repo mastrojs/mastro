@@ -22,7 +22,6 @@
     "lineWidth": 100
   },
   "imports": {
-    "@std/path/posix/extname": "jsr:@std/path@1.1.4/posix/extname",
     "@std/media-types": "jsr:@std/media-types@^1.1.0",
     "@std/http": "jsr:@std/http@^1.0.19",
     "ts-blank-space": "npm:ts-blank-space@0.6.1"

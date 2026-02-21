@@ -6,9 +6,9 @@
  */
 
 import type { Stats } from "node:fs";
+import { extname } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
 import { extension } from "@std/media-types";
-import { extname } from "@std/path/posix/extname";
 
 import { findFiles } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
