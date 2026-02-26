@@ -181,7 +181,12 @@ const ensureDir = async (statsP: Promise<Stats>) => {
   }
 };
 
-// just a dummy prefix so `new URL` doesn't throw
+
+
+/**
+ * A dummy prefix so `new URL` doesn't throw.
+ * Note that we don't use localhost to not trigger [`isDevServer`](./server.ts)
+ */
 const urlPrefix = "http://127.0.0.1";
 
 if (typeof document === "undefined" && import.meta.main) {
