@@ -111,6 +111,15 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
   // However, we could investigate whether keeping a manual index would be better,
   // but garbage collection would probably suffer.
   stack.reverse();
+
+  // Set up buffer to reduce per-chunk overhead
+  let buffer = "";
+  const flushBuffer = () => {
+    const value = buffer;
+    buffer = "";
+    return { value, done: false };
+  };
+
   return {
     [Symbol.asyncIterator]() {
       return {
@@ -126,6 +135,8 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
               } else {
                 stack.push(value);
               }
+            } else if (nextUp instanceof Promise && buffer.length > 0) {
+              return flushBuffer();
             } else {
               const current = await stack.pop();
               if (Array.isArray(current)) {
@@ -136,12 +147,18 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
                 // push iterator on stack for future consumption
                 const iterator = current[Symbol.asyncIterator]();
                 stack.push(iterator);
+                if (buffer.length > 0) {
+                  return flushBuffer();
+                }
               } else {
-                return { value: escape(current as HtmlPrimitive), done: false };
+                buffer += escape(current as HtmlPrimitive);
               }
             }
           }
-          return { value: undefined, done: true };
+          // stack is emptied
+          return buffer.length > 0
+            ? flushBuffer()
+            : { value: undefined, done: true };
         },
       };
     },
