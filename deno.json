@@ -1,6 +1,6 @@
 {
   "name": "@mastrojs/mastro",
-  "version": "0.7.3",
+  "version": "0.7.6",
   "tasks": {
     "publish": "deno test -RWE src && deno bench -RWE src && deno publish",
     "service-worker": "deno bundle --minify --platform=browser -o ../template-basic-service-worker/routes/mastro.js src/serviceWorker.ts"
