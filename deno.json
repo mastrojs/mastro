@@ -9,7 +9,7 @@
     ".": "./src/core/index.ts",
     "./generator": "./src/generator.ts",
     "./html": "./src/core/html.ts",
-    "./server": "./src/server.ts",
+    "./server": "./src/server.ts"
   },
   "compilerOptions": {
     "lib": ["deno.ns", "dom", "node"]
@@ -24,7 +24,6 @@
   },
   "imports": {
     "@std/media-types": "jsr:@std/media-types@^1.1.0",
-    "@std/http": "jsr:@std/http@^1.0.19",
-    "ts-blank-space": "npm:ts-blank-space@0.6.1"
+    "@std/http": "jsr:@std/http@^1.0.19"
   }
 }
