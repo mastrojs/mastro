@@ -1,6 +1,6 @@
 {
   "name": "@mastrojs/mastro",
-  "version": "0.7.6",
+  "version": "0.7.12",
   "tasks": {
     "publish": "deno test -RWE src && deno bench -RWE src && deno publish"
   },
