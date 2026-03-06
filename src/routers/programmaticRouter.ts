@@ -1,6 +1,15 @@
+/**
+ * This module exports the `Mastro` class to create a server using the
+ * [programmatic router](https://mastrojs.github.io/docs/routing/#programmatic-router).
+ * @module
+ */
+
 import type { GenerateOpts } from "../generator.ts";
 import { createHandler, type CreateHandlerOpts } from "../server.ts";
 import { type Handler, type HttpMethod, importSuffix, type Route } from "./common.ts";
+
+export { staticCacheControlVal } from "./common.ts";
+export type { CreateHandlerOpts, GenerateOpts, Handler, HttpMethod };
 
 /**
  * Either a plain `Handler` function, or an object with a `handler` and other fields.

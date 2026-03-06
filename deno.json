@@ -2,14 +2,14 @@
   "name": "@mastrojs/mastro",
   "version": "0.7.6",
   "tasks": {
-    "publish": "deno test -RWE src && deno bench -RWE src && deno publish",
-    "service-worker": "deno bundle --minify --platform=browser -o ../template-basic-service-worker/routes/mastro.js src/serviceWorker.ts"
+    "publish": "deno test -RWE src && deno bench -RWE src && deno publish"
   },
   "exports": {
     ".": "./src/core/index.ts",
     "./generator": "./src/generator.ts",
     "./html": "./src/core/html.ts",
-    "./server": "./src/server.ts"
+    "./server": "./src/routers/fileRouter.ts",
+    "./server-programmatic": "./src/routers/programmaticRouter.ts"
   },
   "compilerOptions": {
     "lib": ["deno.ns", "dom", "node"]

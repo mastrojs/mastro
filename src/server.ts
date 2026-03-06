@@ -1,14 +1,4 @@
-/**
- * This module exports various ways to create a
- * [Mastro server](https://mastrojs.github.io/docs/install-setup/#start-a-server).
- * @module
- */
-
-import { type Handler, importSuffix, type Route } from "./routers/common.ts";
-export type { Handler, HttpMethod, Route } from "./routers/common.ts";
-
-export * from "./routers/fileRouter.ts";
-export * from "./routers/programmaticRouter.ts";
+import { type Handler, importSuffix, isDevServer, type Route } from "./routers/common.ts";
 
 /**
  * Options for `createHandler`
@@ -99,39 +89,3 @@ async (
     }
   }
 };
-
-/**
- * Default export with a `fetch` handler.
- *
- * Can be passed to [Deno.serve](https://docs.deno.com/api/deno/~/Deno.serve),
- * or used directly with the [deno serve](https://docs.deno.com/runtime/reference/cli/serve/) CLI.
- */
-const defaultExport: { fetch: (req: Request) => Promise<Response> | Response } = {
-  fetch: createHandler<void, void>(),
-};
-export default defaultExport;
-
-/**
- * Attempts to give a reasonable `Cache-Control` header value for static files by looking
- * at the `DENO_DEPLOYMENT_ID` env variable and whether the host is local or not.
- */
-export const staticCacheControlVal = (req: Request): string | undefined => {
-  if (typeof Deno === "object" && Deno.env.get("DENO_DEPLOYMENT_ID")) {
-    // See https://docs.deno.com/deploy/early-access/reference/caching/
-    // The idea is to have the CDN of Deno Deploy EA cache static assets forever (7d)
-    // which is okay because deploys invalidate the cache.
-    // Browsers meanwhile would use etags to see whether the file has been updated.
-    return "s-maxage=604800";
-  } else if (isDevServer(new URL(req.url))) {
-    return "max-age=0";
-  }
-};
-
-/**
- * Attempts to determine whether we're running a development or production server.
- *
- * Currently this is done by checking whether the hostname is localhost, which is not perfect
- * but allows you to test production behaviour by connecting to `127.0.0.1` and
- * is easy to do without messing with environment variables.
- */
-const isDevServer = (url: URL) => url.hostname === "localhost";

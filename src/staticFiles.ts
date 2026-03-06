@@ -1,5 +1,5 @@
 import { serveFile as serveFileNode } from "./node/serveFile.ts";
-import { staticCacheControlVal } from "./server.ts";
+import { staticCacheControlVal } from "./routers/common.ts";
 
 const importRegex = /^import .*\.ts("|')(;)?$/gm;
 

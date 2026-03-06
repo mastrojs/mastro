@@ -1,5 +1,29 @@
-import { findFiles, sep } from "../core/fs.ts";
-import { httpMethods, type Route } from "./common.ts";
+/**
+ * This module exports functions to create a
+ * [Mastro server](https://mastrojs.github.io/docs/install-setup/#start-a-server).
+ * using the default [file-based router](https://mastrojs.github.io/docs/routing/).
+ * @module
+ */
+
+import { findFiles } from "../core/fs.ts";
+import { createHandler, type CreateHandlerOpts } from "../server.ts";
+import { type Handler, httpMethods, type Route } from "./common.ts";
+
+export { createHandler };
+export type { CreateHandlerOpts, Handler, Route };
+
+const sep: string = typeof document === "object" ? "/" : (await import("node:path")).sep;
+
+/**
+ * Default export with a `fetch` handler.
+ *
+ * Can be passed to [Deno.serve](https://docs.deno.com/api/deno/~/Deno.serve),
+ * or used directly with the [deno serve](https://docs.deno.com/runtime/reference/cli/serve/) CLI.
+ */
+const defaultExport: { fetch: (req: Request) => Promise<Response> | Response } = {
+  fetch: createHandler<void, void>(),
+};
+export default defaultExport;
 
 let routes: Promise<Route[]> | Route[] | undefined;
 

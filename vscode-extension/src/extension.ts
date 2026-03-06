@@ -219,7 +219,7 @@ const getWebviewContent = async (
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
           }
 
-          const { loadRoutes } = await import("@mastrojs/mastro")
+          const { loadRoutes } = await import("@mastrojs/mastro/server")
           const routes = await loadRoutes(name => {
             try {
               return import("/" + name);
@@ -482,7 +482,7 @@ const getImportMap = async (
     imports["@mastrojs/mastro/generator"] = getDevUrl("mastro/src/generator.js");
   } else {
     // currently we don't esm.sh ?bundle because the two exports share some files
-    const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.7.0/";
+    const mastroProdUrl = "https://esm.sh/jsr/@mastrojs/mastro@0.7.7/";
     imports["@mastrojs/mastro"] = mastroProdUrl;
     imports["@mastrojs/mastro/"] = mastroProdUrl;
   }

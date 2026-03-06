@@ -2,7 +2,8 @@ The source code of the core Mastro library, together with the `generator.ts` and
 
 - [`generator.ts`](generator.ts) contains everything related to static site generation.
 - [`server.ts`](server.ts) contains the server handler that can be passed to `Deno.serve`.
-- [`routers/fileRouter.ts`](routers/fileRouter.ts) – Mastro's file-based router, which creates a list of routes based on the `*.server.{js,ts}` files in your project's `routes/` folder.
+- [`routers/fileRouter.ts`](routers/fileRouter.ts) – Mastro's default file-based router, which creates a list of routes based on the `*.server.{js,ts}` files in your project's `routes/` folder.
+- [`routers/programmaticRouter.ts`](routers/programmaticRouter.ts) – Mastro's programmatic (Express-like) router.
 
 The "@mastrojs/mastro" package [re-exports](core/index.ts) the following files from the `core/` folder:
 

@@ -1,4 +1,4 @@
-import { Mastro } from '@mastrojs/mastro/server'
+import { Mastro } from '@mastrojs/mastro/server-programmatic'
 import * as Home from './handlers/Home.ts';
 import * as PostDetail from './handlers/PostDetail.ts';
 

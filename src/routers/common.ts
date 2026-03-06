@@ -38,3 +38,28 @@ export interface Route {
 // Otherwise Node.js says "Stripping types is currently unsupported for files under node_modules"
 // @ts-expect-error no type definitions for Bun
 export const importSuffix = typeof Deno === "object" || typeof Bun === "object" ? "ts" : "js";
+
+/**
+ * Attempts to determine whether we're running a development or production server.
+ *
+ * Currently this is done by checking whether the hostname is localhost, which is not perfect
+ * but allows you to test production behaviour by connecting to `127.0.0.1` and
+ * is easy to do without messing with environment variables.
+ */
+export const isDevServer = (url: URL) => url.hostname === "localhost";
+
+/**
+ * Attempts to give a reasonable `Cache-Control` header value for static files by looking
+ * at the `DENO_DEPLOYMENT_ID` env variable and whether the host is local or not.
+ */
+export const staticCacheControlVal = (req: Request): string | undefined => {
+  if (typeof Deno === "object" && Deno.env.get("DENO_DEPLOYMENT_ID")) {
+    // See https://docs.deno.com/deploy/reference/caching/
+    // The idea is to have the CDN of Deno Deploy cache static assets forever (7d)
+    // which is okay because deploys invalidate the cache.
+    // Browsers meanwhile would use etags to see whether the file has been updated.
+    return "s-maxage=604800";
+  } else if (isDevServer(new URL(req.url))) {
+    return "max-age=0";
+  }
+};
