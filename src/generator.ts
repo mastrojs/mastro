@@ -19,11 +19,6 @@ import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
  */
 export interface GenerateOpts {
   /**
-   * Create a `.routes.json` file in current folder (not outFolder)
-   * for later use with esbuild. Default is `false`.
-   */
-  generateRoutesFile?: boolean;
-  /**
    * Name of output folder that will be created. Default is `generated`.
    */
   outFolder?: string;
