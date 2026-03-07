@@ -224,7 +224,9 @@ const main = async () => {
     readline.emitKeypressEvents(process.stdin);
     process.stdin.setRawMode(true);
 
-    const template = await select("Which template do you want to start with?", ["basic", "blog"]);
+    const template = runtime === "cloudflare"
+      ? "basic"
+      : await select("Which template do you want to start with?", ["basic", "blog"]);
     const templateFetchZipPromise = template === "basic"
       ? undefined
       : fetch(`https://github.com/mastrojs/mastro/archive/refs/heads/main.zip`);
