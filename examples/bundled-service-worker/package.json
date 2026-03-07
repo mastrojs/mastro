@@ -1,0 +1,24 @@
+{
+  "name": "my-server",
+  "type": "module",
+  "scripts": {
+    "start": "node --watch server.ts",
+    "generate": "node node_modules/@mastrojs/mastro/src/generator.js",
+    "check": "tsc"
+  },
+  "dependencies": {
+    "@mastrojs/mastro": "jsr:^0",
+    "@remix-run/node-fetch-server": "^0.11",
+    "esbuild": "^0.27.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=24.12"
+  },
+  "volta": {
+    "node": "24.12.0"
+  }
+}
