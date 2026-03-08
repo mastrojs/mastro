@@ -7,8 +7,12 @@ import { extname } from "node:path";
 /**
  * Returns a `Response` from a file on the file system.
  *
+ * Previously we did `import { serveFile } from "@std/http/file-server"`,
+ * but [@std:http](https://jsr.io/@std/http) doesn't run on Node.js.
+ * It also has a bunch of dependencies, so we use this vendored implementation everywhere.
+ *
  * lightly adapted from:
- * https://github.com/denoland/std/blob/main/http/file_server.ts
+ * https://github.com/denoland/std/blob/2258bf2628a97a03dece8d0235d910bfaf1f501d/http/file_server.ts
  * (MIT License)
  */
 export const serveFile = async (req: Request, filePath: string): Promise<Response> => {

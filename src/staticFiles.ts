@@ -1,4 +1,4 @@
-import { serveFile as serveFileNode } from "./node/serveFile.ts";
+import { serveFile } from "./vendor/serveFile.ts";
 import { staticCacheControlVal } from "./routers/common.ts";
 
 const importRegex = /^import .*\.ts("|')(;)?$/gm;
@@ -40,13 +40,13 @@ export const serveStaticFile = async (
   const staticPath = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
   const pregeneratedFile = isDev
     ? undefined
-    : await serveFile(req, "generated" + staticPath);
-  const fileRes = pregeneratedFile || await serveFile(req, "routes" + staticPath);
+    : await tryServeFile(req, "generated" + staticPath);
+  const fileRes = pregeneratedFile || await tryServeFile(req, "routes" + staticPath);
   if (fileRes) {
     return fileRes;
   }
   if (pathname.endsWith(".client.js")) {
-    const fileRes = await serveFile(req, "routes" + pathname.slice(0, -3) + ".ts");
+    const fileRes = await tryServeFile(req, "routes" + pathname.slice(0, -3) + ".ts");
     if (fileRes) {
       const { status, headers } = fileRes; // // 200 or 304 Not Modified, hopefully no range request
       headers.set("Content-Type", "text/javascript; charset=utf-8");
@@ -59,10 +59,7 @@ export const serveStaticFile = async (
   }
 };
 
-const serveFile = async (req: Request, path: string) => {
-  const serveFile = typeof Deno === "object"
-    ? (await import("@std/http/file-server")).serveFile
-    : serveFileNode;
+const tryServeFile = async (req: Request, path: string) => {
   const res = await serveFile(req, path);
   if (res.status === 404 || res.status === 405) {
     return;
