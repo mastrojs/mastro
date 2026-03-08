@@ -58,9 +58,10 @@ async (
     if (route) {
       const { handler, pregenerate } = route;
       if (method !== route.method || typeof handler !== "function") {
-        const msg = `No ${method} handler function exported`;
+        const msg = `No ${method} handler found`;
         if (isDev) console.info(logPrefix + msg);
-        return new Response(`${msg} by ${route.name}`, { status: 405 });
+        const m = isDev ? ` by ${route.name}\n\nsee https://mastrojs.github.io/docs/routing/` : "";
+        return new Response(msg + m, { status: 405 });
       }
       if (pregenerate && !isDev) {
         return new Response(
