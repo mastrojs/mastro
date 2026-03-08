@@ -1,10 +1,10 @@
 import { Mastro } from "@mastrojs/mastro/server-programmatic";
 import * as Home from "./handlers/Home.ts";
-// import swVersion from "./sw-version" with { type: "json" };
+// @ts-expect-error
+import swConfig from "./sw-config" with { type: "json" };
 
-const mastroHandler = new Mastro()
+const swHandler = new Mastro()
   .get("/", Home)
-  .get("/text/", () => new Response("Here is some plain text"))
   .createHandler({ serveStaticFiles: false });
 
 /**
@@ -15,8 +15,8 @@ const mastroHandler = new Mastro()
  * see https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers
  * debug with chrome://serviceworker-internals
  */
-const cacheVersion = "v1";
-const staticFiles = ["/styles.css"];
+
+const { cacheVersion, staticFiles } = swConfig;
 
 on("install", async () => {
   (self as unknown as ServiceWorkerGlobalScope).skipWaiting();
@@ -39,7 +39,7 @@ on("activate", async () => {
 onFetch(async (req) => {
   const cache = await caches.open(cacheVersion);
   const staticFile = await cache.match(req);
-  return staticFile || mastroHandler(req);
+  return staticFile || swHandler(req);
 });
 
 

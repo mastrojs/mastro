@@ -1,9 +1,0 @@
-{
-  "name": "my-service-worker",
-  "version": "1.0.0",
-  "main": "sw.ts",
-  "type": "module",
-  "dependencies": {
-    "@mastrojs/mastro": "jsr:^0"
-  }
-}
