@@ -1,7 +1,7 @@
 import { html, htmlToResponse } from "@mastrojs/mastro";
 import { Layout } from "../sw/components/Layout.ts";
 
-export const GET = () =>
+export const handler = () =>
   htmlToResponse(
     Layout({
       title: "Hello World",
