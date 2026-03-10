@@ -77,7 +77,8 @@ export const serveFile = async (req: Request, filePath: string): Promise<Respons
   }
 
   headers.set("Content-Length", `${fileSize}`);
-  const stream = (await fs.open(filePath)).readableWebStream() as ReadableStream;
+  const file = await fs.open(filePath, "r");
+  const stream = file.readableWebStream({ autoClose: true }) as ReadableStream;
   return new Response(stream, { status: 200, headers });
 };
 
