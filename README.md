@@ -36,13 +36,13 @@ Deploy to GitHub Pages without installing anything: [Run Mastro in your browser]
 
 After [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either use the [Mastro template for Deno](https://github.com/mastrojs/template-basic-deno) or run:
 
-    deno run -A npm:@mastrojs/create-mastro@0.0.9
+    deno run -A npm:@mastrojs/create-mastro@0.1.5
 
 #### Node.js
 
 Either use the [Mastro template for Node.js](https://github.com/mastrojs/template-basic-node) or run:
 
-    pnpm create @mastrojs/mastro@0.0.9
+    pnpm create @mastrojs/mastro@0.1.5
 
 (`npm` and `yarn` also work, but `pnpm` is [recommended](https://jsr.io/docs/npm-compatibility).)
 
@@ -50,7 +50,7 @@ Either use the [Mastro template for Node.js](https://github.com/mastrojs/templat
 
 Either use the [Mastro template for Bun](https://github.com/mastrojs/template-basic-bun) or run:
 
-    bun create @mastrojs/mastro@0.0.9
+    bun create @mastrojs/mastro@0.1.5
 
 ## Documentation
 
