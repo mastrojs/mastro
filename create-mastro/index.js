@@ -45,6 +45,7 @@ const packageManager = (() => {
   }
 })();
 
+const templateOutDir = "mastro-main"; // determined by zip file
 
 /**
  * Helper Functions
@@ -155,6 +156,8 @@ const unzip = async (opts) => {
 }
 
 /**
+ * Depending on runtime, updates `deno.json` or `package.json`
+ *
  * @param { string } dir
  * @param { (dependencies: Record<string, string>) => void } cb
  */
@@ -163,6 +166,21 @@ const updateDeps = async (dir, cb) => {
   const json = JSON.parse(await fs.readFile(path, { encoding: "utf8" }));
   cb(json[runtime === "deno" ? "imports" : "dependencies"]);
   await fs.writeFile(path, JSON.stringify(json, null, 2));
+}
+
+/**
+ * @param { string } dir
+ */
+const updateFilesForBlog = async (dir) => {
+  await Promise.all(["components", "data", "routes"].map(async folder => {
+    await fs.rm(join(dir, folder), { recursive: true, force: true });
+    return fs.rename(join(templateOutDir, "examples", "blog", folder), join(dir, folder));
+  }));
+  await updateDeps(dir, deps => {
+    deps["@mastrojs/markdown"] = ["npm", "bun"].includes(packageManager)
+      ? "npm:@jsr/mastrojs__markdown@^0"
+      : "jsr:@mastrojs/markdown@^0";
+  });
 }
 
 /**
@@ -224,9 +242,11 @@ const main = async () => {
     readline.emitKeypressEvents(process.stdin);
     process.stdin.setRawMode(true);
 
-    const template = runtime === "cloudflare"
-      ? "basic"
-      : await select("Which template do you want to start with?", ["basic", "blog"]);
+    /** @type {Array<"basic" | "blog">} */
+    const templateChoices = runtime === "cloudflare"
+      ? ["basic"]
+      : ["basic", "blog"]
+    const template = await select("Which template do you want to start with?", templateChoices);
     const templateFetchZipPromise = template === "basic"
       ? undefined
       : fetch(`https://github.com/mastrojs/mastro/archive/refs/heads/main.zip`);
@@ -256,24 +276,16 @@ const main = async () => {
 
     if (templateFetchZipPromise) {
       // Update dir with things from @mastrojs/mastro's `examples/blog/` folder.
-      const templateOutDir = "mastro-main"; // determined by zip file
       await unzip({ fetchZipPromise: templateFetchZipPromise, zipFileName: templateOutDir + ".zip" });
 
-      await Promise.all(["components", "data", "routes"].map(async folder => {
-        await fs.rm(join(dir, folder), { recursive: true, force: true });
-        return fs.rename(join(templateOutDir, "examples", "blog", folder), join(dir, folder));
-      }));
-      await updateDeps(dir, deps => {
-        deps["@mastrojs/markdown"] = ["npm", "bun"].includes(packageManager)
-          ? "npm:@jsr/mastrojs__markdown@^0"
-          : "jsr:@mastrojs/markdown@^0";
-      });
+      if (template === "blog") {
+        await updateFilesForBlog(dir);
+        if (addSveltia) {
+          await addSveltiaFiles(dir);
+        }
+      }
 
       await fs.rm(templateOutDir, { recursive: true });
-
-      if (addSveltia) {
-        await addSveltiaFiles(dir);
-      }
     }
 
     const installInstr = runtime === "deno"
