@@ -5,7 +5,7 @@ export const GET = () => {
     <!DOCTYPE html>
 
     <h1>SSE</h1>
-    <a href="https://mastrojs.github.io/guide/bundling-assets/#http-streaming">
+    <a href="https://mastrojs.github.io/guide/caching-service-workers-streaming/#http-streaming">
       Server-sent events
     </a>
     <ul></ul>
