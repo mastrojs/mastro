@@ -66,6 +66,23 @@ export const jsonResponse = (
     },
   });
 
+/**
+ * Create a standard Response object to stream an `AsyncIterable` of JSON data as
+ * [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events).
+ */
+export const sseResponse = <T extends object>(
+  stream: AsyncIterable<T>,
+  headers?: HeadersInit,
+): Response => {
+  const sseStream = mapIterable(stream, (chunk) => `data: ${JSON.stringify(chunk)}\n\n`);
+  return new Response(toReadableStream(sseStream), {
+    headers: {
+      "Content-Type": "text/event-stream",
+      ...headers,
+    },
+  });
+};
+
 const toReadableStream = (iterable: AsyncIterable<string>) => {
   // TODO: check back when and if something like the following works and is more performant:
   // return ReadableStream.from(iterable.map(str => encoder.encode(str)));
@@ -96,7 +113,7 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
       iterator.return?.();
     },
   });
-}
+};
 
 /**
  * Returns the GitHub Pages base path (or an empty string).
@@ -147,3 +164,12 @@ export const ghPagesBasePath = (): string => {
 
 const isAsyncIterable = <T>(val: any): val is AsyncIterable<T> =>
   val && typeof val[Symbol.asyncIterator] === "function";
+
+async function* mapIterable<T, R>(
+  iter: AsyncIterable<T>,
+  callback: (val: T) => R,
+): AsyncIterable<R> {
+  for await (const val of iter) {
+    yield callback(val);
+  }
+}

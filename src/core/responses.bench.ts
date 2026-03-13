@@ -1,7 +1,7 @@
 import "node:process";
 import { assertEquals } from "jsr:@std/assert";
 import { type Html, html } from "./html.ts";
-import { htmlToResponse } from "./responses.ts";
+import { htmlToResponse, sseResponse } from "./responses.ts";
 
 /**
  * Howto run: https://docs.deno.com/runtime/reference/cli/bench/
@@ -146,5 +146,22 @@ Deno.bench({
       '    </html>',
       '  ',
     ].join("\n"));
+  },
+});
+
+Deno.bench({
+  name: "sseResponse",
+  async fn() {
+    const length = 20;
+    async function* generator() {
+      let i = 0;
+      while (i < length) {
+        yield { i };
+        i++;
+      }
+    }
+    const res = sseResponse(generator());
+    const arr = Array.from({ length }, (_, i) => `data: {"i":${i}}`);
+    assertEquals(await res.text(), arr.join("\n\n") + "\n\n");
   },
 });
