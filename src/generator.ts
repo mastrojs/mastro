@@ -114,7 +114,11 @@ const generatePage = async (route: Route, url: URL) => {
       const outFilePath = pathname.endsWith("/")
         ? `${pathname}index.html`
         : addExtension(pathname, response.headers);
-      return { outFilePath, response };
+      if (response.ok) {
+        return { outFilePath, response };
+      } else if (response.status >= 500) {
+        throw `received HTTP ${response.status}: ${await response.text()}`;
+      }
     } else {
       console.warn(route.name + ": GET must return a Response object");
     }
