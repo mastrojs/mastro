@@ -82,11 +82,10 @@ async (
       return new Response("404 not found", { status: 404 });
     }
   } catch (e: any) {
-    console.warn(`\x1b[35m${logPrefix}\x1b[0m`, e);
-    if (e.name === "NotFound" || e.code === "ENOENT") {
-      return new Response("404 not found", { status: 404 });
-    } else {
-      return new Response(`500: ${e.name || "Unknown error"}\n\n${e}`, { status: 500 });
-    }
+    const [msg, status] = e.name === "NotFound" || e.code === "ENOENT"
+      ? ["404 not found", 404]
+      : [`500: ${e.name || "Unknown error"}\n\n${e}`, 500];
+    console.warn(`\x1b[35m${logPrefix}${status}\x1b[0m`, e);
+    return new Response(msg, { status });
   }
 };
