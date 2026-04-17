@@ -267,74 +267,73 @@ const main = async () => {
 
   const rl = createInterface({ input: stdin, output: stdout, crlfDelay: Infinity });
   const dir = await rl.question("What name should we use for your new project folder?\n");
-  if (dir) {
-    readline.emitKeypressEvents(process.stdin);
-    process.stdin.setRawMode(true);
+  if (!dir) return process.exit();
+  readline.emitKeypressEvents(process.stdin);
+  process.stdin.setRawMode(true);
 
-    /** @type {Array<"basic" | "blog">} */
-    const templateChoices = runtime === "cloudflare"
-      ? ["basic"]
-      : ["basic", "blog"]
-    const template = await select("Which template do you want to start with?", templateChoices);
-    const templateFetchZipPromise = template === "basic"
-      ? undefined
-      : fetch(`https://github.com/mastrojs/mastro/archive/refs/heads/main.zip`);
+  /** @type {Array<"basic" | "blog">} */
+  const templateChoices = runtime === "cloudflare"
+    ? ["basic"]
+    : ["basic", "blog"]
+  const template = await select("Which template do you want to start with?", templateChoices);
+  const templateFetchZipPromise = template === "basic"
+    ? undefined
+    : fetch(`https://github.com/mastrojs/mastro/archive/refs/heads/main.zip`);
 
-    const addSveltia = template === "blog"
-      ? await select(
-          "Do you want to add a git-based CMS? This adds a routes/admin/ folder.",
-          ["No", "Add Sveltia CMS"],
-        ) === "Add Sveltia CMS"
-      : false;
+  const addSveltia = template === "blog"
+    ? await select(
+        "Do you want to add a git-based CMS? This adds a routes/admin/ folder.",
+        ["No", "Add Sveltia CMS"],
+      ) === "Add Sveltia CMS"
+    : false;
 
-    const zipOutDir = repoName + "-main"; // cannot be changed and is determined by the zip file
-    await unzip({ fetchZipPromise, zipFileName: zipOutDir + ".zip" });
-    await fs.rename(zipOutDir, dir);
+  const zipOutDir = repoName + "-main"; // cannot be changed and is determined by the zip file
+  await unzip({ fetchZipPromise, zipFileName: zipOutDir + ".zip" });
+  await fs.rename(zipOutDir, dir);
 
-    if (packageManager === "npm") {
-      // otherwise it's already correct from the template repo
-      try {
-        await updateDeps(dir, dependencies => {
-          dependencies["@mastrojs/mastro"] = "npm:@jsr/mastrojs__mastro@^0";
-        });
-        await fs.writeFile(join(dir, ".npmrc"), "@jsr:registry=https://npm.jsr.io");
-      } catch (e) {
-        console.error(`Created folder ${dir} but failed to patch it for npm. Please use pnpm instead.`);
+  if (packageManager === "npm") {
+    // otherwise it's already correct from the template repo
+    try {
+      await updateDeps(dir, dependencies => {
+        dependencies["@mastrojs/mastro"] = "npm:@jsr/mastrojs__mastro@^0";
+      });
+      await fs.writeFile(join(dir, ".npmrc"), "@jsr:registry=https://npm.jsr.io");
+    } catch (e) {
+      console.error(`Created folder ${dir} but failed to patch it for npm. Please use pnpm instead.`);
+    }
+  }
+
+  if (templateFetchZipPromise) {
+    // Update dir with things from @mastrojs/mastro's `examples/blog/` folder.
+    await unzip({ fetchZipPromise: templateFetchZipPromise, zipFileName: templateOutDir + ".zip" });
+
+    if (template === "blog") {
+      await updateFilesForBlog(dir);
+      if (addSveltia) {
+        await addSveltiaFiles(dir);
       }
     }
 
-    if (templateFetchZipPromise) {
-      // Update dir with things from @mastrojs/mastro's `examples/blog/` folder.
-      await unzip({ fetchZipPromise: templateFetchZipPromise, zipFileName: templateOutDir + ".zip" });
+    await fs.rm(templateOutDir, { recursive: true });
+  }
 
-      if (template === "blog") {
-        await updateFilesForBlog(dir);
-        if (addSveltia) {
-          await addSveltiaFiles(dir);
-        }
-      }
+  const install = runtime !== "deno" && "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"]);
+  const [installInstr = ""] = await Promise.all([
+    install ? installDeps(dir) : undefined,
+    initGit(dir),
+  ]);
 
-      await fs.rm(templateOutDir, { recursive: true });
-    }
+  const startInstr = runtime === "deno"
+    ? "deno task start"
+    : `${packageManager} run start`;
 
-    const install = runtime !== "deno" && "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"]);
-    const [installInstr = ""] = await Promise.all([
-      install ? installDeps(dir) : undefined,
-      initGit(dir),
-    ]);
-
-    const startInstr = runtime === "deno"
-      ? "deno task start"
-      : `${packageManager} run start`;
-
-    console.log(`
+  console.log(`
 Success!
 
 Enter the newly created folder with: ${ansiSetBlue}cd ${dir}${ansiResetStyles}${installInstr}
 Then start the dev server with: ${ansiSetBlue}${startInstr}${ansiResetStyles}`);
 
-    rl.close();
-    stdin.destroy();
-  }
+  rl.close();
+  stdin.destroy();
 }
 await main();
