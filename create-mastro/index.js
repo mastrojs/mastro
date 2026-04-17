@@ -46,6 +46,8 @@ const packageManager = (() => {
 })();
 
 const templateOutDir = "mastro-main"; // determined by zip file
+const ansiSetBlue = "\x1b[34m";
+const ansiResetStyles = "\x1b[0m";
 
 /**
  * Helper Functions
@@ -65,7 +67,7 @@ const select = async (question, options) =>
       console.clear();
       console.log(question);
       options.forEach((opt, i) => {
-        console.log(i === index ? `● ${opt}` : `\x1b[2m○ ${opt}\x1b[0m`);
+        console.log(i === index ? `● ${opt}` : `\x1b[2m○ ${opt}${ansiResetStyles}`);
       });
     }
     render();
@@ -137,9 +139,10 @@ const execCmd = (cmd, opts) =>
 const unzip = async (opts) => {
   const { fetchZipPromise, zipFileName } = opts;
   const res = await fetchZipPromise;
-  if (res.ok && res.body) {
-    await writeFile(zipFileName, res.body);
+  if (!res.ok || !res.body) {
+    throw Error(`fetchZipPromise had status ${res.status}`);
   }
+  await writeFile(zipFileName, res.body);
 
   // FreeBSD tar (preinstalled on macOS and >= Win10) handles also zip files
   const cmd = process.platform === "linux" ? "unzip " : "tar -xf ";
@@ -166,7 +169,7 @@ const updateDeps = async (dir, cb) => {
   const path = join(dir, runtime === "deno" ? "deno.json" : "package.json");
   const json = JSON.parse(await fs.readFile(path, { encoding: "utf8" }));
   cb(json[runtime === "deno" ? "imports" : "dependencies"]);
-  await fs.writeFile(path, JSON.stringify(json, null, 2));
+  await fs.writeFile(path, JSON.stringify(json, null, 2) + "\n");
 }
 
 /**
@@ -238,7 +241,7 @@ const installDeps = async (dir) => {
   const { code, stdout, stderr } = await execCmd(install, { cwd: dir });
   if (code !== 0) {
     console.warn("Couldn't install dependencies", stdout, stderr);
-    return `\n\nThen install dependencies with: ${install}\n`;
+    return `\n\nThen install dependencies with: ${ansiSetBlue}${install}${ansiResetStyles}\n`;
   }
 }
 
@@ -324,16 +327,11 @@ const main = async () => {
       ? "deno task start"
       : `${packageManager} run start`;
 
-    const codeStyle = "color: blue";
     console.log(`
 Success!
 
-Enter the newly created folder with: %ccd ${dir}${installInstr}
-%cThen start the dev server with: %c${startInstr}`,
-      codeStyle,
-      "",
-      codeStyle,
-    );
+Enter the newly created folder with: ${ansiSetBlue}cd ${dir}${ansiResetStyles}${installInstr}
+Then start the dev server with: ${ansiSetBlue}${startInstr}${ansiResetStyles}`);
 
     rl.close();
     stdin.destroy();
