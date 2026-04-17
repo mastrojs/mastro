@@ -241,7 +241,6 @@ const installDeps = async (dir) => {
   const { code, stdout, stderr } = await execCmd(install, { cwd: dir });
   if (code !== 0) {
     console.warn("Couldn't install dependencies", stdout, stderr);
-    return `\n\nThen install dependencies with: ${ansiSetBlue}${install}${ansiResetStyles}\n`;
   }
 }
 
@@ -318,7 +317,7 @@ const main = async () => {
   }
 
   const install = runtime !== "deno" && "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"]);
-  const [installInstr = ""] = await Promise.all([
+  await Promise.all([
     install ? installDeps(dir) : undefined,
     initGit(dir),
   ]);
@@ -330,7 +329,7 @@ const main = async () => {
   console.log(`
 Success!
 
-Enter the newly created folder with: ${ansiSetBlue}cd ${dir}${ansiResetStyles}${installInstr}
+Enter the newly created folder with: ${ansiSetBlue}cd ${dir}${ansiResetStyles}
 Then start the dev server with: ${ansiSetBlue}${startInstr}${ansiResetStyles}`);
 
   rl.close();
