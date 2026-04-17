@@ -118,11 +118,12 @@ const writeFile = (path, data) => {
 
 /**
  * @param {string} cmd
+ * @param {import("node:child_process").ExecOptions} [opts]
  * @returns {Promise<{code: number; stdout: string; stderr: string;}>}
  */
-const execCmd = (cmd) =>
+const execCmd = (cmd, opts) =>
   new Promise((resolve) =>
-    exec(cmd, (error, stdout, stderr) =>
+    exec(cmd, { ...opts, encoding: "utf8" }, (error, stdout, stderr) =>
       resolve({
         code: error ? (error.code || -1) : 0,
         stdout,
@@ -230,6 +231,31 @@ collections:
 }
 
 /**
+ * @param { string } dir
+ */
+const installDeps = async (dir) => {
+  const install = packageManager + " install";
+  const { code, stdout, stderr } = await execCmd(install, { cwd: dir });
+  if (code !== 0) {
+    console.warn("Couldn't install dependencies", stdout, stderr);
+    return `\n\nThen install dependencies with: ${install}\n`;
+  }
+}
+
+/**
+ * @param { string } dir
+ */
+const initGit = async (dir) => {
+  if("Yes" === await select("Initialize a new git repository? (optional)", ["Yes", "No"])) {
+    const { code, stdout, stderr } = await execCmd("git init && git add . && git commit -m 'Initial commit'", { cwd: dir });
+    if (code !== 0) {
+      console.warn("Couldn't initialize git repo", stdout, stderr);
+    }
+  }
+}
+
+
+/**
  * Main function
  */
 const main = async () => {
@@ -288,9 +314,12 @@ const main = async () => {
       await fs.rm(templateOutDir, { recursive: true });
     }
 
-    const installInstr = runtime === "deno"
-      ? ""
-      : `\n\nThen install dependencies with: ${packageManager} install\n`;
+    const install = runtime !== "deno" && "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"]);
+    const [installInstr = ""] = await Promise.all([
+      install ? installDeps(dir) : undefined,
+      initGit(dir),
+    ]);
+
     const startInstr = runtime === "deno"
       ? "deno task start"
       : `${packageManager} run start`;
