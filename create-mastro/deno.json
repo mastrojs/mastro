@@ -1,3 +1,9 @@
 {
-  "nodeModulesDir": "auto"
+  "nodeModulesDir": "auto",
+  "fmt": {
+    "lineWidth": 100
+  },
+  "imports": {
+    "@mastrojs/mastro": "jsr:@mastrojs/mastro@^0.7.16"
+  }
 }

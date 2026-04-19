@@ -21,11 +21,10 @@ import { Readable } from "node:stream";
 /**
  * Constants
  */
-
 const userAgent = process.env.npm_config_user_agent;
 const runtime = (() => {
   if (typeof Deno === "object") {
-   return "deno"
+    return "deno"
   } else if (userAgent?.startsWith("bun/")) {
     // the usual ways to detect Bun don't appear to work in `bun create`
     return "bun";
@@ -44,10 +43,10 @@ const packageManager = (() => {
     default: return "npm";
   }
 })();
-
 const templateOutDir = "mastro-main"; // determined by zip file
 const ansiSetBlue = "\x1b[34m";
 const ansiResetStyles = "\x1b[0m";
+
 
 /**
  * Helper Functions
@@ -97,7 +96,6 @@ const select = async (question, options) =>
       }
     });
   });
-
 
 /**
  * @param {string} path
@@ -245,14 +243,21 @@ const installDeps = async (dir) => {
 }
 
 /**
- * @param { string } dir
+ * @param { Promise<unknown> } p
  */
-const initGit = async (dir) => {
-  if("Yes" === await select("Initialize a new git repository? (optional)", ["Yes", "No"])) {
-    const { code, stdout, stderr } = await execCmd("git init && git add . && git commit -m 'Initial commit'", { cwd: dir });
-    if (code !== 0) {
-      console.warn("Couldn't initialize git repo", stdout, stderr);
-    }
+const loadingSpinnerUntil = async (p) => {
+  const chars = "-\\|/";
+  let i = 0;
+  const id = setInterval(() => {
+    console.clear();
+    console.log(chars[i]);
+    i = i === chars.length - 1 ? 0 : i+1;
+  }, 500);
+  try {
+    await p;
+  } finally {
+    clearInterval(id);
+    console.clear();
   }
 }
 
@@ -288,7 +293,13 @@ const main = async () => {
 
   const zipOutDir = repoName + "-main"; // cannot be changed and is determined by the zip file
   await unzip({ fetchZipPromise, zipFileName: zipOutDir + ".zip" });
-  await fs.rename(zipOutDir, dir);
+  try {
+    await fs.rename(zipOutDir, dir);
+  } catch (/** @type {any} */ e) {
+    console.error(e.code === "ENOTEMPTY" ? `Could not create directory ${dir}: it already exists.`: e);
+    await fs.rm(zipOutDir, { recursive: true });
+    process.exit(-1);
+  }
 
   if (packageManager === "npm") {
     // otherwise it's already correct from the template repo
@@ -316,11 +327,19 @@ const main = async () => {
     await fs.rm(templateOutDir, { recursive: true });
   }
 
-  const install = runtime !== "deno" && "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"]);
-  await Promise.all([
-    install ? installDeps(dir) : undefined,
-    initGit(dir),
-  ]);
+  const installDepsP = runtime !== "deno" && "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"])
+    ? installDeps(dir)
+    : undefined;
+  const initGit = "Yes" === await select("Initialize a new git repository? (optional)", ["Yes", "No"]);
+
+  if (installDepsP) {
+    await loadingSpinnerUntil(installDepsP);
+  }
+
+  if (initGit) {
+    const { code, stdout, stderr } = await execCmd("git init && git add . && git commit -m 'Initial commit'", { cwd: dir });
+    if (code !== 0) console.warn("Couldn't initialize git repo", stdout, stderr);
+  }
 
   const startInstr = runtime === "deno"
     ? "deno task start"
