@@ -24,7 +24,7 @@ import { Readable } from "node:stream";
 const userAgent = process.env.npm_config_user_agent;
 const runtime = (() => {
   if (typeof Deno === "object") {
-    return "deno"
+    return "deno";
   } else if (userAgent?.startsWith("bun/")) {
     // the usual ways to detect Bun don't appear to work in `bun create`
     return "bun";
@@ -37,16 +37,19 @@ const runtime = (() => {
 const packageManager = (() => {
   if (runtime === "deno") return "deno";
   switch (userAgent?.split("/")[0]) {
-    case "pnpm": return "pnpm";
-    case "yarn": return "yarn";
-    case "bun": return "bun";
-    default: return "npm";
+    case "pnpm":
+      return "pnpm";
+    case "yarn":
+      return "yarn";
+    case "bun":
+      return "bun";
+    default:
+      return "npm";
   }
 })();
 const templateOutDir = "mastro-main"; // determined by zip file
 const ansiSetBlue = "\x1b[34m";
 const ansiResetStyles = "\x1b[0m";
-
 
 /**
  * Helper Functions
@@ -59,7 +62,7 @@ const ansiResetStyles = "\x1b[0m";
  * @returns {Promise<T>}
  */
 const select = async (question, options) =>
-  new Promise(resolve => {
+  new Promise((resolve) => {
     let index = 0;
 
     const render = () => {
@@ -68,7 +71,7 @@ const select = async (question, options) =>
       options.forEach((opt, i) => {
         console.log(i === index ? `● ${opt}` : `\x1b[2m○ ${opt}${ansiResetStyles}`);
       });
-    }
+    };
     render();
 
     process.stdin.on("keypress", (_, key) => {
@@ -114,7 +117,7 @@ const writeFile = (path, data) => {
         .on("error", reject)
     );
   }
-}
+};
 
 /**
  * @param {string} cmd
@@ -155,7 +158,7 @@ const unzip = async (opts) => {
   if (!unzipSuccess) {
     process.exit(-1);
   }
-}
+};
 
 /**
  * Depending on runtime, updates `deno.json` or `package.json`
@@ -168,28 +171,29 @@ const updateDeps = async (dir, cb) => {
   const json = JSON.parse(await fs.readFile(path, { encoding: "utf8" }));
   cb(json[runtime === "deno" ? "imports" : "dependencies"]);
   await fs.writeFile(path, JSON.stringify(json, null, 2) + "\n");
-}
+};
 
 /**
  * @param { string } dir
  */
 const updateFilesForBlog = async (dir) => {
-  await Promise.all(["components", "data", "routes"].map(async folder => {
+  await Promise.all(["components", "data", "routes"].map(async (folder) => {
     await fs.rm(join(dir, folder), { recursive: true, force: true });
     return fs.rename(join(templateOutDir, "examples", "blog", folder), join(dir, folder));
   }));
-  await updateDeps(dir, deps => {
+  await updateDeps(dir, (deps) => {
     deps["@mastrojs/markdown"] = ["npm", "bun"].includes(packageManager)
       ? "npm:@jsr/mastrojs__markdown@^0"
       : "jsr:@mastrojs/markdown@^0";
   });
-}
+};
 
 /**
  * @param { string } dir
  */
 const addSveltiaFiles = async (dir) => {
-  const sveltiaConfig = `# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
+  const sveltiaConfig =
+    `# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
 
 backend:
   name: github
@@ -227,9 +231,12 @@ collections:
   await Promise.all([
     fs.writeFile(join(dir, "routes", "admin", "config.yml"), sveltiaConfig),
     fs.writeFile(join(dir, "routes", "admin", "index.html"), sveltiaIndexHtml),
-    fs.appendFile(join(dir, "README.md"), "\n\n## Sveltia CMS\n\nOpen <http://localhost:8000/admin/> in your browser.\n"),
+    fs.appendFile(
+      join(dir, "README.md"),
+      "\n\n## Sveltia CMS\n\nOpen <http://localhost:8000/admin/> in your browser.\n",
+    ),
   ]);
-}
+};
 
 /**
  * @param { string } dir
@@ -240,7 +247,7 @@ const installDeps = async (dir) => {
   if (code !== 0) {
     console.warn("Couldn't install dependencies", stdout, stderr);
   }
-}
+};
 
 /**
  * @param { Promise<unknown> } p
@@ -251,7 +258,7 @@ const loadingSpinnerUntil = async (p) => {
   const id = setInterval(() => {
     console.clear();
     console.log(chars[i]);
-    i = i === chars.length - 1 ? 0 : i+1;
+    i = i === chars.length - 1 ? 0 : i + 1;
   }, 500);
   try {
     await p;
@@ -259,15 +266,16 @@ const loadingSpinnerUntil = async (p) => {
     clearInterval(id);
     console.clear();
   }
-}
-
+};
 
 /**
  * Main function
  */
 const main = async () => {
   const repoName = `template-basic-${runtime}`;
-  const fetchZipPromise = fetch(`https://github.com/mastrojs/${repoName}/archive/refs/heads/main.zip`);
+  const fetchZipPromise = fetch(
+    `https://github.com/mastrojs/${repoName}/archive/refs/heads/main.zip`,
+  );
 
   const rl = createInterface({ input: stdin, output: stdout, crlfDelay: Infinity });
   const dir = await rl.question("What name should we use for your new project folder?\n");
@@ -276,9 +284,7 @@ const main = async () => {
   process.stdin.setRawMode(true);
 
   /** @type {Array<"basic" | "blog">} */
-  const templateChoices = runtime === "cloudflare"
-    ? ["basic"]
-    : ["basic", "blog"]
+  const templateChoices = runtime === "cloudflare" ? ["basic"] : ["basic", "blog"];
   const template = await select("Which template do you want to start with?", templateChoices);
   const templateFetchZipPromise = template === "basic"
     ? undefined
@@ -286,9 +292,9 @@ const main = async () => {
 
   const addSveltia = template === "blog"
     ? await select(
-        "Do you want to add a git-based CMS? This adds a routes/admin/ folder.",
-        ["No", "Add Sveltia CMS"],
-      ) === "Add Sveltia CMS"
+      "Do you want to add a git-based CMS? This adds a routes/admin/ folder.",
+      ["No", "Add Sveltia CMS"],
+    ) === "Add Sveltia CMS"
     : false;
 
   const zipOutDir = repoName + "-main"; // cannot be changed and is determined by the zip file
@@ -296,7 +302,9 @@ const main = async () => {
   try {
     await fs.rename(zipOutDir, dir);
   } catch (/** @type {any} */ e) {
-    console.error(e.code === "ENOTEMPTY" ? `Could not create directory ${dir}: it already exists.`: e);
+    console.error(
+      e.code === "ENOTEMPTY" ? `Could not create directory ${dir}: it already exists.` : e,
+    );
     await fs.rm(zipOutDir, { recursive: true });
     process.exit(-1);
   }
@@ -304,12 +312,14 @@ const main = async () => {
   if (packageManager === "npm") {
     // otherwise it's already correct from the template repo
     try {
-      await updateDeps(dir, dependencies => {
+      await updateDeps(dir, (dependencies) => {
         dependencies["@mastrojs/mastro"] = "npm:@jsr/mastrojs__mastro@^0";
       });
       await fs.writeFile(join(dir, ".npmrc"), "@jsr:registry=https://npm.jsr.io");
     } catch (e) {
-      console.error(`Created folder ${dir} but failed to patch it for npm. Please use pnpm instead.`);
+      console.error(
+        `Created folder ${dir} but failed to patch it for npm. Please use pnpm instead.`,
+      );
     }
   }
 
@@ -327,24 +337,25 @@ const main = async () => {
     await fs.rm(templateOutDir, { recursive: true });
   }
 
-  const installDepsP = runtime !== "deno" && "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"])
+  const installDepsP = runtime !== "deno" &&
+      "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"])
     ? installDeps(dir)
     : undefined;
-  const initGit = "Yes" === await select("Initialize a new git repository? (optional)", ["Yes", "No"]);
+
+  const initGit =
+    "Yes" === await select("Initialize a new git repository? (optional)", ["Yes", "No"]);
 
   if (installDepsP) {
     await loadingSpinnerUntil(installDepsP);
   }
 
   if (initGit) {
-    const { code, stdout, stderr } = await execCmd("git init && git add . && git commit -m 'Initial commit'", { cwd: dir });
+    const cmd = "git init && git add . && git commit -m 'Initial commit'";
+    const { code, stdout, stderr } = await execCmd(cmd, { cwd: dir });
     if (code !== 0) console.warn("Couldn't initialize git repo", stdout, stderr);
   }
 
-  const startInstr = runtime === "deno"
-    ? "deno task start"
-    : `${packageManager} run start`;
-
+  const startInstr = runtime === "deno" ? "deno task start" : `${packageManager} run start`;
   console.log(`
 Success!
 
@@ -353,5 +364,5 @@ Then start the dev server with: ${ansiSetBlue}${startInstr}${ansiResetStyles}`);
 
   rl.close();
   stdin.destroy();
-}
+};
 await main();
