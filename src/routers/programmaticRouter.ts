@@ -5,11 +5,11 @@
  */
 
 import type { GenerateOpts } from "../generator.ts";
-import { createHandler, type CreateHandlerOpts } from "../server.ts";
+import { type BaseHandlerOpts, createMastroHandler } from "../server.ts";
 import { type Handler, type HttpMethod, importSuffix, type Route } from "./common.ts";
 
 export { staticCacheControlVal } from "./common.ts";
-export type { CreateHandlerOpts, GenerateOpts, Handler, HttpMethod };
+export type { BaseHandlerOpts, GenerateOpts, Handler, HttpMethod };
 
 /**
  * Either a plain `Handler` function, or an object with a `handler` and other fields.
@@ -75,8 +75,7 @@ export class Mastro<E = void, C = void> {
   }
 
   /** Create fetch handler */
-  createHandler(opts: CreateHandlerOpts = {}): Handler<E, C> {
-    opts.routes = this.routes;
-    return createHandler(opts);
+  createHandler(opts: BaseHandlerOpts = {}): Handler<E, C> {
+    return createMastroHandler({ ...opts, routes: this.routes });
   }
 }

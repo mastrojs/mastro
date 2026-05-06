@@ -1,29 +1,22 @@
 import { type Handler, importSuffix, isDevServer, type Route } from "./routers/common.ts";
 
-/**
- * Options for `createHandler`
- */
-export interface CreateHandlerOpts {
-  routes?: Route[];
+export interface BaseHandlerOpts {
   /** defaults to true */
   serveStaticFiles?: boolean;
 }
 
-/**
- * Create fetch handler that serves Mastro routes and static files
- */
-export const createHandler = <E, C>(opts?: CreateHandlerOpts): Handler<E, C> =>
+interface Opts extends BaseHandlerOpts {
+  routes: Route[] | Promise<Route[]>;
+}
+
+export const createMastroHandler = <E, C>(opts: Opts): Handler<E, C> =>
 async (
   req: Request,
   env: E,
   ctx: C,
 ) => {
-  // in variable to prevent bundling by esbuild:
-  const fileRouterPath = `./routers/fileRouter.${importSuffix}`;
-  const {
-    routes = await import(fileRouterPath).then((mod) => mod.loadRoutes()) as Route[],
-    serveStaticFiles = true,
-  } = opts || {};
+  const { serveStaticFiles = true } = opts;
+  const routes = await opts.routes;
   const url = new URL(req.url);
   const logPrefix = `${req.method} ${url.pathname + url.search} => `;
   const isDev = isDevServer(url);

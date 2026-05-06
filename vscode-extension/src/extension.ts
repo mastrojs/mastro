@@ -220,7 +220,10 @@ const getWebviewContent = async (
           }
 
           const { loadRoutes } = await import("@mastrojs/mastro/server")
-          const routes = await loadRoutes(name => {
+          const pattern = "routes/**/*.server.js";
+          const routeFiles = await document.fs.findFiles(pattern);
+
+          const routes = await loadRoutes(routeFiles, name => {
             try {
               return import("/" + name);
             } catch (e) {
@@ -324,8 +327,14 @@ const getWebviewContent = async (
                       : urlStr || (e.stack.endsWith(eStr) ? '' : (e.stack || ''))
                     ) + '</p>'
                 }
-              } else {
+              } else if (routeFiles.length > 0) {
                 iframe.srcdoc = '<h1>404 page not found</h1>'
+              } else {
+                iframe.srcdoc = [
+                  "<h1>No route files found!</h1>",
+                  "<p>searched for " + pattern + " in current working directory.</p>",
+                  '<p>see the <a href="https://mastrojs.github.io/docs/routing/">Mastro routing docs</a></p>',
+                ].join("\n");
               }
             } catch (e) {
               iframe.srcdoc = '<p>' + e + '</p>'

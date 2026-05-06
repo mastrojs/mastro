@@ -39,7 +39,7 @@
     "publish": "npx @vscode/vsce publish minor",
     "vscode:prepublish": "npm run build",
     "build": "tsc -p .",
-    "build-dev": "tsc -p . && tsc ../src/core/*.ts ../src/generator.ts ../../markdown/markdown.ts ../../images/images.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions || true",
+    "build-dev": "tsc -p . && tsc ../src/core/*.ts ../src/routers/*.ts ../src/generator.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions || true",
     "watch": "tsc -watch -p ."
   },
   "devDependencies": {
@@ -48,6 +48,6 @@
     "typescript": "^5.9.3"
   },
   "volta": {
-    "node": "24.9.0"
+    "node": "24.15.0"
   }
 }

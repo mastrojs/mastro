@@ -6,13 +6,43 @@
  */
 
 import { findFiles } from "../core/fs.ts";
-import { createHandler, type CreateHandlerOpts } from "../server.ts";
+import { type BaseHandlerOpts, createMastroHandler } from "../server.ts";
 import { type Handler, httpMethods, type Route } from "./common.ts";
 
-export { createHandler };
-export type { CreateHandlerOpts, Handler, Route };
+export { staticCacheControlVal } from "./common.ts";
+export type { Handler, Route };
 
-const sep: string = typeof document === "object" ? "/" : (await import("node:path")).sep;
+type Loader = (fileName: string) => Promise<Record<string, unknown>>;
+
+/**
+ * Options for `createHandler`
+ */
+export interface CreateHandlerOpts extends BaseHandlerOpts {
+  /** When using e.g. esbuild, the route file names need to be supplied, because the individual file
+   * names are not accessible in the bundle, but we need them to create the routes array. */
+  routeFiles?: string[];
+}
+
+/**
+ * Create fetch handler that serves Mastro routes and static files
+ */
+export const createHandler = (opts: CreateHandlerOpts) =>
+  createMastroHandler({ ...opts, routes: loadRoutes(opts.routeFiles) });
+
+/**
+ * Returns an array of the file-based routes from `routes/`, loaded with the provided `loader`.
+ * Called from the Mastro VSCode extension.
+ */
+export const loadRoutes = async (routeFiles?: string[], loader?: Loader): Promise<Route[]> => {
+  if (!routeFiles) {
+    routeFiles = await findFiles("routes/**/*.server.{ts,js}");
+  }
+  if (!loader) {
+    const { pathToFileURL } = await import("node:url");
+    loader = (fileName) => import(pathToFileURL(process.cwd() + sep + fileName).toString());
+  }
+  return loadFileBasedRoutes(routeFiles, loader);
+};
 
 /**
  * Default export with a `fetch` handler.
@@ -21,41 +51,21 @@ const sep: string = typeof document === "object" ? "/" : (await import("node:pat
  * or used directly with the [deno serve](https://docs.deno.com/runtime/reference/cli/serve/) CLI.
  */
 const defaultExport: { fetch: (req: Request) => Promise<Response> | Response } = {
-  fetch: createHandler<void, void>(),
+  fetch: createMastroHandler<void, void>({ routes: loadRoutes() }),
 };
 export default defaultExport;
 
-let routes: Promise<Route[]> | Route[] | undefined;
-
 /**
- * Returns an array of the file-based routes from `routes/`, loaded with the provided `loader`.
- * Custom loader is useful when using esbuild (e.g. with Cloudflare Wrangler), or
- * in the Mastro VSCode extension.
+ * Returns true iff the given `filePath` contains dynamic route parameters.
  */
-export const loadRoutes = async (
-  loader?: (fileName: string) => Promise<Record<string, unknown>>,
-): Promise<Route[]> => {
-  if (!routes) {
-    if (!loader) {
-      const { pathToFileURL } = await import("node:url");
-      loader = (fileName) => import(pathToFileURL(process.cwd() + sep + fileName).toString());
-    }
-    // don't await routes to speed up server startup
-    routes = loadFileBasedRoutes(loader);
-  }
-  return routes;
-};
+export const hasRouteParams = (filePath: string): boolean =>
+  filePath.split(sep).some((segment) => segment.match(paramRegex));
 
-const loadFileBasedRoutes = async (
-  loader: (fileName: string) => Promise<Record<string, unknown>>,
-): Promise<Route[]> => {
-  const pattern = `routes/**/*.server.${typeof document === "object" ? "js" : "{ts,js}"}`;
-  const routeFiles = await findFiles(pattern);
+const loadFileBasedRoutes = async (routeFiles: string[], loader: Loader): Promise<Route[]> => {
   if (routeFiles.length === 0) {
     console.warn([
       "",
       "WARNING: No route files found!",
-      `  searched for ${pattern} in current working directory.`,
       "  see https://mastrojs.github.io/docs/routing/",
       "",
     ].join("\n"));
@@ -108,10 +118,6 @@ const toPattern = (filePath: string) => {
   return new URLPattern({ pathname: "/" + parts.join("/") });
 };
 
-/**
- * Returns true iff the given `filePath` contains dynamic route parameters.
- */
-export const hasRouteParams = (filePath: string): boolean =>
-  filePath.split(sep).some((segment) => segment.match(paramRegex));
-
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
+
+const sep: string = typeof document === "object" ? "/" : (await import("node:path")).sep;
