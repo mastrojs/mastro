@@ -11,7 +11,7 @@ const nodeFs = "node:fs/promises";
 const nodePath = "node:path";
 
 // @ts-expect-error WorkerGlobalScope
-const isWorker = typeof self !== "undefined" && self.WorkerGlobalScope;
+const isWorker = typeof self !== "undefined" && self.WorkerGlobalScope && navigator.userAgent !== "Cloudflare-Workers";
 
 const fs = typeof document === "object" || isWorker
   ? undefined
