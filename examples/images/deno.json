@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "start": "deno serve -A --watch=. ../../src/server.ts",
+    "start": "deno serve -A --watch=. ../../src/routers/fileRouter.ts",
     "generate": "deno run -A @mastrojs/mastro/generator",
     "pregenerate": "deno run -A @mastrojs/mastro/generator --only-pregenerate"
   },
