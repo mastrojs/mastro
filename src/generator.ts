@@ -14,6 +14,8 @@ import { findFiles } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
 import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
 
+export { loadRoutes };
+
 /**
  * Config options for `generate`
  */
@@ -36,7 +38,8 @@ export interface GenerateOpts {
 
 /**
  * Generate all pages for the static site and write them to disk.
- * Can only be used with Deno or Node.js – not in the VSCode extension.
+ *
+ * Can not be used in the VSCode extension.
  */
 export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   const fs = await import("node:fs/promises");
@@ -179,8 +182,6 @@ const ensureDir = async (statsP: Promise<Stats>) => {
     process.exit(1);
   }
 };
-
-
 
 /**
  * A dummy prefix so `new URL` doesn't throw.
