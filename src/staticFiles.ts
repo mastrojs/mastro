@@ -1,4 +1,4 @@
-import { serveFile } from "./vendor/serveFile.ts";
+import { serveFile } from "./server/serveFile.ts";
 import { staticCacheControlVal } from "./routers/common.ts";
 
 const importRegex = /^import .*\.ts("|')(;)?$/gm;

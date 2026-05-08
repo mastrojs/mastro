@@ -5,7 +5,7 @@
  */
 
 import type { GenerateOpts } from "../generator.ts";
-import { type BaseHandlerOpts, createMastroHandler } from "../handler.ts";
+import { type BaseHandlerOpts, createMastroHandler } from "../server/handler.ts";
 import { type Handler, type HttpMethod, importSuffix, type Route } from "./common.ts";
 
 export { staticCacheControlVal } from "./common.ts";

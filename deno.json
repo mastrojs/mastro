@@ -8,7 +8,7 @@
     ".": "./src/core/index.ts",
     "./generator": "./src/generator.ts",
     "./html": "./src/core/html.ts",
-    "./server": "./src/routers/fileRouter.ts",
+    "./server": "./src/server/server.ts",
     "./server-programmatic": "./src/routers/programmaticRouter.ts"
   },
   "compilerOptions": {

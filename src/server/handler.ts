@@ -1,4 +1,4 @@
-import { type Handler, importSuffix, isDevServer, type Route } from "./routers/common.ts";
+import { type Handler, importSuffix, isDevServer, type Route } from "../routers/common.ts";
 
 export interface BaseHandlerOpts {
   /** defaults to true */
@@ -27,11 +27,11 @@ async (
       // imports in variable to prevent bundling by esbuild
       let mod;
       try {
-        const modPath = `./staticFiles.${importSuffix}`;
+        const modPath = `../staticFiles.${importSuffix}`;
         mod = await import(modPath);
       } catch {
         // when there's a package.json preset (as in the cloudflare template), Deno also needs .js
-        const modPath = `./staticFiles.js`;
+        const modPath = `../staticFiles.js`;
         mod = await import(modPath);
       }
       const fileRes = await mod.serveStaticFile(req, isDev);
