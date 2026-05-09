@@ -25,15 +25,10 @@ async (
     const method = req.method.toUpperCase();
     if (method === "GET" && serveStaticFiles) {
       // imports in variable to prevent bundling by esbuild
-      let mod;
-      try {
-        const modPath = `../staticFiles.${importSuffix}`;
-        mod = await import(modPath);
-      } catch {
-        // when there's a package.json preset (as in the cloudflare template), Deno also needs .js
-        const modPath = `../staticFiles.js`;
-        mod = await import(modPath);
-      }
+      const modPath1 = `../staticFiles.${importSuffix}`;
+      const modPath2 = `../staticFiles.js`;
+      // when there's a package.json preset (as in the cloudflare template), Deno also needs .js
+      const mod = await import(modPath1).catch(() => import(modPath2));
       const fileRes = await mod.serveStaticFile(req, isDev);
       if (fileRes) {
         return fileRes;
