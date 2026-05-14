@@ -9,6 +9,7 @@ import { type BaseHandlerOpts, createMastroHandler } from "./handler.ts";
 import type { Handler, Route } from "../routers/common.ts";
 import { loadRoutes } from "../routers/fileRouter.ts";
 
+export { loadRoutes };
 export { staticCacheControlVal } from "../routers/common.ts";
 export type { Handler, Route };
 

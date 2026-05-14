@@ -14,8 +14,6 @@ import { findFiles } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
 import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
 
-export { loadRoutes };
-
 /**
  * Config options for `generate`
  */
