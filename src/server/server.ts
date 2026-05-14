@@ -25,7 +25,7 @@ export interface CreateHandlerOpts extends BaseHandlerOpts {
 /**
  * Create fetch handler that serves Mastro routes and static files
  */
-export const createHandler = (opts: CreateHandlerOpts): Handler =>
+export const createHandler = <E, C>(opts: CreateHandlerOpts): Handler<E, C> =>
   createMastroHandler({ ...opts, routes: loadRoutes(opts.routeFiles) });
 
 /**
