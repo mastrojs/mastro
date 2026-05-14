@@ -34,6 +34,10 @@ export interface GenerateOpts {
    * For use with the programmatic router. Default is to fall back on the file-based router.
    */
   routes?: Route[];
+  /**
+   * Generate `.routenames.json`, which the file-based router needs when using a bundled server.
+   */
+  writeRoutenames?: boolean;
 }
 
 /**
@@ -53,6 +57,10 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   }
   await fs.rm(outFolder, { force: true, recursive: true });
   await fs.mkdir(outFolder);
+
+  if (fileBasedRouter && opts.writeRoutenames) {
+    await fs.writeFile(".routenames.json", JSON.stringify(routes.map((r) => r.name), null, 2));
+  }
 
   for (const route of routes) {
     const { name } = route;
@@ -206,6 +214,11 @@ if (typeof document === "undefined" && import.meta.main) {
       description: "Only pregenerate routes with `export const pregenerate = true`",
       type: "boolean",
     },
+    "write-routenames": {
+      description: "Generate `.routenames.json`. Only needed with the file-based router " +
+        "when also using a bundled server (e.g. Cloudflare).",
+      type: "boolean",
+    },
   };
   try {
     const values = parseArgs({ options }).values;
@@ -216,8 +229,9 @@ if (typeof document === "undefined" && import.meta.main) {
       console.info("Options:\n" + opts.join("\n"));
     } else {
       await generate({
-        outFolder: values.output as string,
+        outFolder: values.output as string | undefined,
         onlyPregenerate: !!values["only-pregenerate"],
+        writeRoutenames: !!values["write-routenames"],
       });
     }
   } catch (e: any) {

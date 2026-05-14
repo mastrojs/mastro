@@ -64,14 +64,10 @@ export class Mastro<E = void, C = void> {
   }
 
   /** Generate static site */
-  async generate(opts?: GenerateOpts): Promise<void> {
+  async generate(opts?: Omit<GenerateOpts, "routes" | "writeRoutenames">): Promise<void> {
     const modPath = `../generator.${importSuffix}`; // variable to prevent esbuild bundling
     const { generate } = await import(modPath);
-    if (!opts) {
-      opts = {};
-    }
-    opts.routes = this.routes;
-    return generate(opts);
+    return generate({ ...opts, routes: this.routes });
   }
 
   /** Create fetch handler */
