@@ -1,5 +1,22 @@
+/**
+ * This module exports more configurable functions to create a
+ * [Mastro server](https://mastrojs.github.io/docs/install-setup/#start-a-server)
+ * using the default [file-based router](https://mastrojs.github.io/docs/routing/).
+ * @module
+ */
+
 import { findFiles } from "../core/fs.ts";
-import { httpMethods, type Route } from "./common.ts";
+import { type CreateHandlerOpts, createMastroHandler } from "../server/handler.ts";
+import { type Handler, httpMethods, type Route } from "./common.ts";
+
+export type { CreateHandlerOpts, Handler, Route };
+export { staticCacheControlVal } from "./common.ts";
+
+/**
+ * Create fetch handler that serves Mastro routes and static files
+ */
+export const createHandler = <E, C>(opts?: CreateHandlerOpts): Handler<E, C> =>
+  createMastroHandler({ ...opts, routes: opts?.routes || loadRoutes() });
 
 /**
  * Loads and returns file-based routes – either with the provided `loader`, or falling back to

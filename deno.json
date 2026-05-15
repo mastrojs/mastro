@@ -1,6 +1,6 @@
 {
   "name": "@mastrojs/mastro",
-  "version": "0.8.1",
+  "version": "0.8.4",
   "tasks": {
     "publish": "deno test -RWE src && deno bench -RWE src && deno publish"
   },
@@ -9,6 +9,7 @@
     "./generator": "./src/generator.ts",
     "./html": "./src/core/html.ts",
     "./server": "./src/server/server.ts",
+    "./server-filebased": "./src/routers/fileRouter.ts",
     "./server-programmatic": "./src/routers/programmaticRouter.ts"
   },
   "compilerOptions": {

@@ -1,15 +1,15 @@
 import { type Handler, importSuffix, isDevServer, type Route } from "../routers/common.ts";
 
-export interface BaseHandlerOpts {
+/**
+ * Options for `createHandler`
+ */
+export interface CreateHandlerOpts {
+  routes: Route[] | Promise<Route[]>;
   /** defaults to true */
   serveStaticFiles?: boolean;
 }
 
-interface Opts extends BaseHandlerOpts {
-  routes: Route[] | Promise<Route[]>;
-}
-
-export const createMastroHandler = <E, C>(opts: Opts): Handler<E, C> =>
+export const createMastroHandler = <E, C>(opts: CreateHandlerOpts): Handler<E, C> =>
 async (
   req: Request,
   env: E,
@@ -27,7 +27,7 @@ async (
       // imports in variable to prevent bundling by esbuild
       const modPath1 = `../staticFiles.${importSuffix}`;
       const modPath2 = `../staticFiles.js`;
-      // when there's a package.json preset (as in the cloudflare template), Deno also needs .js
+      // when there's a package.json present (as in the cloudflare template), Deno also needs .js
       const mod = await import(modPath1).catch(() => import(modPath2));
       const fileRes = await mod.serveStaticFile(req, isDev);
       if (fileRes) {

@@ -14,7 +14,7 @@ Deno.bench({
       },
     ];
     const outFolder = await Deno.makeTempDir();
-    await generate({ outFolder, routes: routes });
+    await generate({ outFolder, routes });
 
     // curiously, this speeds things up tremendously. must be a benchmarking artefact
     await new Promise(resolve => setTimeout(resolve, 0));
