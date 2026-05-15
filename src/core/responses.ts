@@ -25,24 +25,11 @@ export const htmlResponse = (
   body: string | AsyncIterable<string>,
   status = 200,
   headers?: HeadersInit,
-): Response => {
-  let payload;
-  if (isAsyncIterable(body)) {
-    payload = toReadableStream(body);
-  } else {
-    payload = body;
-  }
-  return new Response(
-    payload,
-    {
-      status,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        ...headers,
-      },
-    },
+): Response =>
+  new Response(
+    isAsyncIterable(body) ? toReadableStream(body) : body,
+    { status, headers: { "Content-Type": "text/html; charset=utf-8", ...headers } },
   );
-};
 
 /**
  * Create a standard Response object from an `Html` node.
@@ -60,10 +47,7 @@ export const jsonResponse = (
 ): Response =>
   new Response(JSON.stringify(body), {
     status,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
+    headers: { "Content-Type": "application/json", ...headers },
   });
 
 /**
@@ -73,15 +57,11 @@ export const jsonResponse = (
 export const sseResponse = <T extends object>(
   stream: AsyncIterable<T>,
   headers?: HeadersInit,
-): Response => {
-  const sseStream = mapIterable(stream, (chunk) => `data: ${JSON.stringify(chunk)}\n\n`);
-  return new Response(toReadableStream(sseStream), {
-    headers: {
-      "Content-Type": "text/event-stream",
-      ...headers,
-    },
-  });
-};
+): Response =>
+  new Response(
+    toReadableStream(mapIterable(stream, (chunk) => `data: ${JSON.stringify(chunk)}\n\n`)),
+    { headers: { "Content-Type": "text/event-stream", ...headers } },
+  );
 
 const toReadableStream = (iterable: AsyncIterable<string>) => {
   // TODO: check back when and if something like the following works and is more performant:
@@ -165,11 +145,8 @@ export const ghPagesBasePath = (): string => {
 const isAsyncIterable = <T>(val: any): val is AsyncIterable<T> =>
   val && typeof val[Symbol.asyncIterator] === "function";
 
-async function* mapIterable<T, R>(
-  iter: AsyncIterable<T>,
-  callback: (val: T) => R,
-): AsyncIterable<R> {
+async function* mapIterable<T, R>(iter: AsyncIterable<T>, cb: (val: T) => R): AsyncIterable<R> {
   for await (const val of iter) {
-    yield callback(val);
+    yield cb(val);
   }
 }
