@@ -1,13 +1,18 @@
 import { findFiles } from "../core/fs.ts";
 import { httpMethods, type Route } from "./common.ts";
 
-type Loader = (fileName: string) => Promise<Record<string, unknown>>;
-
 /**
- * Returns an array of the file-based routes from `routes/`, loaded with the provided `loader`.
- * Called from the Mastro VSCode extension.
+ * Loads and returns file-based routes – either with the provided `loader`, or falling back to
+ * reading the `routes/` folder from the file system.
+ * You only need to call this manually when using a bundler like esbuild, where we don't have the
+ * route file names in the bundle.
+ *
+ * Also called from the Mastro VSCode extension.
  */
-export const loadRoutes = async (routeFiles?: string[], loader?: Loader): Promise<Route[]> => {
+export const loadRoutes = async (
+  routeFiles?: string[],
+  loader?: (fileName: string) => Promise<Record<string, unknown>>,
+): Promise<Route[]> => {
   if (!routeFiles) {
     routeFiles = await findFiles("routes/**/*.server.{ts,js}");
   }
@@ -15,16 +20,7 @@ export const loadRoutes = async (routeFiles?: string[], loader?: Loader): Promis
     const { pathToFileURL } = await import("node:url");
     loader = (fileName) => import(pathToFileURL(process.cwd() + sep + fileName).toString());
   }
-  return loadFileBasedRoutes(routeFiles, loader);
-};
 
-/**
- * Returns true iff the given `filePath` contains dynamic route parameters.
- */
-export const hasRouteParams = (filePath: string): boolean =>
-  filePath.split(sep).some((segment) => segment.match(paramRegex));
-
-const loadFileBasedRoutes = async (routeFiles: string[], loader: Loader): Promise<Route[]> => {
   if (routeFiles.length === 0) {
     console.warn([
       "",
@@ -59,6 +55,12 @@ const loadFileBasedRoutes = async (routeFiles: string[], loader: Loader): Promis
     )
   );
 };
+
+/**
+ * Returns true iff the given `filePath` contains dynamic route parameters.
+ */
+export const hasRouteParams = (filePath: string): boolean =>
+  filePath.split(sep).some((segment) => segment.match(paramRegex));
 
 const toPattern = (filePath: string) => {
   const pathParts = filePath.split(sep).slice(1);
