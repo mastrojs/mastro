@@ -85,7 +85,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     const outPath = outFolder + filePath;
     await fs.mkdir(dirname(outPath), { recursive: true });
     if (filePath.endsWith(".client.ts")) {
-      const { tsToJs } = await import("./staticFiles.ts");
+      const { tsToJs } = await import("./tsToJs.ts");
       const text = await fs.readFile("routes" + filePath, { encoding: "utf8" });
       await fs.writeFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
     } else {
