@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 //@ts-check
+// deno-lint-ignore-file no-process-global
 
 /**
  * This script initializes an empty Mastro project.
@@ -61,7 +62,7 @@ const ansiResetStyles = "\x1b[0m";
  * @param {T[]} options
  * @returns {Promise<T>}
  */
-const select = async (question, options) =>
+const select = (question, options) =>
   new Promise((resolve) => {
     let index = 0;
 
@@ -110,7 +111,7 @@ const writeFile = (path, data) => {
     return Deno.writeFile(path, data);
   } else {
     return new Promise((resolve, reject) =>
-      // @ts-ignore
+      // @ts-ignore different ReadableStream type
       Readable.fromWeb(data)
         .pipe(createWriteStream(path))
         .on("finish", resolve)
@@ -283,9 +284,9 @@ const main = async () => {
   readline.emitKeypressEvents(process.stdin);
   process.stdin.setRawMode(true);
 
-  /** @type {Array<"basic" | "blog">} */
-  const templateChoices = runtime === "cloudflare" ? ["basic"] : ["basic", "blog"];
-  const template = await select("Which template do you want to start with?", templateChoices);
+  const template = runtime === "cloudflare"
+    ? "basic"
+    : await select("Which template do you want to start with?", ["basic", "blog"]);
   const templateFetchZipPromise = template === "basic"
     ? undefined
     : fetch(`https://github.com/mastrojs/mastro/archive/refs/heads/main.zip`);
@@ -316,7 +317,7 @@ const main = async () => {
         dependencies["@mastrojs/mastro"] = "npm:@jsr/mastrojs__mastro@^0";
       });
       await fs.writeFile(join(dir, ".npmrc"), "@jsr:registry=https://npm.jsr.io");
-    } catch (e) {
+    } catch {
       console.error(
         `Created folder ${dir} but failed to patch it for npm. Please use pnpm instead.`,
       );
@@ -355,7 +356,9 @@ const main = async () => {
     if (code !== 0) console.warn("Couldn't initialize git repo", stdout, stderr);
   }
 
-  const startInstr = runtime === "deno" ? "deno task start" : `${packageManager} run start`;
+  const startInstr = runtime === "deno"
+    ? "deno task start"
+    : `${packageManager} run ${runtime === "cloudflare" ? "dev" : "start"}`;
   console.log(`
 Success!
 
