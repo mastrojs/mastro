@@ -63,6 +63,24 @@ export const sseResponse = <T extends object>(
     { headers: { "Content-Type": "text/event-stream", ...headers } },
   );
 
+/**
+ * [Identity tag literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/raw#building_an_identity_tag)
+ * which does no escaping: do not pass it untrusted input.
+ *
+ * ```ts
+ * export const styles = css`
+ *   p {
+ *     font-size: ${2 * 3}em;
+ *   }
+ * `;
+ * ```
+ *
+ * For more usage examples, see
+ * [Component-scoped CSS without a build step](https://mastrojs.github.io/blog/2026-05-26-component-scoped-css-without-build-step/).
+ */
+export const css = (strings: TemplateStringsArray, ...values: Array<string | number>): string =>
+  String.raw({ raw: strings }, ...values);
+
 const toReadableStream = (iterable: AsyncIterable<string>) => {
   // TODO: check back when and if something like the following works and is more performant:
   // return ReadableStream.from(iterable.map(str => encoder.encode(str)));
