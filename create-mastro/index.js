@@ -351,7 +351,7 @@ const main = async () => {
   }
 
   if (initGit) {
-    const cmd = "git init && git add . && git commit -m 'Initial commit'";
+    const cmd = "git init -b main && git add . && git commit -m 'Initial commit'";
     const { code, stdout, stderr } = await execCmd(cmd, { cwd: dir });
     if (code !== 0) console.warn("Couldn't initialize git repo", stdout, stderr);
   }
