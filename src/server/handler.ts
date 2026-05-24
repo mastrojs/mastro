@@ -67,12 +67,12 @@ async (
       }
     } else {
       if (isDev && url.pathname !== "/favicon.ico") console.info(logPrefix + "No route match");
-      return new Response("404 not found", { status: 404 });
+      return new Response("404 route not found", { status: 404 });
     }
   } catch (e: any) {
     const [msg, status] = e.name === "NotFound" || e.code === "ENOENT"
-      ? ["404 not found", 404]
-      : [`500: ${e.name || "Unknown error"}\n\n${e}`, 500];
+      ? [`404 Not Found\n\n${isDev ? e.message : ""}`, 404]
+      : [`500 Internal Server Error\n\n${isDev ? (e.stack || e) : e.name || "Unknown error"}`, 500];
     console.warn(`\x1b[35m${logPrefix}${status}\x1b[0m`, e);
     return new Response(msg, { status });
   }
