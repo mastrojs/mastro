@@ -6,6 +6,7 @@
  */
 
 import { createMastroHandler } from "./handler.ts";
+import "./serveStaticFile.ts"; // make sure JSR sees that file
 import { loadRoutes } from "../routers/fileRouter.ts";
 
 /**
