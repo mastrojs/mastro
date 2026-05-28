@@ -19,6 +19,11 @@ import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
  */
 export interface GenerateOpts {
   /**
+   * Base URL for the synthetic requests sent by the generator. Default is http://127.0.0.1
+   * to make them distinguishable from request from localhost (see `isDevServer`).
+   */
+  baseUrl?: string;
+  /**
    * Name of output folder that will be created. Default is `generated`.
    */
   outFolder?: string;
@@ -68,7 +73,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
           name + " should export a function named getStaticPaths, returning an array of strings.",
         );
       }
-      for (const file of await generatePagesForRoute(route)) {
+      for (const file of await generatePagesForRoute(route, opts.baseUrl)) {
         if (file) {
           const outFilePath = outFolder + file.outFilePath;
           await fs.mkdir(dirname(outFilePath), { recursive: true });
@@ -105,12 +110,13 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
  */
 export const generatePagesForRoute = async (
   route: Route,
+  baseUrl = "http://127.0.0.1",
 ): Promise<Array<{ outFilePath: string; response: Response } | undefined>> => {
   const { name, getStaticPaths } = route;
   const paths = getStaticPaths
     ? validateGetStaticPaths(name, await getStaticPaths())
     : [route.pattern.pathname];
-  return Promise.all(paths.map((p) => generatePage(route, new URL(urlPrefix + p))));
+  return Promise.all(paths.map((p) => generatePage(route, new URL(baseUrl + p))));
 };
 
 const generatePage = async (route: Route, url: URL) => {
@@ -189,12 +195,6 @@ const ensureDir = async (statsP: Promise<Stats>) => {
   }
 };
 
-/**
- * A dummy prefix so `new URL` doesn't throw.
- * Note that we don't use localhost to not trigger [`isDevServer`](./server.ts)
- */
-const urlPrefix = "http://127.0.0.1";
-
 if (typeof document === "undefined" && import.meta.main) {
   const { parseArgs } = await import("node:util");
 
@@ -203,6 +203,10 @@ if (typeof document === "undefined" && import.meta.main) {
       description: "Print this help page",
       type: "boolean",
       short: "h",
+    },
+    "base-url": {
+      description: "Base URL for the synthetic requests, defaults to http://127.0.0.1",
+      type: "string",
     },
     output: {
       description: "Name of output folder that will be created, defaults to `generated`",
@@ -214,7 +218,7 @@ if (typeof document === "undefined" && import.meta.main) {
     },
     "write-routenames": {
       description: "Generate `.routenames.json`. Only needed with the file-based router " +
-        "when also using a bundled server (e.g. Cloudflare).",
+        "when also using a bundled server.",
       type: "boolean",
     },
   };
@@ -227,6 +231,7 @@ if (typeof document === "undefined" && import.meta.main) {
       console.info("Options:\n" + opts.join("\n"));
     } else {
       await generate({
+        baseUrl: values["base-url"] as string | undefined,
         outFolder: values.output as string | undefined,
         onlyPregenerate: !!values["only-pregenerate"],
         writeRoutenames: !!values["write-routenames"],
