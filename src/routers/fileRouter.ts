@@ -5,7 +5,7 @@
  * @module
  */
 
-import { findFiles } from "../core/fs.ts";
+import { findFiles, sep } from "../core/fs.ts";
 import { type CreateHandlerOpts, createMastroHandler } from "../server/handler.ts";
 import { type Handler, httpMethods, type Route } from "./common.ts";
 
@@ -101,5 +101,3 @@ const toPattern = (filePath: string) => {
 };
 
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
-
-const sep: string = typeof document === "object" ? "/" : (await import("node:path")).sep;

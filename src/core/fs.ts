@@ -45,7 +45,7 @@ export const readDir = async (path: string): Promise<string[]> =>
  */
 export const readTextFile = async (path: string): Promise<string> =>
   fs
-    ? (await fs).readFile(await noLeadingSep(path), { encoding: "utf8" })
+    ? (await fs).readFile(noLeadingSep(path), { encoding: "utf8" })
     : vscodeExtensionFs.readTextFile(leadingSlash(path));
 
 /**
@@ -55,7 +55,7 @@ export const readTextFile = async (path: string): Promise<string> =>
  */
 export const readFile = async (path: string): Promise<Uint8Array<ArrayBufferLike>> =>
   fs
-    ? (await fs).readFile(await noLeadingSep(path))
+    ? (await fs).readFile(noLeadingSep(path))
     : vscodeExtensionFs.readFile(leadingSlash(path));
 
 /**
@@ -107,7 +107,10 @@ export const findFiles = async (pattern: string): Promise<string[]> => {
 const leadingSlash = (path: string) =>
   path.startsWith("/") ? path : "/" + path;
 
-const noLeadingSep = async (path: string) => {
-  const sep: string = typeof document === "object" ? "/" : (await import(nodePath)).sep;
-  return path.startsWith(sep) ? path.slice(1) : path;
-}
+/**
+ * File path separator. `\` on Windows, `/` otherwise.
+ */
+export const sep: string = typeof document === "object" ? "/" : (await import(nodePath)).sep;
+
+const noLeadingSep = (path: string) =>
+  path.startsWith(sep) ? path.slice(1) : path;
