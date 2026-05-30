@@ -17,12 +17,17 @@ async (
 ) => {
   const { serveStaticFiles = true } = opts;
   const routes = await opts.routes;
+  const method = req.method.toUpperCase();
   const url = new URL(req.url);
   const logPrefix = `${req.method} ${url.pathname + url.search} => `;
   const isDev = isDevServer(url);
+  const setCacheHeaders = (res: Response) => {
+    if (!isDev && url.pathname.startsWith("/_assets/") && method === "GET") {
+      res.headers.set("Cache-Control", "public, max-age=31556952, immutable");
+    }
+  };
 
   try {
-    const method = req.method.toUpperCase();
     if (method === "GET" && serveStaticFiles) {
       // imports in variable to prevent bundling by esbuild
       const modPath1 = `./serveStaticFile.${importSuffix}`;
@@ -31,6 +36,7 @@ async (
       const mod = await import(modPath1).catch(() => import(modPath2));
       const fileRes = await mod.serveStaticFile(req, isDev);
       if (fileRes) {
+        setCacheHeaders(fileRes);
         return fileRes;
       }
     }
@@ -61,6 +67,7 @@ async (
       const res = await handler(req, env as any, ctx as any);
       if (res instanceof Response) {
         if (isDev) console.info(logPrefix + route.name);
+        setCacheHeaders(res);
         return res;
       } else {
         throw Error(method + " must return a Response object");

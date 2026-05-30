@@ -10,7 +10,7 @@ import { extname } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
 import { extension } from "@std/media-types";
 
-import { findFiles } from "./core/fs.ts";
+import { findFiles, sep } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
 import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
 
@@ -18,6 +18,10 @@ import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
  * Config options for `generate`
  */
 export interface GenerateOpts {
+  /**
+   * Files in this folder get hashed output names. Default is `_assets`, empty string to disable.
+   */
+  assetsFolder?: string;
   /**
    * Base URL for the synthetic requests sent by the generator. Default is http://127.0.0.1
    * to make them distinguishable from request from localhost (see `isDevServer`).
@@ -49,11 +53,30 @@ export interface GenerateOpts {
  * Can not be used in the VSCode extension.
  */
 export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
+  const { createHash } = await import("node:crypto");
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
-
+  const { pathToFileURL } = await import("node:url");
   const fileBasedRouter = !opts.routes;
-  const { outFolder = "generated", onlyPregenerate = false, routes = await loadRoutes() } = opts;
+  const {
+    assetsFolder = "_assets",
+    outFolder = "generated",
+    onlyPregenerate = false,
+    routes = await loadRoutes(),
+  } = opts;
+  const assetsPrefix = assetsFolder ? sep + assetsFolder + sep : undefined;
+
+  const isAsset = (path: string) => assetsPrefix && path.startsWith(assetsPrefix) && extname(path);
+  const assetHashes: Record<string, string> = {};
+  const getAssetPath = (path: string, data: Buffer) => {
+    const ext = extname(path);
+    const hash = createHash("sha256").update(data).digest("hex").slice(0, 8);
+    const hashedPath = `${path.slice(0, -1 * ext.length)}-${hash}${ext}`;
+    assetHashes[pathToFileURL(path).pathname.slice(assetsPrefix?.length)] = hashedPath;
+    return hashedPath;
+  };
+  const writeJSON = (path: string, data: object) =>
+    fs.writeFile(path, JSON.stringify(data, null, 2) + "\n");
 
   if (fileBasedRouter && routes.length === 0) {
     await ensureDir(fs.stat("routes"));
@@ -62,7 +85,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   await fs.mkdir(outFolder);
 
   if (fileBasedRouter && opts.writeRoutenames) {
-    await fs.writeFile(".routenames.json", JSON.stringify(routes.map((r) => r.name), null, 2));
+    await writeJSON(".routenames.json", routes.map((r) => r.name));
   }
 
   for (const route of routes) {
@@ -75,11 +98,17 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
       }
       for (const file of await generatePagesForRoute(route, opts.baseUrl)) {
         if (file) {
-          const outFilePath = outFolder + file.outFilePath;
-          await fs.mkdir(dirname(outFilePath), { recursive: true });
+          const outPath = outFolder + file.outFilePath;
+          await fs.mkdir(dirname(outPath), { recursive: true });
           const { body } = file.response;
           if (body) {
-            await writeFile(outFilePath, body);
+            let data;
+            let { outFilePath } = file;
+            if (isAsset(outFilePath)) {
+              data = await file.response.arrayBuffer().then(Buffer.from);
+              outFilePath = getAssetPath(outFilePath, data);
+            }
+            await writeFile(outFolder + outFilePath, data || body);
           }
         }
       }
@@ -87,15 +116,21 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   }
 
   for (const filePath of await getStaticFilePaths()) {
-    const outPath = outFolder + filePath;
-    await fs.mkdir(dirname(outPath), { recursive: true });
+    await fs.mkdir(dirname(outFolder + filePath), { recursive: true });
     if (filePath.endsWith(".client.ts")) {
       const { tsToJs } = await import("./tsToJs.ts");
       const text = await fs.readFile("routes" + filePath, { encoding: "utf8" });
       await fs.writeFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
     } else {
-      await fs.copyFile("routes" + filePath, outPath);
+      const outPath = isAsset(filePath)
+        ? getAssetPath(filePath, await fs.readFile("routes" + filePath))
+        : filePath;
+      await fs.copyFile("routes" + filePath, outFolder + outPath);
     }
+  }
+
+  if (assetsPrefix) {
+    await writeJSON("generatedAssets.json", assetHashes);
   }
 
   console.info(`Generated static site and wrote to ${outFolder}/ folder.`);
@@ -164,7 +199,7 @@ export const getStaticFilePaths = async (): Promise<string[]> =>
 
 const isStaticFile = (p: string) => !p.endsWith(".server.ts") && !p.endsWith(".server.js");
 
-const writeFile = async (path: string, data: ReadableStream<Uint8Array>) => {
+const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer) => {
   if (typeof Deno === "object") {
     return Deno.writeFile(path, data);
   } else {
@@ -204,6 +239,11 @@ if (typeof document === "undefined" && import.meta.main) {
       type: "boolean",
       short: "h",
     },
+    "assets-folder": {
+      description: "Files in this folder get hashed output names. Default is `_assets`. " +
+        'To disable, use --assets-folder=""',
+      type: "string",
+    },
     "base-url": {
       description: "Base URL for the synthetic requests, defaults to http://127.0.0.1",
       type: "string",
@@ -232,6 +272,7 @@ if (typeof document === "undefined" && import.meta.main) {
     } else {
       await generate({
         baseUrl: values["base-url"] as string | undefined,
+        assetsFolder: values["assets-folder"] as string | undefined,
         outFolder: values.output as string | undefined,
         onlyPregenerate: !!values["only-pregenerate"],
         writeRoutenames: !!values["write-routenames"],

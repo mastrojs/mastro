@@ -1,3 +1,4 @@
+import { readTextFile } from "./fs.ts";
 import { type Html, renderToStream } from "./html.ts";
 
 /**
@@ -62,6 +63,28 @@ export const sseResponse = <T extends object>(
     toReadableStream(mapIterable(stream, (chunk) => `data: ${JSON.stringify(chunk)}\n\n`)),
     { headers: { "Content-Type": "text/event-stream", ...headers } },
   );
+
+/**
+ * Returns the path of a hashed file name, or the input path if not found in `generatedAssets.json`
+ *
+ * If you have a `routes/_assets/logo.webp` file, use in your template:
+ *
+ * ```
+ * import { asset, html } from "@mastrojs/mastro";
+ *
+ * export const Header = () =>
+ *   html`<header><img src=${asset("logo.webp")}></header>`;
+ * ```
+ *
+ * Don't forget to set your CDN's caching headers for `/_assets/*` to something like
+ * `Cache-Control: public, max-age=31556952, immutable` (1 year), otherwise hashing is little use.
+ * When running a server, you additionally need to run the
+ * [pregenerate build step](/guide/bundling-assets/#build-step).
+ * See the [Mastro Guide](https://mastrojs.github.io/guide/caching-service-workers-streaming/#fingerprinting-assets-with-hash-based-file-names)
+ */
+export const asset = (path: string) => assetHashes[path] || (/_assets/ + path);
+const assetHashes = await readTextFile("generatedAssets.json")
+  .then((data) => JSON.parse(data)).catch(() => ({}));
 
 /**
  * [Identity tag literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/raw#building_an_identity_tag)
