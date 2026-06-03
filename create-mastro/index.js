@@ -281,6 +281,8 @@ const main = async () => {
   const rl = createInterface({ input: stdin, output: stdout, crlfDelay: Infinity });
   const dir = await rl.question("What name should we use for your new project folder?\n");
   if (!dir) return process.exit();
+
+  // set up terminal for interactive keyboard UI (e.g. with the `select` function):
   readline.emitKeypressEvents(process.stdin);
   process.stdin.setRawMode(true);
 
