@@ -7,10 +7,10 @@ import { assertEquals } from "jsr:@std/assert";
         "routes/index.server.ts",
         "routes/[...slug]/test.server.ts",
         "routes/[...slug]/index.server.ts",
+        "routes/.well-known/foo/bar.server.ts",
         "routes/blog/index.server.ts",
         "routes/blog/[slug].server.ts",
         "routes/blog/override.server.ts",
-        "routes/.well-known/foo/bar.server.ts",
       ];
     },
     readTextFile: () => {
@@ -31,8 +31,8 @@ Deno.test("fileRouter: route precedence order", async () => {
     "routes/blog/override.server.ts",
     "routes/blog/index.server.ts",
     "routes/blog/[slug].server.ts",
+    "routes/.well-known/foo/bar.server.ts",
     "routes/[...slug]/test.server.ts",
     "routes/[...slug]/index.server.ts",
-    "routes/.well-known/foo/bar.server.ts",
   ]);
 });

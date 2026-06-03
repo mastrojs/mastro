@@ -46,12 +46,7 @@ export const loadRoutes = async (
       "",
     ].join("\n"));
   }
-
-  // Perhaps we should sort this according to more solid route precedence criteria.
-  // Currently, it's just reverse alphabetical order, which at least guarantees that
-  // - [...slug] loses out over more specific routes that start with a lowercase char
-  // - longer paths win over their prefixes.
-  routeFiles.sort((a, b) => a < b ? 1 : -1);
+  routeFiles.sort(compareRoutes);
 
   const modules = await Promise.all(routeFiles.map(async (name) => (
     { module: await loader(name), name, pattern: toPattern(name) }
@@ -78,6 +73,21 @@ export const loadRoutes = async (
  */
 export const hasRouteParams = (filePath: string): boolean =>
   filePath.split(sep).some((segment) => segment.match(paramRegex));
+
+/**
+ * Perhaps we should sort this according to more solid route precedence criteria.
+ * Currently, it's just reverse alphabetical order, which at least guarantees that
+ * - [...slug] loses out over more specific routes that start with a lowercase char
+ * - longer paths win over their prefixes.
+ *
+ * And we have an exception for character 7 so that e.g.`routes/.well-known/foo.server.ts`
+ * takes precedence over `routes/[...slug].server.ts`
+ */
+const compareRoutes = (a: string, b: string) => {
+  if (a[7] === "[" && b[7] !== "[") return 1;
+  if (b[7] === "[" && a[7] !== "[") return -1;
+  return a < b ? 1 : -1;
+}
 
 const toPattern = (filePath: string) => {
   const pathParts = filePath.split(sep).slice(1);
