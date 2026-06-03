@@ -70,12 +70,8 @@ export const readFile = async (path: string): Promise<Uint8Array<ArrayBufferLike
  * In [VSCode for the Web](https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
  * there is a [bug](https://github.com/microsoft/vscode/issues/249197) and we had to roll our own.
  */
-export const findFiles = async (pattern: string): Promise<string[]> => {
-  // best-effort input validation for unix paths
-  pattern = pattern.startsWith("/") ? pattern.slice(1) : pattern;
-  if (pattern.startsWith("../") || pattern.includes("/../")) {
-    throw Error("findFiles pattern must not include ../");
-  }
+export const findFiles = async (pattern: string | string[]): Promise<string[]> => {
+  pattern = typeof pattern === "string" ? validatePattern(pattern) : pattern.map(validatePattern);
   if (fs) {
     const paths = [];
     // @ts-expect-error no type definitions for Bun
@@ -103,6 +99,17 @@ export const findFiles = async (pattern: string): Promise<string[]> => {
     return vscodeExtensionFs.findFiles(pattern);
   }
 };
+
+/**
+ * Best-effort input validation for unix paths
+ */
+const validatePattern = (p: string) => {
+  p = p.startsWith("/") ? p.slice(1) : p;
+  if (p.startsWith("../") || p.includes("/../")) {
+    throw Error("findFiles pattern must not include ../");
+  }
+  return p;
+}
 
 const leadingSlash = (path: string) =>
   path.startsWith("/") ? path : "/" + path;
