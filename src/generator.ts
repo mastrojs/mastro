@@ -129,7 +129,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     }
   }
 
-  if (assetsPrefix) {
+  if (assetsPrefix && Object.keys(assetHashes).length > 0) {
     await writeJSON("generatedAssets.json", assetHashes);
   }
 

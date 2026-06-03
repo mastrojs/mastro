@@ -82,7 +82,7 @@ export const sseResponse = <T extends object>(
  * [pregenerate build step](/guide/bundling-assets/#build-step).
  * See the [Mastro Guide](https://mastrojs.github.io/guide/caching-service-workers-streaming/#fingerprinting-assets-with-hash-based-file-names)
  */
-export const asset = (path: string) => assetHashes[path] || (/_assets/ + path);
+export const asset = (path: string): string => assetHashes[path] || (/_assets/ + path);
 const assetHashes = await readTextFile("generatedAssets.json")
   .then((data) => JSON.parse(data)).catch(() => ({}));
 
