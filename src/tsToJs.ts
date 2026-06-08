@@ -1,6 +1,6 @@
 /**
- * Convert a TypeScript string to JavaScript by running it through `stripTypeScriptTypes` (Node.js)
- * and `ts-blank-space` (Deno and Bun), and then changing imports ending with `.ts` to end in `.js`.
+ * Convert a TypeScript string to JavaScript by running it through `stripTypeScriptTypes`
+ * (or `ts-blank-space` on Bun), and then changing imports ending with `.ts` to end in `.js`.
  *
  * Since browsers don't understand TypeScript and static file servers generally
  * don't serve `.ts` files with `content-type: text/javascript`, we need to run this
@@ -9,7 +9,7 @@
 export const tsToJs = async (code: string): Promise<string> => {
   const tsBlankSpace = ["npm", "ts-blank-space"].join(":");
   // @ts-expect-error no type definitions for Bun
-  const { stripTypeScriptTypes } = typeof Deno === "object" || typeof Bun === "object"
+  const { stripTypeScriptTypes } = typeof Bun === "object"
     ? await import(tsBlankSpace).then((m) => ({ stripTypeScriptTypes: m.default }))
     : await import("node:module");
   const js: string = stripTypeScriptTypes(code);
