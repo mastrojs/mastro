@@ -1,0 +1,14 @@
+{
+  "tasks": {
+    "start": "deno serve --watch=. --allow-read --allow-env jsr:@mastrojs/mastro/server"
+  },
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
+  },
+  "imports": {
+    "@mastrojs/api": "jsr:@mastrojs/api@^0",
+    "@mastrojs/mastro": "jsr:@mastrojs/mastro@^0",
+    "@mastrojs/reactive": "jsr:@mastrojs/reactive@^0",
+    "@mastrojs/result": "jsr:@mastrojs/result@^0"
+  }
+}
