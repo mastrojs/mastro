@@ -88,6 +88,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     await writeJSON(".routenames.json", routes.map((r) => r.name));
   }
 
+  let completeSuccess = true;
   for (const route of routes) {
     const { name } = route;
     if (route.method === "GET" && (!onlyPregenerate || route.pregenerate)) {
@@ -97,7 +98,9 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
         );
       }
       for (const file of await generatePagesForRoute(route, opts.baseUrl)) {
-        if (file) {
+        if (file === false) {
+          completeSuccess = false;
+        } else if (file) {
           const outPath = outFolder + file.outFilePath;
           await fs.mkdir(dirname(outPath), { recursive: true });
           const { body } = file.response;
@@ -133,7 +136,9 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     await writeJSON("generatedAssets.json", assetHashes);
   }
 
-  console.info(`Generated static site and wrote to ${outFolder}/ folder.`);
+  completeSuccess
+    ? console.info(`Generated static site and wrote to ${outFolder}/ folder.`)
+    : process.exit(1);
 };
 
 /**
@@ -146,7 +151,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
 export const generatePagesForRoute = async (
   route: Route,
   baseUrl = "http://127.0.0.1",
-): Promise<Array<{ outFilePath: string; response: Response } | undefined>> => {
+): Promise<Array<{ outFilePath: string; response: Response } | false | undefined>> => {
   const { name, getStaticPaths } = route;
   const paths = getStaticPaths
     ? validateGetStaticPaths(name, await getStaticPaths())
@@ -173,7 +178,8 @@ const generatePage = async (route: Route, url: URL) => {
       console.warn(route.name + ": GET must return a Response object");
     }
   } catch (e) {
-    console.error(`\nFailed to generate path ${pathname} on route ${route.name}\n`, e);
+    console.error(`\nFailed to generate path ${pathname} on route ${route.name}\n `, e);
+    return false;
   }
 };
 
