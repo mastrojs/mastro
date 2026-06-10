@@ -15,13 +15,13 @@ Mastro is a **minimal** tool to build **content-driven websites**. Use **web sta
 
 ### No bloat
 
-- **No overhead**: written in just [~700 lines](https://github.com/mastrojs/mastro/tree/main/src#readme) of TypeScript, Mastro runs [fast](https://mastrojs.github.io#fast-for-everyone).
+- **No overhead**: written in just [~800 lines](https://github.com/mastrojs/mastro/tree/main/src#readme) of TypeScript, Mastro runs [fast](https://mastrojs.github.io#fast-for-everyone).
 - **No client-side JavaScript** (until you [add some](https://mastrojs.github.io/guide/interactivity-with-javascript-in-the-browser/)): create [MPA](https://mastrojs.github.io/guide/client-side-vs-server-side-javascript-static-vs-ondemand-spa-vs-mpa/) websites that load [fast](https://mastrojs.github.io#fast-for-everyone).
 - **No bundler** (until you [add one](https://mastrojs.github.io/guide/bundling-assets/)): your code ships exactly as you wrote it.
 - **No magic**: use plain `<img>` and `<a>` tags referencing [HTTP-first assets](https://mastrojs.github.io/guide/bundling-assets/#bundling-css).
 - **No VC-money**: no eventual enshitification – selling is none of our business.
 - **No update treadmill**: we use web standards instead of complex [dependencies](https://jsr.io/@mastrojs/mastro/dependencies).
-- **No lock-in**: swap out Mastro later or fork it – it's only [~700 lines](https://github.com/mastrojs/mastro/tree/main/src#readme) after all.
+- **No lock-in**: swap out Mastro later or fork it – it's only [~800 lines](https://github.com/mastrojs/mastro/tree/main/src#readme) after all.
 
 
 ## How to run
