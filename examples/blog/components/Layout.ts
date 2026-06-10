@@ -5,7 +5,7 @@ import { Footer } from "./Footer.ts";
 export const basePath = ghPagesBasePath();
 
 interface Props {
-  title?: string;
+  title: string;
   children: Html;
 }
 

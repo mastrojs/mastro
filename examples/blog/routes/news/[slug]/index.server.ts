@@ -4,7 +4,10 @@ import { Layout } from "../../../components/Layout.ts";
 
 export const GET = async (req: Request) => {
   const { slug } = getParams(req);
-  const post = await readMarkdownFile(`data/posts/${slug}.md`);
+
+  // to actually verify the metadata, use a schema: https://github.com/mastrojs/markdown#schema
+  const post = await readMarkdownFile<{title: string}>(`data/posts/${slug}.md`);
+
   return htmlToResponse(
     Layout({
       title: post.meta.title,
