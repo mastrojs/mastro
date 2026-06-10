@@ -4,7 +4,7 @@ date: 2024-01-30
 ---
 
 Markdown is just a simpler syntax for the most commonly used HTML
-elements when writing body text.
+elements when writing body text. Open the file `data/posts/2024-01-30-hello-world.md` to see it.
 
 A blank line, like above, marks a new paragraph (HTML `<p>`).
 A line starting with `##` is an HTML `<h2>`:

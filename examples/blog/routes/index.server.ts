@@ -4,17 +4,37 @@ import { Layout } from "../components/Layout.ts";
 export const GET = () =>
   htmlToResponse(
     Layout({
-      title: "Home",
+      title: "Welcome to your website!",
       children: html`
-        <nav>
-          <p>👉 <a href="/news/">News</a></p>
-        </nav>
-
-        <h1>Common HTML elements</h1>
         <p>
-          Let's go through the most important HTML elements to
-          structure your content:
+          This is the home page containing an introduction to the most common HTML elements.
+          Check out <code>routes/index.server.ts</code> to see the source.
         </p>
+
+        <p>
+          👉 <a href="/news/">News</a> are on a separate page: <code>routes/news/index.server.ts</code>.
+          But you can rename the folders inside <code>routes</code> to change the URLs of your pages.
+          See <a href="https://mastrojs.github.io/docs/routing/">Mastro's routing docs</a>.
+        </p>
+
+        <p>
+          Edit the CSS in <code>routes/styles.css</code>, or use your
+          <a href="https://mastrojs.github.io/guide/css/#inspect-your-website-with-your-browser%E2%80%99s-developer-tools">
+            browser's developer tools
+          </a> to play around with it.
+          For example, change the CSS variables set on the <code>&lt;html&gt;</code> element.
+        </p>
+
+        <p>Have fun! If you get stuck:</p>
+
+        <ul>
+          <li><a href="https://mastrojs.github.io/docs/">Mastro Docs</a></li>
+          <li><a href="https://mastrojs.github.io/guide/">Guide to web development</a></li>
+          <li>
+            Ask questions on <a href="https://github.com/mastrojs/mastro/discussions">GitHub Discussions</a>
+            or the <a href="https://stt.gg/k7QMEaP1">Mastro Chat</a>.
+          </li>
+        </ul>
 
         <h2>Paragraphs</h2>
         <p>The p element marks a paragraph of text.</p>
