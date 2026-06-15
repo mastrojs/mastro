@@ -12,7 +12,7 @@ export const GET = async () => {
       children: posts.map((post) =>
         html`
           <p>
-            <a href="${post.path.slice(11, -3) + "/"}">
+            <a href="${post.slug + "/"}">
               ${post.meta.title}
             </a>
           </p>
