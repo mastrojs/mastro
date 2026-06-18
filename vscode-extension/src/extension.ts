@@ -574,6 +574,7 @@ const findFiles = async (
   }
   return files
     .filter(makePredicate())
+    .sort()
     .map(name => rootFolder.with({ path: basePath + name }))
 }
 

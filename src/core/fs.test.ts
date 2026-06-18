@@ -4,8 +4,8 @@ import { findFiles } from "./fs.ts";
 Deno.test("findFiles", async () => {
   assertEquals(await findFiles("*"), [
     "LICENSE",
-    "deno.json",
     "README.md",
+    "deno.json",
     "deno.lock",
   ]);
 

@@ -94,7 +94,7 @@ export const findFiles = async (pattern: string | string[]): Promise<string[]> =
         }
       }
     }
-    return paths;
+    return paths.sort();
   } else {
     return vscodeExtensionFs.findFiles(pattern);
   }
