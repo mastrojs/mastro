@@ -62,7 +62,7 @@ export const readFile = async (path: string): Promise<Uint8Array<ArrayBufferLike
  * Return the file paths on the local file system, relative to the current working directory,
  * expanding glob patterns like `*` and `**`. Do not pass it untrusted input.
  *
- * Returned paths don't start with a slash (or other path separator).
+ * Returned paths are sorted alphabetically and don't start with a slash (or other path separator).
  *
  * Except for when using the Mastro VSCode extension, this is a thin wrapper around
  * [fs.glob](https://nodejs.org/api/fs.html#fspromisesglobpattern-options).

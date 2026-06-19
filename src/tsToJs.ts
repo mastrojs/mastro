@@ -2,9 +2,9 @@
  * Convert a TypeScript string to JavaScript by running it through `stripTypeScriptTypes`
  * (or `ts-blank-space` on Bun), and then changing imports ending with `.ts` to end in `.js`.
  *
- * Since browsers don't understand TypeScript and static file servers generally
- * don't serve `.ts` files with `content-type: text/javascript`, we need to run this
- * function on `.client.ts` files, to convert them to `.client.js` files.
+ * Since browsers don't understand TypeScript, we run this function on `.client.ts` files,
+ * to convert them to `.client.js` files. Extension needs to change because most
+ * static file servers don't serve `.ts` files with `content-type: text/javascript`.
  */
 export const tsToJs = async (code: string): Promise<string> => {
   const tsBlankSpace = ["npm", "ts-blank-space"].join(":");
