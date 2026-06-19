@@ -1,10 +1,10 @@
-import { contentType } from "@std/media-types";
 import { Buffer } from "node:buffer";
 import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
 import { extname } from "node:path";
 import { staticCacheControlVal } from "../routers/common.ts";
 import { tsToJs } from "../tsToJs.ts";
+import { contentTypeFromExt } from "../mediaTypes.ts";
 
 /**
  * Utility function for the server to serve static files as well.
@@ -90,7 +90,7 @@ const serveFile = async (req: Request, filePath: string): Promise<Response> => {
   if (etag) {
     headers.set("ETag", etag);
   }
-  const contentTypeValue = contentType(extname(filePath));
+  const contentTypeValue = contentTypeFromExt(extname(filePath).slice(1));
   if (contentTypeValue) {
     headers.set("Content-Type", contentTypeValue);
   }

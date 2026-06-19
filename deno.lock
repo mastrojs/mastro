@@ -2,8 +2,7 @@
   "version": "5",
   "specifiers": {
     "jsr:@std/assert@*": "1.0.16",
-    "jsr:@std/internal@^1.0.12": "1.0.12",
-    "jsr:@std/media-types@^1.1.0": "1.1.0"
+    "jsr:@std/internal@^1.0.12": "1.0.12"
   },
   "jsr": {
     "@std/assert@1.0.16": {
@@ -14,14 +13,6 @@
     },
     "@std/internal@1.0.12": {
       "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
-    },
-    "@std/media-types@1.1.0": {
-      "integrity": "c9d093f0c05c3512932b330e3cc1fe1d627b301db33a4c2c2185c02471d6eaa4"
     }
-  },
-  "workspace": {
-    "dependencies": [
-      "jsr:@std/media-types@^1.1.0"
-    ]
   }
 }

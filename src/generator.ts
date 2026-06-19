@@ -8,11 +8,11 @@
 import type { Stats } from "node:fs";
 import { extname } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
-import { extension } from "@std/media-types";
 
 import { findFiles, sep } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
 import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
+import { extFromContentType } from "./mediaTypes.ts";
 
 /**
  * Config options for `generate`
@@ -184,7 +184,7 @@ const generatePage = async (route: Route, url: URL) => {
 };
 
 const addExtension = (path: string, headers: Headers) =>
-  extname(path) ? path : `${path}.${extension(headers.get("Content-Type") || "") || "html"}`;
+  extname(path) ? path : `${path}.${extFromContentType(headers.get("Content-Type")) || "html"}`;
 
 const validateGetStaticPaths = (name: string, paths: string[]) => {
   if (!Array.isArray(paths) || (paths.length > 0 && typeof paths[0] !== "string")) {
