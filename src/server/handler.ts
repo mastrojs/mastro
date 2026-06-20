@@ -46,7 +46,7 @@ async (
       const match = r.pattern.exec(req.url);
       if (match) {
         urlMatched = r.name;
-        if (r.method === method && typeof r.handler === "function") {
+        if ((r.method === method || r.method === "all") && typeof r.handler === "function") {
           (req as any)._params = match.pathname.groups;
           return true;
         }
