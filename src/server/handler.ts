@@ -41,22 +41,20 @@ async (
       }
     }
 
+    let urlMatched: string | undefined;
     const route = routes.find((r) => {
       const match = r.pattern.exec(req.url);
       if (match) {
-        (req as any)._params = match.pathname.groups;
+        urlMatched = r.name;
+        if (r.method === method && typeof r.handler === "function") {
+          (req as any)._params = match.pathname.groups;
+          return true;
+        }
       }
-      return match;
     });
 
     if (route) {
       const { handler, pregenerate } = route;
-      if (method !== route.method || typeof handler !== "function") {
-        const msg = `No ${method} handler found`;
-        if (isDev) console.info(logPrefix + msg);
-        const m = isDev ? ` by ${route.name}\n\nsee https://mastrojs.github.io/docs/routing/` : "";
-        return new Response(msg + m, { status: 405 });
-      }
       if (pregenerate && !isDev) {
         return new Response(
           "404 Route was hit on non-localhost but exports pregenerate=true. " +
@@ -72,6 +70,11 @@ async (
       } else {
         throw Error(method + " must return a Response object");
       }
+    } else if (urlMatched) {
+      const msg = `No ${method} handler found`;
+      if (isDev) console.info(logPrefix + msg);
+      const m = isDev ? ` by ${urlMatched}\n\nsee https://mastrojs.github.io/docs/routing/` : "";
+      return new Response(msg + m, { status: 405 });
     } else {
       if (isDev && url.pathname !== "/favicon.ico") console.info(logPrefix + "No route match");
       return new Response("404 route not found", { status: 404 });
