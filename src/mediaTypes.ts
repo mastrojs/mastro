@@ -17,10 +17,3 @@ for (const [type, mime] of Object.entries(db)) {
  * `extensionToContentType("html") === "text/html; charset=UTF-8"`;
  */
 export const contentTypeFromExt = (ext: string) => types[ext.toLowerCase()];
-
-/**
- * Returns the file extension for a given content type. For example:
- * `contentTypeToExtension("text/html; charset=UTF-8") === "html"`;
- */
-export const extFromContentType = (type: string | null): string | undefined =>
-  db[type?.split(";")[0]?.toLowerCase().trim() as keyof typeof db]?.extensions[0];

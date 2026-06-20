@@ -6,13 +6,12 @@
  */
 
 import type { Stats } from "node:fs";
-import { extname } from "node:path";
+import { basename, extname } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles, sep } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
 import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
-import { extFromContentType } from "./mediaTypes.ts";
 
 /**
  * Config options for `generate`
@@ -166,9 +165,11 @@ const generatePage = async (route: Route, url: URL) => {
     (req as any)._params = route.pattern.exec(url)?.pathname.groups;
     const response = await route.handler(req);
     if (response instanceof Response) {
-      const outFilePath = pathname.endsWith("/")
-        ? `${pathname}index.html`
-        : addExtension(pathname, response.headers);
+      const outFilePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
+      if (!extname(outFilePath) && !outFilePath.startsWith("/.well-known/")) {
+        console.warn(`\nWARNING: ${route.name} generated file ${outFilePath} without file extension.
+  Consider renaming route to ${route.name.replace(".server", ".ext.server")}\n`);
+      }
       if (response.ok) {
         return { outFilePath, response };
       } else if (response.status >= 500) {
@@ -182,9 +183,6 @@ const generatePage = async (route: Route, url: URL) => {
     return false;
   }
 };
-
-const addExtension = (path: string, headers: Headers) =>
-  extname(path) ? path : `${path}.${extFromContentType(headers.get("Content-Type")) || "html"}`;
 
 const validateGetStaticPaths = (name: string, paths: string[]) => {
   if (!Array.isArray(paths) || (paths.length > 0 && typeof paths[0] !== "string")) {
