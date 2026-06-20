@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import { extname } from "node:path";
 import { staticCacheControlVal } from "../routers/common.ts";
 import { tsToJs } from "../tsToJs.ts";
-import { contentTypeFromExt } from "../mediaTypes.ts";
+import { contentTypeFromExt } from "./mediaTypes.ts";
 
 /**
  * Utility function for the server to serve static files as well.

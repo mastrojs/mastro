@@ -168,7 +168,7 @@ const generatePage = async (route: Route, url: URL) => {
       const outFilePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
       if (!extname(outFilePath) && !outFilePath.startsWith("/.well-known/")) {
         console.warn(`\nWARNING: ${route.name} generated file ${outFilePath} without file extension.
-  Consider renaming route to ${route.name.replace(".server", ".ext.server")}\n`);
+  Consider renaming route to e.g. ${route.name.replace(".server", ".html.server")}\n`);
       }
       if (response.ok) {
         return { outFilePath, response };
