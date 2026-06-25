@@ -85,6 +85,19 @@ export const renderToString = async (node: Html): Promise<string> => {
 }
 
 /**
+ * Convert an `Html` node to a properly escaped `string` but
+ * throws if the input contains a Promise or AsyncIterable.
+ * You probably want to use `renderToString` or `renderToStream` instead.
+ */
+export const renderToStringSync = (node: Html): string => {
+  const s = renderToStream(node);
+  if (typeof s !== "string") {
+    throw Error("renderToStringSync received async value. Use renderToString instead.");
+  }
+  return s;
+}
+
+/**
  * Convert an `Html` node to a properly escaped stream.
  * Returns an `AsyncIterable<string>` if there are Promises or AsyncIterables in the input,
  * otherwise returns a `string`.
