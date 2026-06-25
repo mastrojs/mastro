@@ -6,7 +6,7 @@
  */
 
 import type { Stats } from "node:fs";
-import { basename, extname } from "node:path";
+import { extname } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles, sep } from "./core/fs.ts";
