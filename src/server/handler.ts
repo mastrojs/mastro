@@ -9,12 +9,8 @@ export interface CreateHandlerOpts {
   serveStaticFiles?: boolean;
 }
 
-export const createMastroHandler = <E, C>(opts: CreateHandlerOpts): Handler<E, C> =>
-async (
-  req: Request,
-  env: E,
-  ctx: C,
-) => {
+export const createMastroHandler = (opts: CreateHandlerOpts): Handler =>
+async (req: Request) => {
   const { serveStaticFiles = true } = opts;
   const routes = await opts.routes;
   const method = req.method.toUpperCase();
@@ -62,7 +58,7 @@ async (
           { status: 404 },
         );
       }
-      const res = await handler(req, env as any, ctx as any);
+      const res = await handler(req);
       if (res instanceof Response) {
         if (isDev) console.info(logPrefix + route.name);
         setCacheHeaders(res);

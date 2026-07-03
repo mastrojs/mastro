@@ -15,7 +15,7 @@ export { staticCacheControlVal } from "./common.ts";
 /**
  * Create fetch handler that serves Mastro routes and static files
  */
-export const createHandler = <E, C>(opts?: CreateHandlerOpts): Handler<E, C> =>
+export const createHandler = (opts?: CreateHandlerOpts): Handler =>
   createMastroHandler({ ...opts, routes: opts?.routes || loadRoutes() });
 
 /**

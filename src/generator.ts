@@ -12,6 +12,7 @@ import type { ParseArgsOptionDescriptor } from "node:util";
 import { findFiles, sep } from "./core/fs.ts";
 import type { Route } from "./routers/common.ts";
 import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
+import type { Middleware } from "./middleware.ts";
 
 /**
  * Config options for `generate`
@@ -26,6 +27,7 @@ export interface GenerateOpts {
    * to make them distinguishable from request from localhost (see `isDevServer`).
    */
   baseUrl?: string;
+  middleware?: Middleware;
   /**
    * Name of output folder that will be created. Default is `generated`.
    */
@@ -55,10 +57,11 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   const { createHash } = await import("node:crypto");
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
-  const { pathToFileURL } = await import("node:url");
+  const { fileURLToPath, pathToFileURL } = await import("node:url");
   const fileBasedRouter = !opts.routes;
   const {
     assetsFolder = "_assets",
+    middleware,
     outFolder = "generated",
     onlyPregenerate = false,
     routes = await loadRoutes(),
@@ -96,6 +99,9 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
           name + " should export a function named getStaticPaths, returning an array of strings.",
         );
       }
+      if (middleware) {
+        route.handler = req => middleware(req, { mode: "generator", fetchUpstream: route.handler })
+      }
       for (const file of await generatePagesForRoute(route, opts.baseUrl)) {
         if (file === false) {
           completeSuccess = false;
@@ -117,8 +123,22 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     }
   }
 
+  const fetchUpstream = async (req: Request) =>
+    new Response(await fs.readFile("routes" + fileURLToPath(req.url)));
   for (const filePath of await getStaticFilePaths()) {
     await fs.mkdir(dirname(outFolder + filePath), { recursive: true });
+    if (middleware) {
+      const req = new Request(pathToFileURL(filePath));
+      const res = await middleware(req, { mode: "generator", fetchUpstream });
+      if (res.body) {
+        // TODO: filePath = res.headers.get("Content-Disposition");
+        await writeFile(outFolder + filePath, res.body);
+      }
+    } else {
+      await fs.copyFile("routes" + filePath, outFolder + filePath);
+    }
+
+    /*
     if (filePath.endsWith(".client.ts")) {
       const { tsToJs } = await import("./tsToJs.ts");
       const text = await fs.readFile("routes" + filePath, { encoding: "utf8" });
@@ -129,6 +149,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
         : filePath;
       await fs.copyFile("routes" + filePath, outFolder + outPath);
     }
+    */
   }
 
   if (assetsPrefix && Object.keys(assetHashes).length > 0) {
