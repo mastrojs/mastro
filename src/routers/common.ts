@@ -8,11 +8,7 @@ export type HttpMethod = (typeof httpMethods)[number];
  * A fetch handler that takes a standard `Request` and returns a standard `Response`.
  * On some runtimes, there are two more arguments that Mastro passes through.
  */
-export type Handler<E = void, C = void> = (
-  req: Request,
-  env: E,
-  ctx: C,
-) => Promise<Response> | Response;
+export type Handler = (req: Request) => Promise<Response> | Response;
 
 /**
  * A Mastro Route

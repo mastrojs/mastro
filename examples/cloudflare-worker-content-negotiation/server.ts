@@ -5,6 +5,7 @@ import * as PostDetail from './handlers/PostDetail.ts';
 export const app = new Mastro<Env, ExecutionContext>()
   .get("/", Home)
   .get("/posts/:slug/", navigator.userAgent === "Cloudflare-Workers"
+    // TODO: remove env and replace with import
     ? (req, env) => {
         const mediaType = req.headers.get("accept")?.split(",").find(val => val.startsWith("text/"));
         const suffix = mediaType === "text/html" ? "" : ".md";
