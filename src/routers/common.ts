@@ -1,3 +1,5 @@
+import type { Middleware } from "../middleware.ts";
+
 /** Supported HTTP methods */
 export const httpMethods = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"] as const;
 
@@ -9,6 +11,19 @@ export type HttpMethod = (typeof httpMethods)[number];
  * On some runtimes, there are two more arguments that Mastro passes through.
  */
 export type Handler = (req: Request) => Promise<Response> | Response;
+
+export interface RouteNew {
+  /**
+   * Name of the route for error messages etc.
+   * For file-based routes the `filePath`, e.g. `/routes/index.server.ts`
+   */
+  name: string;
+  /** Fetch handler */
+  handler: Middleware,
+  /** Called by the static site generator on routes with route parameters in the pattern. */
+  getStaticPaths?: () => Promise<string[]> | string[];
+}
+
 
 /**
  * A Mastro Route

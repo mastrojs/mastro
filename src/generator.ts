@@ -10,7 +10,7 @@ import { extname } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles, sep } from "./core/fs.ts";
-import type { Route } from "./routers/common.ts";
+import type { RouteNew } from "./routers/common.ts";
 import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
 import type { Middleware } from "./middleware.ts";
 
@@ -41,7 +41,7 @@ export interface GenerateOpts {
   /**
    * For use with the programmatic router. Default is to fall back on the file-based router.
    */
-  routes?: Route[];
+  routes?: RouteNew[];
   /**
    * Generate `.routenames.json`, which the file-based router needs when using a bundled server.
    */
@@ -90,6 +90,13 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     await writeJSON(".routenames.json", routes.map((r) => r.name));
   }
 
+  // for (const route of routes) {
+  //   const { getStaticPaths } = route;
+  //   const paths = getStaticPaths
+  //     ? validateGetStaticPaths(route.name, await getStaticPaths())
+  //     : [ /* TODO */];
+  // }
+
   let completeSuccess = true;
   for (const route of routes) {
     const { name } = route;
@@ -98,9 +105,6 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
         throw Error(
           name + " should export a function named getStaticPaths, returning an array of strings.",
         );
-      }
-      if (middleware) {
-        route.handler = req => middleware(req, { mode: "generator", fetchUpstream: route.handler })
       }
       for (const file of await generatePagesForRoute(route, opts.baseUrl)) {
         if (file === false) {
