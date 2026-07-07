@@ -50,6 +50,7 @@ const packageManager = (() => {
 })();
 const templateOutDir = "mastro-main"; // determined by zip file
 const ansiSetBlue = "\x1b[34m";
+const ansiSetGrey = "\x1b[2m";
 const ansiResetStyles = "\x1b[0m";
 
 /**
@@ -70,7 +71,7 @@ const select = (question, options) =>
       console.clear();
       console.log(question);
       options.forEach((opt, i) => {
-        console.log(i === index ? `● ${opt}` : `\x1b[2m○ ${opt}${ansiResetStyles}`);
+        console.log(i === index ? `● ${opt}` : `${ansiSetGrey}○ ${opt}${ansiResetStyles}`);
       });
     };
     render();
@@ -239,6 +240,27 @@ collections:
   ]);
 };
 
+const agentsMd = `We're using the Mastro web framework.
+
+- Use web search with \`site:mastrojs.github.io\` to look up Mastro docs.
+- Use web search with \`site:developer.mozilla.org\` to look up web platform
+  features. Use the APIs if they're "Baseline Widely available".
+- Write semantic HTML.
+- CSS
+  - Never add inline CSS
+  - Avoid adding classes if you can use HTML element selectors
+  - Use a [two-layer approach](https://theadminbar.com/semantics-and-primitives-color-system/)
+    for CSS variables (primitives like \`--blue: #0000ff\`,
+    and semantics like \`--link-color: var(--blue)\`).
+  - Ask the user whether they want to only have a single global
+    [styles.css](routes/styles.css) file (good for smaller projects),
+    or whether they want to colocate CSS files with their HTML
+    in [components](components/) and if so
+    [which approach they prefer](https://mastrojs.github.io/blog/2026-05-26-component-scoped-css-without-build-step/)
+- Only use [client-side JavaScript](https://mastrojs.github.io/guide/interactivity-with-javascript-in-the-browser/)
+  if absolutely necessary. If so, use \`<script type="module">\`.
+`;
+
 /**
  * @param { string } dir
  */
@@ -286,14 +308,17 @@ const main = async () => {
   readline.emitKeypressEvents(process.stdin);
   process.stdin.setRawMode(true);
 
+  const templateMsg = `Which template do you want to start with? ${
+    ansiSetGrey}Use up/down arrow keys:${ansiResetStyles}`;
+  const blogTemplate = "blog (with markdown support)"
   const template = runtime === "cloudflare"
     ? "basic"
-    : await select("Which template do you want to start with?", ["basic", "blog"]);
+    : await select(templateMsg, ["basic", blogTemplate]);
   const templateFetchZipPromise = template === "basic"
     ? undefined
     : fetch(`https://github.com/mastrojs/mastro/archive/refs/heads/main.zip`);
 
-  const addSveltia = template === "blog"
+  const addSveltia = template === blogTemplate
     ? await select(
       "Do you want to add a git-based CMS? This adds a routes/admin/ folder.",
       ["No", "Add Sveltia CMS"],
@@ -330,7 +355,7 @@ const main = async () => {
     // Update dir with things from @mastrojs/mastro's `examples/blog/` folder.
     await unzip({ fetchZipPromise: templateFetchZipPromise, zipFileName: templateOutDir + ".zip" });
 
-    if (template === "blog") {
+    if (template === blogTemplate) {
       await updateFilesForBlog(dir);
       if (addSveltia) {
         await addSveltiaFiles(dir);
@@ -344,6 +369,10 @@ const main = async () => {
       "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"])
     ? installDeps(dir)
     : undefined;
+
+  if ("Yes" === await select("Add AGENTS.md file? (optional)", ["Yes", "No"])) {
+    await fs.writeFile(join(dir, "AGENTS.md"), agentsMd);
+  }
 
   const initGit =
     "Yes" === await select("Initialize a new git repository? (optional)", ["Yes", "No"]);
