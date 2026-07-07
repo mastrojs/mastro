@@ -5,9 +5,9 @@
  */
 
 import type { GenerateOpts } from "../generator.ts";
-import { chainMiddlewares, type Middleware } from "../middleware.ts";
+import type { Middleware } from "../middleware.ts";
 import { createMastroHandler } from "../server/handler.ts";
-import { type Handler, type HttpMethod, importSuffix, type Route } from "./common.ts";
+import { type Handler, type HttpMethod, importSuffix, type RouteNew } from "./common.ts";
 
 export { staticCacheControlVal } from "./common.ts";
 export type { GenerateOpts, Handler, HttpMethod };
@@ -25,8 +25,7 @@ export type RouteOpts = Handler | {
  * Class to use as programmatic router (alternative to the file-based router).
  */
 export class Mastro {
-  private routes: Route[] = [];
-  private middleware: Middleware | undefined = undefined;
+  private routes: RouteNew[] = [];
 
   /** Add route */
   addRoute(method: "all" | HttpMethod, pathname: string, opts: RouteOpts): this {
@@ -69,11 +68,11 @@ export class Mastro {
   async generate(opts?: Omit<GenerateOpts, "routes" | "writeRoutenames">): Promise<void> {
     const modPath = `../generator.${importSuffix}`; // variable to prevent esbuild bundling
     const { generate } = await import(modPath);
-    return generate({ ...opts, routes: this.routes, middleware: this.middleware });
+    return generate({ ...opts, routes: this.routes });
   }
 
-  middlewares(...middlewares: Middleware[]): this {
-    this.middleware = chainMiddlewares(middlewares);
+  middlewares(...middlewares: Array<Middleware | RouteNew>): this {
+    this.routes.unshift(...middlewares.map(m => typeof m === "function" ? ({ handler: m }) : m));
     return this;
   }
 
@@ -82,10 +81,6 @@ export class Mastro {
     /** defaults to true */
     serveStaticFiles?: boolean;
   } = {}): Handler {
-    const fetchUpstream = createMastroHandler({ ...opts, routes: this.routes });
-    const { middleware } = this;
-    return middleware
-      ? req => middleware(req, { mode: "server", fetchUpstream })
-      : fetchUpstream;
+    return createMastroHandler({ ...opts, routes: this.routes });
   }
 }

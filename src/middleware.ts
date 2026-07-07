@@ -1,4 +1,4 @@
-import type { Handler } from "./routers/common.ts";
+import type { Handler, RouteNew } from "./routers/common.ts";
 
 /**
  * Request Middleware
@@ -20,6 +20,21 @@ interface Context {
   fetchUpstream: Handler;
   mode: "generator" | "server";
 }
+
+export const chainRoutes = (routes: RouteNew[]): Middleware => {
+  const [route, ...nextRoutes] = routes;
+  if (!route) return (req, ctx) => ctx.fetchUpstream(req);
+  const next = chainRoutes(nextRoutes);
+  return (req, ctx) =>
+    route.handler(req, {
+      ...ctx,
+      fetchUpstream: async (nextReq) => {
+        const res = await next(nextReq, ctx);
+        if (!res.ok) throw `middleware received HTTP ${res.status}: ${await res.text()}`;
+        return res;
+      },
+    });
+};
 
 export const chainMiddlewares = (middlewares: Middleware[]): Middleware => {
   const [middleware, ...nextMiddlewares] = middlewares;
