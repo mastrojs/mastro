@@ -4,9 +4,12 @@ export const tsToJs: Middleware = async (req, ctx) => {
   if (req.url.endsWith(".client.ts")) {
     const res = await ctx.fetchUpstream(req);
     const fileName = req.url.slice(0, -3) + ".js";
-    const { headers } = res;
+    const { status, headers } = res;
+    // status should be 200 or 304 Not Modified, hopefully no range request
     headers.set("Content-Disposition", `filename="${fileName}"`);
-    return new Response(await convert(await res.text()), { headers })
+    headers.set("Content-Type", "text/javascript; charset=utf-8");
+    headers.set("Accept-Ranges", "none");
+    return new Response(await convert(await res.text()), { status, headers })
   }
   return ctx.fetchUpstream(req);
 }

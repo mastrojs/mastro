@@ -3,7 +3,6 @@ import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
 import { extname } from "node:path";
 import { staticCacheControlVal } from "../routers/common.ts";
-import { tsToJs } from "../tsToJs.ts";
 import { contentTypeFromExt } from "./mediaTypes.ts";
 
 /**
@@ -24,15 +23,6 @@ export const serveStaticFile = async (
   const fileRes = pregeneratedFile || await tryServeFile(req, "routes" + staticPath);
   if (fileRes) {
     return fileRes;
-  }
-  if (pathname.endsWith(".client.js")) {
-    const fileRes = await tryServeFile(req, "routes" + pathname.slice(0, -3) + ".ts");
-    if (fileRes) {
-      const { status, headers } = fileRes; // // 200 or 304 Not Modified, hopefully no range request
-      headers.set("Content-Type", "text/javascript; charset=utf-8");
-      headers.set("Accept-Ranges", "none");
-      return new Response(await tsToJs(await fileRes.text()) || null, { status, headers });
-    }
   }
 };
 

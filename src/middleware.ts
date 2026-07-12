@@ -1,4 +1,4 @@
-import type { Handler, RouteNew } from "./routers/common.ts";
+import type { Handler } from "./routers/common.ts";
 
 /**
  * Request Middleware
@@ -14,39 +14,51 @@ import type { Handler, RouteNew } from "./routers/common.ts";
  * return new Response(body, { headers, status })`
  * ```
  */
-export type Middleware = (req: Request, ctx: Context) => Promise<Response> | Response;
+export type Middleware = MiddlewareHandler | {
+  /**
+   * Name of the route for error messages etc.
+   * For file-based routes the `filePath`, e.g. `/routes/index.server.ts`
+   */
+  name: string;
+  /** Fetch handler */
+  handler: MiddlewareHandler,
+  /** Called by the static site generator on routes with route parameters in the pattern. */
+  getStaticPaths?: () => Promise<string[]> | string[];
+}
+
+export type MiddlewareHandler = (req: Request, ctx: Context) => Promise<Response> | Response;
 
 interface Context {
   fetchUpstream: Handler;
   mode: "generator" | "server";
 }
 
-export const chainRoutes = (routes: RouteNew[]): Middleware => {
-  const [route, ...nextRoutes] = routes;
-  if (!route) return (req, ctx) => ctx.fetchUpstream(req);
-  const next = chainRoutes(nextRoutes);
-  return (req, ctx) =>
-    route.handler(req, {
-      ...ctx,
-      fetchUpstream: async (nextReq) => {
-        const res = await next(nextReq, ctx);
-        if (!res.ok) throw `middleware received HTTP ${res.status}: ${await res.text()}`;
-        return res;
-      },
-    });
-};
+export class MiddlewareError extends Error {
+  constructor(public middlewareName: string, msg?: string, cause?: unknown) {
+    super(msg, { cause });
+  }
+}
 
-export const chainMiddlewares = (middlewares: Middleware[]): Middleware => {
-  const [middleware, ...nextMiddlewares] = middlewares;
-  if (!middleware) return (req, ctx) => ctx.fetchUpstream(req);
-  const next = chainMiddlewares(nextMiddlewares);
-  return (req, ctx) =>
-    middleware(req, {
-      ...ctx,
-      fetchUpstream: async (nextReq) => {
-        const res = await next(nextReq, ctx);
-        if (!res.ok) throw `middleware received HTTP ${res.status}: ${await res.text()}`;
-        return res;
-      },
-    });
+export const chainMiddlewares = (middlewares: Middleware[]): MiddlewareHandler => {
+  const [m, ...rest] = middlewares;
+  if (!m) return (req, ctx) => ctx.fetchUpstream(req); // base case of recursion
+
+  const name = m.name || "<anonymous>";
+  const handler = typeof m === "function" ? m : m.handler;
+  const next = chainMiddlewares(rest);
+  return async (req, ctx) => {
+    let res: Response;
+    try {
+      res = await handler(req, { ...ctx, fetchUpstream: (nextReq) => next(nextReq, ctx) });
+    } catch (err) {
+      throw err instanceof MiddlewareError ? err : new MiddlewareError(name, undefined, err);
+    }
+    if (!(res instanceof Response)) {
+      throw new MiddlewareError(name, "function must return a Response object");
+    }
+    if (res.status >= 500) {
+      throw new MiddlewareError(name, `received HTTP ${res.status}: ${await res.text()}`);
+    }
+    return res;
+  };
 };
