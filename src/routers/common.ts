@@ -12,18 +12,6 @@ export type HttpMethod = (typeof httpMethods)[number];
  */
 export type Handler = (req: Request) => Promise<Response> | Response;
 
-export interface RouteNew {
-  /**
-   * Name of the route for error messages etc.
-   * For file-based routes the `filePath`, e.g. `/routes/index.server.ts`
-   */
-  name: string;
-  /** Fetch handler */
-  handler: Middleware,
-  /** Called by the static site generator on routes with route parameters in the pattern. */
-  getStaticPaths?: () => Promise<string[]> | string[];
-}
-
 
 /**
  * A Mastro Route
