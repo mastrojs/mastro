@@ -5,6 +5,7 @@
  * For Service Workers (where there is no filesystem), we just fall back to undefined, but at least
  * we don't want to break the module, hence no top-level await.
  */
+import type { StandardSchemaV1 } from "./standard-schema.ts";
 
 // in variables to prevent bundling by esbuild:
 const nodeFs = "node:fs/promises";
@@ -99,6 +100,42 @@ export const findFiles = async (pattern: string | string[]): Promise<string[]> =
     return vscodeExtensionFs.findFiles(pattern);
   }
 };
+
+/**
+ * Read all files from the local filesystem that match the supplied glob pattern, (via `findFiles`)
+ * and parse then as JSON. Filepath is in `path`, filename without suffix in `slug`.
+ *
+ * The default TypeScript type for the data is `unknown`. You can override that with e.g.
+ * `readJsonFiles<{ title: string }>("data/*.json")`. But to actually verify the metadata is
+ * correct, you should use a schema. For example using
+ * [validate.js](https://github.com/jakelazaroff/validate.js):
+ *
+ * ```ts
+ * import { object, string } from "./validate.js";
+ * const schema = object({ title: string });
+ * const arr = await readJsonFiles(pattern, { schema }),
+ * ```
+ */
+export const readJsonFiles = async <T>(
+  pattern: string,
+  opts: { schema?: StandardSchemaV1<unknown, T> } = {},
+): Promise<Array<{ data: T; path: string; slug: string }>> =>
+  Promise.all(
+    (await findFiles(pattern)).map(async (path) => {
+      let data = JSON.parse(await readTextFile(path));
+      if (opts.schema) {
+        const res = await opts.schema["~standard"].validate(data);
+        if (res.issues) {
+          const issues = res.issues.map((i) => `${i.message} (${i.path})`);
+          throw Error(`JSON in ${path} did not validate:\n  ${issues.join("\n  ")}`);
+        }
+        data = res.value;
+      }
+      const slug = path.split(sep).at(-1)?.split(".").at(0) || "";
+      return { data, path, slug };
+    }),
+  );
+
 
 /**
  * Best-effort input validation for unix paths
