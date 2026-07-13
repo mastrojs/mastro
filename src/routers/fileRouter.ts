@@ -95,7 +95,7 @@ const toPattern = (filePath: string) => {
     const param = part.match(paramRegex)?.[1];
     if (param) {
       return param.startsWith("...") ? `:${param.slice(3)}(.*)?` : `:${param}`;
-    } else if (part === "index.server.ts" || part === "index.server.js") {
+    } else if (indexRegex.test(part)) {
       return "";
     }
     const folder = pathParts[i - 1];
@@ -110,4 +110,5 @@ const toPattern = (filePath: string) => {
   return new URLPattern({ pathname: "/" + parts.join("/") });
 };
 
+const indexRegex = /^index(\.html)?\.server\.(ts|js)$/
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
