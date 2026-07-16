@@ -166,11 +166,11 @@ const generatePage = async (route: Route, url: URL) => {
     const response = await route.handler(req);
     if (response instanceof Response) {
       const outFilePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
-      if (!extname(outFilePath) && !outFilePath.startsWith("/.well-known/")) {
-        console.warn(`\nWARNING: ${route.name} generated file ${outFilePath} without file extension.
-  Consider renaming route to e.g. ${route.name.replace(".server", ".html.server")}\n`);
-      }
       if (response.ok) {
+        if (!extname(outFilePath) && !outFilePath.startsWith("/.well-known/")) {
+          console.warn(`\nWARNING: ${route.name} generated file ${outFilePath} without file extension.
+    Consider renaming route to e.g. ${route.name.replace(".server", ".html.server")}\n`);
+        }
         return { outFilePath, response };
       } else if (response.status >= 500) {
         throw `received HTTP ${response.status}: ${await response.text()}`;
