@@ -1,13 +1,12 @@
 # Mastro
 
-**[Website](https://mastrojs.github.io/)** | [Try Mastro online](https://github.dev/mastrojs/template-basic)
+**[Website](https://mastrojs.github.io/)** | [Try Mastro online](https://vscode.dev/github/mastrojs/template-basic)
 
-**The simplest web framework and site generator yet.**
+**No dependencies. No build step. Just a simple web framework.**
 
-🤗 For people who care about their users and web standards.\
-👨‍🍳 Build directly on top of the browser and Node.js, Deno, Bun, or Workers.
+Mastro is a web framework and site generator for people who care about their users and web standards. It’s is implemented in just ~800 lines of TypeScript.
 
-Mastro was designed from the ground up to use modern browser and runtime built-ins (like view transitions and type-stripping), enabling a [radically simpler design](https://mastrojs.github.io/docs/why-mastro/) where [everything is a route](https://mastrojs.github.io/blog/2026-01-29-everything-is-a-route-one-interface-for-servers-static-sites-and-assets/).
+Use JavaScript/TypeScript’s mature tooling to build fast MPA websites. Instead of going through layers of abstraction, work directly with the browser and your JavaScript runtime – Node.js, Deno, Bun, or Workers.
 
 ## Minimal yet powerful
 
@@ -28,42 +27,11 @@ Mastro was designed from the ground up to use modern browser and runtime built-i
 - **No lock-in**: swap out Mastro later or fork it – it's only [~800 lines](https://github.com/mastrojs/mastro/tree/main/src#readme) after all.
 
 
-## How to run
-
-### In the browser
-
-Deploy to GitHub Pages without installing anything: [run Mastro in your browser](https://github.dev/mastrojs/template-basic)
-
-### Command line
-
-#### Deno
-
-After [installing Deno](https://docs.deno.com/runtime/getting_started/installation/), either use the [Mastro template for Deno](https://github.com/mastrojs/template-basic-deno) or run:
-
-    deno run -A npm:@mastrojs/create-mastro@0.1.6
-
-#### Node.js
-
-Either use the [Mastro template for Node.js](https://github.com/mastrojs/template-basic-node) or run:
-
-    pnpm create @mastrojs/mastro@0.1.6
-
-(`npm` and `yarn` also work, but `pnpm` is [recommended](https://jsr.io/docs/npm-compatibility).)
-
-#### Bun
-
-Either use the [Mastro template for Bun](https://github.com/mastrojs/template-basic-bun) or run:
-
-    bun create @mastrojs/mastro@0.1.6
-
 ## Documentation
 
+- [Get started](https://mastrojs.github.io/docs/getting-started/)
 - [Mastro Docs](https://mastrojs.github.io/docs/)
 - [Mastro Guide to web dev](https://mastrojs.github.io/guide/)
-
-## Deploy to production
-
-To deploy your website, see [Different ways to run Mastro](https://mastrojs.github.io/guide/cli-install/#different-ways-to-run-mastro).
 
 
 ## Extensions
@@ -86,8 +54,8 @@ The core of Mastro is tiny. But to get you started quickly for common use-cases,
 
 ## Join the community
 
-We're looking to build an inclusive community, where people of all kinds of backgrounds and experience levels feel welcome and safe, and help each other out. A place to ask questions and learn new things.
+We’re building an inclusive community, where people of all kinds of backgrounds and experience levels feel welcome and safe, and help each other. A place to ask questions and learn new things.
 
-Do you have a question, need help, or would like to talk about future plans? Please start a [GitHub Discussion](https://github.com/mastrojs/mastro/discussions/) or [chat on Stoat](https://stt.gg/k7QMEaP1).
+Please start a [GitHub Discussion](https://github.com/mastrojs/mastro/discussions/) or join us on [our Discord](https://discord.gg/gmw2VEW5Rw) or [our Stoat](https://stt.gg/k7QMEaP1).
 
 Something not working as expected or confusing? We consider that a bug. Please open a [GitHub issue](https://github.com/mastrojs/mastro/issues/).
