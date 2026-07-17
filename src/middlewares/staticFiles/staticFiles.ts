@@ -2,8 +2,21 @@ import { Buffer } from "node:buffer";
 import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
 import { extname } from "node:path";
-import { staticCacheControlVal } from "../routers/common.ts";
+import { staticCacheControlVal } from "../../routers/common.ts";
 import { contentTypeFromExt } from "./mediaTypes.ts";
+import { findFiles } from "../../core/fs.ts";
+import type { Middleware } from "../../middleware.ts";
+
+export const staticFiles: Middleware = {
+  name: "staticFiles",
+  getStaticPaths: async () =>
+    (await findFiles(["routes/**/*", "routes/**/.*/**/*"]))
+      .filter((p) => !p.endsWith(".server.ts") && !p.endsWith(".server.js")).map((p) => p.slice(6)),
+  handler: async (req, ctx) => {
+    const isDev = true; // TODO
+    return await serveStaticFile(req, isDev) || ctx.fetchUpstream(req);
+  }
+}
 
 /**
  * Utility function for the server to serve static files as well.
@@ -12,17 +25,19 @@ import { contentTypeFromExt } from "./mediaTypes.ts";
  * 2. look for matching file in `routes` folder.
  *     - if requested url ends in `.client.js`, transpile the corresponding `.ts` file
  */
-export const serveStaticFile = async (
+const serveStaticFile = async (
   req: Request,
   isDev: boolean,
 ): Promise<Response | undefined> => {
-  const { pathname } = new URL(req.url);
+  if (req.method === "GET") {
+    const { pathname } = new URL(req.url);
 
-  const staticPath = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
-  const pregeneratedFile = isDev ? undefined : await tryServeFile(req, "generated" + staticPath);
-  const fileRes = pregeneratedFile || await tryServeFile(req, "routes" + staticPath);
-  if (fileRes) {
-    return fileRes;
+    const staticPath = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
+    const pregeneratedFile = isDev ? undefined : await tryServeFile(req, "generated" + staticPath);
+    const fileRes = pregeneratedFile || await tryServeFile(req, "routes" + staticPath);
+    if (fileRes) {
+      return fileRes;
+    }
   }
 };
 

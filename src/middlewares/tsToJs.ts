@@ -1,15 +1,19 @@
 import type { Middleware } from "../middleware.ts";
 
 export const tsToJs: Middleware = async (req, ctx) => {
-  if (req.url.endsWith(".client.ts")) {
-    const res = await ctx.fetchUpstream(req);
-    const fileName = req.url.slice(0, -3) + ".js";
-    const { status, headers } = res;
-    // status should be 200 or 304 Not Modified, hopefully no range request
-    headers.set("Content-Disposition", `filename="${fileName}"`);
-    headers.set("Content-Type", "text/javascript; charset=utf-8");
-    headers.set("Accept-Ranges", "none");
-    return new Response(await convert(await res.text()), { status, headers })
+  if (req.url.endsWith(".client.js")) {
+    const fileName = req.url.slice(0, -3) + ".ts";
+    const res = await ctx.fetchUpstream(new Request(fileName));
+    if (res.status === 200) {
+      const { headers } = res;
+      headers.set("Content-Disposition", `filename="${fileName}"`);
+      headers.set("Content-Type", "text/javascript; charset=utf-8");
+      headers.set("Accept-Ranges", "none");
+      return new Response(await convert(await res.text()), { headers })
+    } else {
+      // 404 Not Found, 304 Not Modified, etc. get passed through
+      return res;
+    }
   }
   return ctx.fetchUpstream(req);
 }
