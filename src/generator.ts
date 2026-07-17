@@ -9,9 +9,10 @@ import type { Stats } from "node:fs";
 import { extname } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
-import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
+import { fileRoutes } from "./middlewares/fileRoutes.ts";
 import { chainMiddlewares, MiddlewareError } from "./middleware.ts";
 import type { MiddlewareHandler, Middleware } from "./middleware.ts";
+import { defaultMiddlewares } from "./middlewares.ts";
 
 /**
  * Config options for `generate`
@@ -37,13 +38,9 @@ export interface GenerateOpts {
    */
   onlyPregenerate?: boolean;
   /**
-   * For use with the programmatic router. Default is to fall back on the file-based router.
+   * Custom middlewares.
    */
-  routes?: Middleware[];
-  /**
-   * Generate `.routenames.json`, which the file-based router needs when using a bundled server.
-   */
-  writeRoutenames?: boolean;
+  middlewares?: Middleware[];
 }
 
 /**
@@ -55,43 +52,40 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
   const { fileURLToPath, pathToFileURL } = await import("node:url");
-  const fileBasedRouter = !opts.routes;
   const {
     baseUrl = "http://127.0.0.1",
     outFolder = "generated",
-    onlyPregenerate = false,
-    routes = await loadRoutes(),
+    middlewares = defaultMiddlewares.concat(fileRoutes),
   } = opts;
-  if (fileBasedRouter && routes.length === 0) {
+  if (!opts.middlewares) {
     await ensureDir(fs.stat("routes"));
   }
   await fs.rm(outFolder, { force: true, recursive: true });
   await fs.mkdir(outFolder);
 
-  const paths: string[] = [];
-  for (const route of routes) {
-    if ("getStaticPaths" in route) {
-      const { getStaticPaths } = route;
-      if (getStaticPaths) {
-        paths.push(...validateGetStaticPaths(route.name, await getStaticPaths()))
-      }
-    }
-  }
-  const handler = chainMiddlewares(routes);
+  const handler = chainMiddlewares(middlewares);
 
   let completeSuccess = true;
-  for (const path of paths) {
-    // TODO: parallelize without opening too many file handles at once
-    const file = await generatePage(handler, new URL(baseUrl + path));
-    if (file === false) {
-      completeSuccess = false;
-    } else if (file) {
-      // TODO: file.outFilePath = res.headers.get("Content-Disposition");
-      const outPath = outFolder + file.outFilePath; // call pathToFileURL here?
-      await fs.mkdir(dirname(outPath), { recursive: true });
-      const { body } = file.response;
-      if (body) {
-        await writeFile(outPath, body);
+  for (const m of middlewares) {
+    if ("getStaticPaths" in m && m.getStaticPaths) {
+      for (const path of await m.getStaticPaths()) {
+        // TODO: parallelize without opening too many file handles at once
+        const file = await generatePage(handler, new URL(baseUrl + path));
+        if (file === false) {
+          completeSuccess = false;
+        } else if (file) {
+          if (!path.endsWith("/") && !extname(path) && !path.startsWith("/.well-known/")) {
+            console.warn(`\nWARNING: ${m.name} generated file ${path} without file extension.
+  Consider renaming route to e.g. ${m.name.replace(".server", ".html.server")}\n`);
+          }
+          // TODO: file.outFilePath = res.headers.get("Content-Disposition");
+          const outPath = outFolder + file.outFilePath; // call pathToFileURL here?
+          await fs.mkdir(dirname(outPath), { recursive: true });
+          const { body } = file.response;
+          if (body) {
+            await writeFile(outPath, body);
+          }
+        }
       }
     }
   }
@@ -100,7 +94,6 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     : process.exit(1);
 };
 
-
 const generatePage = async (handler: MiddlewareHandler, url: URL) => {
   const { pathname } = url;
   try {
@@ -108,32 +101,18 @@ const generatePage = async (handler: MiddlewareHandler, url: URL) => {
     const response = await handler(req, { mode: "generator", fetchUpstream } );
     const outFilePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
     if (response.ok) {
-      return { outFilePath, response };
+      console.warn(`\nnWARNING: skipped path ${pathname} since it returned HTTP ${response.status}:
+${await response.text()}`);
     }
+    return { outFilePath, response };
   } catch (e) {
-    const name = e instanceof MiddlewareError ? e.middlewareName : "";
-    console.error(`\nFailed to generate path ${pathname} in ${name}\n `, e);
+    const err = e instanceof MiddlewareError ? e.cause : e;
+    console.error(`\nERROR: failed to generate path ${pathname}\n `, err);
     return false;
   }
 };
+
 const fetchUpstream = () => new Response("Not found", { status: 404 });
-
-const validateGetStaticPaths = (name: string, paths: string[]) => {
-  if (!Array.isArray(paths)) throw Error(name + notStringMsg);
-  for (const path of paths) {
-    if (typeof path !== "string") throw Error(name + notStringMsg);
-    if (path[0] !== "/") throw Error(name + "#getStaticPaths: paths must start with a slash (/)");
-
-    // TODO: move following check to after generation to exclude 404s?
-    // maybe together with check warn if getStaticPaths returns N paths but not N pages were generated from it
-    if (!path.endsWith("/") && !extname(path) && !path.startsWith("/.well-known/")) {
-      console.warn(`\nWARNING: ${name} generated file ${path} without file extension.
-Consider renaming route to e.g. ${name.replace(".server", ".html.server")}\n`);
-    }
-  }
-  return paths;
-};
-const notStringMsg = "#getStaticPaths must return an array of strings";
 
 const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer) => {
   if (typeof Deno === "object") {
@@ -175,11 +154,6 @@ if (typeof document === "undefined" && import.meta.main) {
       type: "boolean",
       short: "h",
     },
-    "assets-folder": {
-      description: "Files in this folder get hashed output names. Default is `_assets`. " +
-        'To disable, use --assets-folder=""',
-      type: "string",
-    },
     "base-url": {
       description: "Base URL for the synthetic requests, defaults to http://127.0.0.1",
       type: "string",
@@ -190,11 +164,6 @@ if (typeof document === "undefined" && import.meta.main) {
     },
     "only-pregenerate": {
       description: "Only pregenerate routes with `export const pregenerate = true`",
-      type: "boolean",
-    },
-    "write-routenames": {
-      description: "Generate `.routenames.json`. Only needed with the file-based router " +
-        "when also using a bundled server.",
       type: "boolean",
     },
   };
@@ -208,10 +177,8 @@ if (typeof document === "undefined" && import.meta.main) {
     } else {
       await generate({
         baseUrl: values["base-url"] as string | undefined,
-        assetsFolder: values["assets-folder"] as string | undefined,
         outFolder: values.output as string | undefined,
         onlyPregenerate: !!values["only-pregenerate"],
-        writeRoutenames: !!values["write-routenames"],
       });
     }
   } catch (e: any) {

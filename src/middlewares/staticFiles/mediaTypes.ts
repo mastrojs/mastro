@@ -1,7 +1,8 @@
 /*
 Source of mediaTypes.json is https://github.com/denoland/std/blob/9145d20d86f897d21afc3cfda0f0219e79fd02c1/media_types/vendor/db.ts
 Copyright 2018-2026 the Deno authors. MIT license.
-but was transformed with:
+
+It was transformed into its current shape with:
 
 JSON.stringify(Object.keys(db).reduce((acc, type) => {
   const { extensions, charset, source } = db[type];

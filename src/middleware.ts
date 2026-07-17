@@ -28,9 +28,9 @@ export type Middleware = MiddlewareHandler | {
 
 export type MiddlewareHandler = (req: Request, ctx: Context) => Promise<Response> | Response;
 
-interface Context {
+export interface Context {
   fetchUpstream: Handler;
-  mode: "generator" | "server";
+  mode: "generator" | "prodServer" | "devServer";
 }
 
 export class MiddlewareError extends Error {

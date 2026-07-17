@@ -3,6 +3,8 @@ import { findFiles, sep } from "../core/fs.ts";
 import type { Middleware } from "../middleware.ts";
 import { httpMethods, type Route } from "../routers/common.ts";
 import { createMastroHandler } from "../server/handler.ts";
+import { extname } from "node:path";
+import { pathToFileURL } from "node:url";
 
 /**
  * Loads and returns file-based routes – either with the provided `loader`, or falling back to
@@ -63,7 +65,7 @@ export const loadRoutes = async (
 /**
  * Returns true iff the given `filePath` contains dynamic route parameters.
  */
-export const hasRouteParams = (filePath: string): boolean =>
+const hasRouteParams = (filePath: string): boolean =>
   filePath.split(sep).some((segment) => segment.match(paramRegex));
 
 /**
@@ -114,11 +116,29 @@ export const fileRoutes: Middleware = {
   name: "fileRoutes",
   getStaticPaths: async () => {
     const rs = await routes;
-    const paths = await Promise.all(
-      rs.map(r => "getStaticPaths" in r ? (r.getStaticPaths?.() || []) : [])
-    );
-    return paths.flatMap(p => p);
+    const paths = await Promise.all(rs.map(async r => {
+      if (hasRouteParams(r.name)) {
+        if (typeof r.getStaticPaths === "function") {
+          return validateStaticPaths(r.name, await r.getStaticPaths());
+        } else {
+          throw Error(r.name + " should export a function named getStaticPaths, returning an array of strings.");
+        }
+      } else {
+        return pathToFileURL(r.name).pathname;
+      }
+    }));
+    return paths.flat();
   },
   handler: createMastroHandler({ routes })
 }
 
+
+const validateStaticPaths = (name: string, paths: string[]) => {
+  if (!Array.isArray(paths)) throw Error(name + notStringMsg);
+  for (const path of paths) {
+    if (typeof path !== "string") throw Error(name + notStringMsg);
+    if (path[0] !== "/") throw Error(name + "#getStaticPaths: paths must start with a slash (/)");
+  }
+  return paths;
+};
+const notStringMsg = "#getStaticPaths must return an array of strings";

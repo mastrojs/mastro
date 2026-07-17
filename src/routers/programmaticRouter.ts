@@ -5,9 +5,9 @@
  */
 
 import type { GenerateOpts } from "../generator.ts";
-import type { Middleware } from "../middleware.ts";
+import { chainMiddlewares, type Middleware } from "../middleware.ts";
 import { createMastroHandler } from "../server/handler.ts";
-import { type Handler, type HttpMethod, importSuffix } from "./common.ts";
+import { type Handler, type HttpMethod, importSuffix, type Route } from "./common.ts";
 
 export { staticCacheControlVal } from "./common.ts";
 export type { GenerateOpts, Handler, HttpMethod };
@@ -25,7 +25,8 @@ export type RouteOpts = Handler | {
  * Class to use as programmatic router (alternative to the file-based router).
  */
 export class Mastro {
-  private routes: Middleware[] = [];
+  private routes: Route[] = [];
+  private middlewares: Middleware[] | Promise<Middleware[]> | undefined = undefined;
 
   /** Add route */
   addRoute(method: "all" | HttpMethod, pathname: string, opts: RouteOpts): this {
@@ -68,19 +69,30 @@ export class Mastro {
   async generate(opts?: Omit<GenerateOpts, "routes" | "writeRoutenames">): Promise<void> {
     const modPath = `../generator.${importSuffix}`; // variable to prevent esbuild bundling
     const { generate } = await import(modPath);
-    return generate({ ...opts, routes: this.routes });
-  }
-
-  middlewares(...middlewares: Middleware[]): this {
-    this.routes.unshift(middlewares);
-    return this;
+    return generate({ ...opts, middlewares: await this.getMiddlewares() });
   }
 
   /** Create fetch handler */
-  createHandler(opts: {
-    /** defaults to true */
-    serveStaticFiles?: boolean;
-  } = {}): Handler {
-    return createMastroHandler({ ...opts, routes: this.routes });
+  createHandler(): Handler {
+    const handlerP = this.getMiddlewares().then(chainMiddlewares);
+    return req => handlerP.then(handler => handler(req, { mode: "server" }));
+  }
+
+  /** Add custom middlewares before default ones */
+  addMiddlewares(...middlewares: Middleware[]): this {
+    const modPath = `../middlewares.${importSuffix}`; // variable to prevent esbuild bundling
+    this.middlewares = import(modPath).then((mod) => middlewares.concat(mod.defaultMiddlewares));
+    return this;
+  }
+
+  /** Replace default middlewares with custom ones */
+  setMiddlewares(...middlewares: Middleware[]): this {
+    this.middlewares = middlewares;
+    return this;
+  }
+
+  private async getMiddlewares(): Promise<Middleware[]> {
+    if (!this.middlewares) this.addMiddlewares();
+    return (await this.middlewares || []).concat(createMastroHandler({ routes: this.routes }));
   }
 }
