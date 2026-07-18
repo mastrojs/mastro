@@ -1,9 +1,11 @@
 
+import { extname } from "node:path";
+import { pathToFileURL } from "node:url";
+
 import { findFiles, sep } from "../core/fs.ts";
 import type { Middleware } from "../middleware.ts";
 import { httpMethods, type Route } from "../routers/common.ts";
 import { createMastroHandler } from "../server/handler.ts";
-import { pathToFileURL } from "node:url";
 
 /**
  * Loads and returns file-based routes – either with the provided `loader`, or falling back to
@@ -112,7 +114,6 @@ const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 const routes = loadRoutes();
 
 export const fileRoutes: Middleware = {
-  name: "fileRoutes",
   getStaticPaths: async () => {
     const rs = await routes;
     const paths = await Promise.all(rs.map(async r => {
@@ -137,6 +138,10 @@ const validateStaticPaths = (name: string, paths: string[]) => {
   for (const path of paths) {
     if (typeof path !== "string") throw Error(name + notStringMsg);
     if (path[0] !== "/") throw Error(name + "#getStaticPaths: paths must start with a slash (/)");
+    if (!path.endsWith("/") && !extname(path) && !path.startsWith("/.well-known/")) {
+      console.warn(`\nWARNING: ${name} has path ${path} without file extension.
+  Consider renaming route to e.g. ${name.replace(".server", ".html.server")}\n`);
+    }
   }
   return paths;
 };

@@ -6,7 +6,6 @@
  */
 
 import type { Stats } from "node:fs";
-import { extname } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { fileRoutes } from "./middlewares/fileRoutes.ts";
@@ -74,10 +73,6 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
         if (file === false) {
           completeSuccess = false;
         } else if (file) {
-          if (!path.endsWith("/") && !extname(path) && !path.startsWith("/.well-known/")) {
-            console.warn(`\nWARNING: ${m.name} generated file ${path} without file extension.
-  Consider renaming route to e.g. ${m.name.replace(".server", ".html.server")}\n`);
-          }
           // TODO: file.outFilePath = res.headers.get("Content-Disposition");
           const outPath = outFolder + file.outFilePath; // call pathToFileURL here?
           await fs.mkdir(dirname(outPath), { recursive: true });

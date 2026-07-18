@@ -8,7 +8,6 @@ import { findFiles } from "../../core/fs.ts";
 import type { Context, Middleware } from "../../middleware.ts";
 
 export const staticFiles: Middleware = {
-  name: "staticFiles",
   getStaticPaths: async () =>
     (await findFiles(["routes/**/*", "routes/**/.*/**/*"]))
       .filter((p) => !p.endsWith(".server.ts") && !p.endsWith(".server.js")).map((p) => p.slice(6)),

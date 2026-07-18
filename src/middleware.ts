@@ -15,11 +15,6 @@ import type { Handler } from "./routers/common.ts";
  * ```
  */
 export type Middleware = MiddlewareHandler | {
-  /**
-   * Name of the route for error messages etc.
-   * For file-based routes the `filePath`, e.g. `/routes/index.server.ts`
-   */
-  name: string;
   /** Fetch handler */
   handler: MiddlewareHandler,
   /** Called by the static site generator on routes with route parameters in the pattern. */
