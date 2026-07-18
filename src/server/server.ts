@@ -6,7 +6,7 @@
  */
 
 // import "./serveStaticFile.ts"; // make sure JSR sees that file
-import { chainMiddlewares, MiddlewareError } from "../middleware.ts";
+import { chainMiddlewares } from "../middleware.ts";
 import { defaultMiddlewares } from "../middlewares.ts";
 import { fileRoutes } from "../middlewares/fileRoutes.ts";
 
@@ -18,11 +18,8 @@ const fetch = async (req: Request) => {
   const isDev = true // TODO
   try {
     return await handler(req, { mode: isDev ? "devServer": "prodServer", fetchUpstream });
-  } catch (err: any) {
-    const [e, msg] = err instanceof MiddlewareError
-      ? [err.cause, ` in middleware "${err.middlewareName}"`]
-      : [err, ""];
-    return new Response(`500 Internal Server Error${msg}\n\n${isDev ? (e.stack || e) : e.name || "Unknown error"}`, { status: 500 });
+  } catch (e: any) {
+    return new Response(`500 Internal Server Error\n\n${isDev ? (e.stack || e) : e.name || "Unknown error"}`, { status: 500 });
   }
 }
 /**

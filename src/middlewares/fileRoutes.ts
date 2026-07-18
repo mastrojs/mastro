@@ -3,7 +3,6 @@ import { findFiles, sep } from "../core/fs.ts";
 import type { Middleware } from "../middleware.ts";
 import { httpMethods, type Route } from "../routers/common.ts";
 import { createMastroHandler } from "../server/handler.ts";
-import { extname } from "node:path";
 import { pathToFileURL } from "node:url";
 
 /**

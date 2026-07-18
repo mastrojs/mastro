@@ -33,32 +33,20 @@ export interface Context {
   mode: "generator" | "prodServer" | "devServer";
 }
 
-export class MiddlewareError extends Error {
-  constructor(public middlewareName: string, msg?: string, cause?: unknown) {
-    super(msg, { cause });
-  }
-}
-
 export const chainMiddlewares = (middlewares: Middleware[]): MiddlewareHandler => {
   const [m, ...rest] = middlewares;
   if (!m) return (req, ctx) => ctx.fetchUpstream(req); // base case of recursion
 
-  const name = m.name || "<anonymous>";
   const handler = typeof m === "function" ? m : m.handler;
   const next = chainMiddlewares(rest);
   return async (req, ctx) => {
-    let res: Response;
-    try {
-      res = await handler(req, { ...ctx, fetchUpstream: (nextReq) => next(nextReq, ctx) });
-    } catch (err) {
-      throw err instanceof MiddlewareError ? err : new MiddlewareError(name, undefined, err);
-    }
+    const res = await handler(req, { ...ctx, fetchUpstream: (nextReq) => next(nextReq, ctx) });
     if (!(res instanceof Response)) {
-      throw new MiddlewareError(name, "function must return a Response object");
+      throw new Error(`Function ${handler.name || "<anonymous>"} did not return a Response object`);
+    } else if (res.status >= 500) {
+      throw new Error(`Function ${handler.name || "<anonymous>"} returned HTTP ${res.status}: ${await res.text()}`);
     }
-    if (res.status >= 500) {
-      throw new MiddlewareError(name, `received HTTP ${res.status}: ${await res.text()}`);
-    }
+    // what about 404s and other non-200 responses?
     return res;
   };
 };

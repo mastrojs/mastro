@@ -10,7 +10,7 @@ import { extname } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { fileRoutes } from "./middlewares/fileRoutes.ts";
-import { chainMiddlewares, MiddlewareError } from "./middleware.ts";
+import { chainMiddlewares } from "./middleware.ts";
 import type { MiddlewareHandler, Middleware } from "./middleware.ts";
 import { defaultMiddlewares } from "./middlewares.ts";
 
@@ -106,8 +106,7 @@ ${await response.text()}`);
     }
     return { outFilePath, response };
   } catch (e) {
-    const err = e instanceof MiddlewareError ? e.cause : e;
-    console.error(`\nERROR: failed to generate path ${pathname}\n `, err);
+    console.error(`\nERROR: failed to generate path ${pathname}\n `, e);
     return false;
   }
 };
