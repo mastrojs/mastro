@@ -23,8 +23,7 @@ export type Html =
   | HtmlPrimitive
   | Html[]
   | AsyncIterable<Html>
-  | Promise<HtmlPrimitive>
-  | Promise<Html[]>;
+  | Promise<Html>;
 
 /**
  * Tagged template literal to construct `Html` nodes.

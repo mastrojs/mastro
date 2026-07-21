@@ -94,6 +94,19 @@ Deno.test('html attributes', async () => {
   )
 })
 
+Deno.test("html with Promises", async () => {
+  assertEquals(
+    await renderToString(html`<p>${Promise.resolve("hi")}</p>`),
+    "<p>hi</p>",
+  );
+
+  const headings = Promise.resolve(["foo", "bar"]);
+  assertEquals(
+    await renderToString(html`<ol>${headings.then(hs => hs.map(h => html`<li>${h}</li>`))}</ol>`),
+    "<ol><li>foo</li><li>bar</li></ol>",
+  );
+})
+
 Deno.test('htmlResponse', async () => {
   const res = htmlToResponse('hi')
   assertEquals(await res.text(), 'hi')
