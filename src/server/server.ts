@@ -5,29 +5,18 @@
  * @module
  */
 
+import { defaultMiddlewares } from "../middleware/defaultMiddlewares.ts";
+import { createHandler } from "../middleware/middleware.ts";
+import { createFileRouter } from "../middleware/middlewares/fileRouter.ts";
+
 // import "./serveStaticFile.ts"; // make sure JSR sees that file
-import { chainMiddlewares } from "../middleware.ts";
-import { defaultMiddlewares } from "../middlewares.ts";
-import { fileRoutes } from "../middlewares/fileRoutes.ts";
 
-const fetchUpstream = () => new Response("Not found", { status: 404 });
-
-const handler = chainMiddlewares([ ...defaultMiddlewares, fileRoutes ]);
-
-const fetch = async (req: Request) => {
-  const isDev = true // TODO
-  try {
-    return await handler(req, { mode: isDev ? "devServer": "prodServer", fetchUpstream });
-  } catch (e: any) {
-    return new Response(`500 Internal Server Error\n\n${isDev ? (e.stack || e) : e.name || "Unknown error"}`, { status: 500 });
-  }
-}
 /**
  * Default export that can be passed to [Deno.serve](https://docs.deno.com/api/deno/~/Deno.serve),
  * or used directly with the [deno serve](https://docs.deno.com/runtime/reference/cli/serve/) CLI.
  */
 const defaultExport: { fetch: (req: Request) => Promise<Response> | Response } = {
   /** fetch handler */
-  fetch,
+  fetch: createHandler(defaultMiddlewares.concat(createFileRouter())),
 };
 export default defaultExport;

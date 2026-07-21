@@ -2,10 +2,10 @@
 import { extname } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { findFiles, sep } from "../core/fs.ts";
+import { findFiles, sep } from "../../core/fs.ts";
 import type { Middleware } from "../middleware.ts";
-import { httpMethods, type Route } from "../routers/common.ts";
-import { createMastroHandler } from "../server/handler.ts";
+import { httpMethods, type Route } from "../../server/common.ts";
+import { routesToHandler } from "../../server/handler.ts";
 
 /**
  * Loads and returns file-based routes – either with the provided `loader`, or falling back to
@@ -45,13 +45,14 @@ export const loadRoutes = async (
   )));
 
   return modules.flatMap(({ module, name, pattern }) =>
-    (typeof module.ALL === "function" ? ["ALL"] as const : httpMethods).flatMap((method) =>
-      module[method]
+    (typeof module.ALL === "function" ? ["ALL"] as const : httpMethods).flatMap((method) => {
+      const handler = module[method];
+      return typeof handler === "function"
         ? {
           name,
           handler: req => {
             (req as any)._params = pattern.exec(req.url)?.pathname.groups;
-            return module[method](req);
+            return handler(req);
           },
           method: method === "ALL" ? "all" : method,
           pattern,
@@ -59,7 +60,7 @@ export const loadRoutes = async (
           pregenerate: module.pregenerate,
         } as Route
         : []
-    )
+    })
   );
 };
 
@@ -109,11 +110,7 @@ const indexRegex = /^index(\.html)?\.server\.(ts|js)$/
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 
 
-
-
-const routes = loadRoutes();
-
-export const fileRoutes: Middleware = {
+export const createFileRouter = (routes: Promise<Route[]> | Route[] = loadRoutes()): Middleware => ({
   getStaticPaths: async () => {
     const rs = await routes;
     const paths = await Promise.all(rs.map(async r => {
@@ -129,8 +126,8 @@ export const fileRoutes: Middleware = {
     }));
     return paths.flat();
   },
-  handler: createMastroHandler({ routes })
-}
+  handler: routesToHandler({ routes })
+});
 
 
 const validateStaticPaths = (name: string, paths: string[]) => {

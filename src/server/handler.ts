@@ -1,4 +1,4 @@
-import { type Handler, isDevServer, type Route } from "../routers/common.ts";
+import { type Handler, isDevServer, type Route } from "./common.ts";
 
 /**
  * Options for `createHandler`
@@ -7,7 +7,7 @@ export interface CreateHandlerOpts {
   routes: Route[] | Promise<Route[]>;
 }
 
-export const createMastroHandler = (opts: CreateHandlerOpts): Handler =>
+export const routesToHandler = (opts: CreateHandlerOpts): Handler =>
 async (req: Request) => {
   const routes = await opts.routes;
   const method = req.method.toUpperCase();

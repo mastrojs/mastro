@@ -31,21 +31,21 @@ Deno.test("programmaticRouter", async () => {
   assertEquals(await access("/all", "POST"), "All");
 
   const middlewareHandler = new Mastro()
-    .middleware([
+    .setMiddlewares(
       async (req, ctx) => {
-        const response = await ctx.fetchNext(req);
+        const response = await ctx.fetchUpstream(req);
         return new Response(`${await response.text()} first`);
       },
       async (req, ctx) => {
-        const response = await ctx.fetchNext(req);
+        const response = await ctx.fetchUpstream(req);
         return new Response(`${await response.text()} second`);
       },
-    ])
+    )
     .get("/", () => new Response("root"))
     .createHandler();
 
   assertEquals(
     await (await middlewareHandler(new Request("http://localhost/"))).text(),
-    "root first second",
+    "root second first",
   );
 });

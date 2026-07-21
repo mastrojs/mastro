@@ -8,10 +8,10 @@
 import type { Stats } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
-import { fileRoutes } from "./middlewares/fileRoutes.ts";
-import { chainMiddlewares } from "./middleware.ts";
-import type { MiddlewareHandler, Middleware } from "./middleware.ts";
-import { defaultMiddlewares } from "./middlewares.ts";
+import { chainMiddlewares } from "./middleware/middleware.ts";
+import type { MiddlewareHandler, Middleware } from "./middleware/middleware.ts";
+import { defaultMiddlewares } from "./middleware/defaultMiddlewares.ts";
+import { createFileRouter } from "./middleware/middlewares/fileRouter.ts";
 
 /**
  * Config options for `generate`
@@ -54,7 +54,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   const {
     baseUrl = "http://127.0.0.1",
     outFolder = "generated",
-    middlewares = defaultMiddlewares.concat(fileRoutes),
+    middlewares = defaultMiddlewares.concat(createFileRouter()),
   } = opts;
   if (!opts.middlewares) {
     await ensureDir(fs.stat("routes"));
@@ -95,8 +95,8 @@ const generatePage = async (handler: MiddlewareHandler, url: URL) => {
     const req = new Request(url);
     const response = await handler(req, { mode: "generator", fetchUpstream } );
     const outFilePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
-    if (response.ok) {
-      console.warn(`\nnWARNING: skipped path ${pathname} since it returned HTTP ${response.status}:
+    if (!response.ok) {
+      console.warn(`\nWARNING: skipped path ${pathname} since it returned HTTP ${response.status}:
 ${await response.text()}`);
     }
     return { outFilePath, response };

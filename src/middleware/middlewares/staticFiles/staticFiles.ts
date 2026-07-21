@@ -2,33 +2,29 @@ import { Buffer } from "node:buffer";
 import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
 import { extname } from "node:path";
-import { staticCacheControlVal } from "../../routers/common.ts";
+import { isDevServer, staticCacheControlVal } from "../../../server/common.ts";
 import { contentTypeFromExt } from "./mediaTypes.ts";
-import { findFiles } from "../../core/fs.ts";
-import type { Context, Middleware } from "../../middleware.ts";
+import { findFiles } from "../../../core/fs.ts";
+import type { Middleware } from "../../middleware.ts";
 
 export const staticFiles: Middleware = {
   getStaticPaths: async () =>
     (await findFiles(["routes/**/*", "routes/**/.*/**/*"]))
       .filter((p) => !p.endsWith(".server.ts") && !p.endsWith(".server.js")).map((p) => p.slice(6)),
-  handler: async (req, ctx) => await serveStaticFile(req, ctx.mode) || ctx.fetchUpstream(req),
+  handler: async (req, ctx) => await serveStaticFile(req) || ctx.fetchUpstream(req),
 }
 
 /**
  * Utility function for the server to serve static files as well.
  *
- * 1. look for matching file in `generated` folder
+ * 1. if production: look for matching file in `generated` folder
  * 2. look for matching file in `routes` folder.
- *     - if requested url ends in `.client.js`, transpile the corresponding `.ts` file
  */
-const serveStaticFile = async (
-  req: Request,
-  mode: Context["mode"],
-): Promise<Response | undefined> => {
+const serveStaticFile = async (req: Request): Promise<Response | undefined> => {
   if (req.method === "GET") {
-    const { pathname } = new URL(req.url);
-    const staticPath = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
-    const pregeneratedFile = mode === "devServer" ? undefined : await tryServeFile(req, "generated" + staticPath);
+    const url = new URL(req.url);
+    const staticPath = url.pathname.endsWith("/") ? (url.pathname + "index.html") : url.pathname;
+    const pregeneratedFile = isDevServer(url) ? undefined : await tryServeFile(req, "generated" + staticPath);
     const fileRes = pregeneratedFile || await tryServeFile(req, "routes" + staticPath);
     if (fileRes) {
       return fileRes;

@@ -1,13 +1,13 @@
-import type { Handler } from "./routers/common.ts";
+import type { Handler } from "../server/common.ts";
 
 /**
  * Request Middleware
  *
- * To suppress generation of this page, return `new Response(null, { status: 404 })`
- *
  * When doing static site generation (or asset generation),
+ * suppress generation of a page by returning `new Response(null, { status: 404 })`.
  * To change the file name of the generated file, set a `Content-Disposition` header on your
  * response, for example:
+ *
  * ```
  * const { body, headers, status } = ctx.fetchUpstream(req);
  * headers.set("Content-Disposition", 'filename="file name.jpg"');
@@ -23,9 +23,30 @@ export type Middleware = MiddlewareHandler | {
 
 export type MiddlewareHandler = (req: Request, ctx: Context) => Promise<Response> | Response;
 
+/**
+ * Create fetch handler
+ */
+export const createHandler = (middlewares: Middleware[]): Handler => {
+  const handler = chainMiddlewares(middlewares);
+  const isDev = true; // TODO
+  return async req => {
+    try {
+      return await handler(req, { mode: "server", fetchUpstream });
+    } catch (e: any) {
+      return new Response(
+        `500 Internal Server Error\n\n${isDev ? (e.stack || e) : e.name || "Unknown error"}`,
+        { status: 500 },
+      );
+    }
+  };
+}
+
+const fetchUpstream = () => new Response("Not found", { status: 404 });
+
 export interface Context {
   fetchUpstream: Handler;
-  mode: "generator" | "prodServer" | "devServer";
+  // mode: "generator" | "prodServer" | "devServer";
+  mode: "generator" | "server";
 }
 
 export const chainMiddlewares = (middlewares: Middleware[]): MiddlewareHandler => {

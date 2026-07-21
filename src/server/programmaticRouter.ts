@@ -1,16 +1,7 @@
-/**
- * This module exports the `Mastro` class to create a server using the
- * [programmatic router](https://mastrojs.github.io/docs/routing/#programmatic-router).
- * @module
- */
-
 import type { GenerateOpts } from "../generator.ts";
-import { chainMiddlewares, type Middleware } from "../middleware.ts";
-import { createMastroHandler } from "../server/handler.ts";
-import { type Handler, type HttpMethod, importSuffix, type Route } from "./common.ts";
-
-export { staticCacheControlVal } from "./common.ts";
-export type { GenerateOpts, Handler, HttpMethod };
+import { createHandler, type Middleware } from "../middleware/middleware.ts";
+import type { Handler, HttpMethod, Route } from "../server/common.ts";
+import { routesToHandler } from "./handler.ts";
 
 /**
  * Either a plain `Handler` function, or an object with a `handler` and other fields.
@@ -33,14 +24,13 @@ export class Mastro {
     if (typeof opts === "function") {
       opts = { handler: opts };
     }
-    const { getStaticPaths, pregenerate } = opts;
     this.routes.push({
-      getStaticPaths,
+      getStaticPaths: opts.getStaticPaths || (() => [pathname]),
       handler: opts.handler as Handler,
       method,
       name: pathname,
       pattern: new URLPattern({ pathname }),
-      pregenerate,
+      pregenerate: opts.pregenerate,
     });
     return this;
   }
@@ -74,13 +64,13 @@ export class Mastro {
 
   /** Create fetch handler */
   createHandler(): Handler {
-    const handlerP = this.getMiddlewares().then(chainMiddlewares);
-    return req => handlerP.then(handler => handler(req, { mode: "server" }));
+    const handlerP = this.getMiddlewares().then(createHandler);
+    return (req) => handlerP.then((handler) => handler(req));
   }
 
   /** Add custom middlewares before default ones */
   addMiddlewares(...middlewares: Middleware[]): this {
-    const modPath = `../middlewares.${importSuffix}`; // variable to prevent esbuild bundling
+    const modPath = `../middleware/defaultMiddlewares.${importSuffix}`; // prevent esbuild bundling
     this.middlewares = import(modPath).then((mod) => middlewares.concat(mod.defaultMiddlewares));
     return this;
   }
@@ -93,6 +83,10 @@ export class Mastro {
 
   private async getMiddlewares(): Promise<Middleware[]> {
     if (!this.middlewares) this.addMiddlewares();
-    return (await this.middlewares || []).concat(createMastroHandler({ routes: this.routes }));
+    return (await this.middlewares || []).concat(routesToHandler({ routes: this.routes }));
   }
 }
+
+// Otherwise Node.js says "Stripping types is currently unsupported for files under node_modules"
+// @ts-expect-error no type definitions for Bun
+const importSuffix = typeof Deno === "object" || typeof Bun === "object" ? "ts" : "js";
