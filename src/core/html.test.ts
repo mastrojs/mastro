@@ -1,5 +1,5 @@
 import { assertEquals } from 'jsr:@std/assert'
-import { html, renderToString, unsafeInnerHtml } from './html.ts'
+import { html, renderToString, renderToStringSync, unsafeInnerHtml } from './html.ts'
 import { htmlToResponse } from "./responses.ts";
 
 Deno.test("html", async () => {
@@ -93,6 +93,17 @@ Deno.test('html attributes', async () => {
     '<div required foo></div><code>x=7</code>',
   )
 })
+
+Deno.test("renderToStringSync", () => {
+  assertEquals(
+    renderToStringSync("text"),
+    "text",
+  );
+  assertEquals(
+    renderToStringSync(html`<p>hi</p>`),
+    "<p>hi</p>",
+  );
+});
 
 Deno.test("html with Promises", async () => {
   assertEquals(

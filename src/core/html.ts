@@ -89,7 +89,7 @@ export const renderToString = async (node: Html): Promise<string> => {
  * You probably want to use `renderToString` or `renderToStream` instead.
  */
 export const renderToStringSync = (node: Html): string => {
-  const s = renderToStream(node);
+  const s = renderToStream(Array.isArray(node) ? node : [node]);
   if (typeof s !== "string") {
     throw Error("renderToStringSync received async value. Use renderToString instead.");
   }
