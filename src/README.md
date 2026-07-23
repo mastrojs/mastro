@@ -2,7 +2,7 @@ The source code of the Mastro library consists of only ~800 lines of TypeScript.
 <details>
 <summary>including types, but excluding tests, comments, and blank lines</summary>
 
-    tokei src --exclude "*.test.ts" --exclude "*.bench.ts" --output json | jq ".TypeScript.code"
+    tokei src --exclude "*.test.ts" --exclude "*.bench.ts" --exclude "*.d.ts" --output json | jq ".TypeScript.code"
 </details>
 
 ## Core

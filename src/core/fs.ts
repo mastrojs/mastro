@@ -5,7 +5,7 @@
  * For Service Workers (where there is no filesystem), we just fall back to undefined, but at least
  * we don't want to break the module, hence no top-level await.
  */
-import type { StandardSchemaV1 } from "./standard-schema.ts";
+import type { StandardSchemaV1 } from "./standard-schema.d.ts";
 
 // in variables to prevent bundling by esbuild:
 const nodeFs = "node:fs/promises";
