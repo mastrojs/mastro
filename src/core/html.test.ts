@@ -1,5 +1,5 @@
 import { assert, assertEquals } from 'jsr:@std/assert'
-import { html, renderToStream, renderToString, renderToStringSync, unsafeInnerHtml } from './html.ts'
+import { type Html, html, renderToStream, renderToString, renderToStringSync, unsafeInnerHtml } from './html.ts'
 import { htmlToResponse } from "./responses.ts";
 
 Deno.test("html", async () => {
@@ -57,12 +57,20 @@ Deno.test('html escaping', async () => {
     await renderToString(unsafeInnerHtml('foo <strong>bar</strong>')),
     'foo <strong>bar</strong>',
   )
+  assertEquals(
+    await renderToString(['&', '&']),
+    '&amp;&amp;',
+  )
 })
 
-Deno.test('html attributes', async () => {
+Deno.test('html attributes with automatic quote insertion', async () => {
   assertEquals(
     await renderToString(html`<div class="${'my class'}"></div>`),
     '<div class="my class"></div>',
+  )
+  assertEquals(
+    await renderToString(html`<div class= ${'my class'}></div>`),
+    '<div class= my class></div>',
   )
   assertEquals(
     await renderToString(html`<div class="${'my"class'}"></div>`),
@@ -92,7 +100,142 @@ Deno.test('html attributes', async () => {
     await renderToString(html`<div ${'required'} ${'foo'}></div><code>x=${7}</code>`),
     '<div required foo></div><code>x=7</code>',
   )
+  assertEquals(
+    await renderToString(html`<div class=${['my', ' class']}></div>`),
+    '<div class="my class"></div>',
+  )
+  assertEquals(
+    await renderToString(html`<h1 class=${'my class'}></h1>`),
+    '<h1 class="my class"></h1>',
+  )
+  assertEquals(
+    await renderToString(html`<my-element
+      class=${'my class'}></my-element>`),
+    '<my-element\n      class="my class"></my-element>',
+  )
 })
+
+Deno.test("html automatic quote insertion: does not trigger in script contents", async () => {
+  assertEquals(
+    await renderToString(html`<script>if (a < b) x=${7}</script>`),
+    "<script>if (a < b) x=7</script>",
+  );
+  assertEquals(
+    await renderToString(html`<script type="module">if (a < b) x=${7}</script>`),
+    '<script type="module">if (a < b) x=7</script>',
+  );
+  assertEquals(
+    await renderToString(html`<script>if (a<b) x=${7}</script>`),
+    "<script>if (a<b) x=7</script>",
+  );
+  assertEquals(
+    await renderToString(
+      html`<script type=${"module"}>// Create a <div dynamically
+const count=${7};</script><div class="${"after"}"></div>`,
+    ),
+    '<script type="module">// Create a <div dynamically\nconst count=7;</script><div class="after"></div>',
+  );
+  assertEquals(
+    await renderToString(
+      html`<script data-code="a > b">// Create a <div dynamically
+const count=${7};</script>`,
+    ),
+    '<script data-code="a > b">// Create a <div dynamically\nconst count=7;</script>',
+  );
+  assertEquals(
+    await renderToString(html`<script src=${"app.js"}></script><div class=${"after"}></div>`),
+    '<script src="app.js"></script><div class="after"></div>',
+  );
+  assertEquals(
+    await renderToString(html`<script src=${"app.js"} type="module"></script><div class=${"after"}></div>`),
+    '<script src="app.js" type="module"></script><div class="after"></div>',
+  );
+});
+
+Deno.test("html automatic quote insertion: does not trigger in style contents", async () => {
+  assertEquals(
+    await renderToString(html`<style type="text/css">.box > h1 { color: ${"red"}; }</style>`),
+    '<style type="text/css">.box > h1 { color: red; }</style>',
+  );
+  assertEquals(
+    await renderToString(html`<style>.box > h1 { margin: ${0}; }</style><div class=${"after"}></div>`),
+    '<style>.box > h1 { margin: 0; }</style><div class="after"></div>',
+  );
+});
+
+Deno.test("html does not falsely add quotes around attribute-like text", async () => {
+  assertEquals(
+    await renderToString(html`some class=${"text"}`),
+    "some class=text",
+  );
+  assertEquals(
+    await renderToString(html`<p>some class=${"text"}</p>`),
+    "<p>some class=text</p>",
+  );
+  assertEquals(
+    await renderToString(html`<!-- <div class=${"comment"}> -->`),
+    "<!-- <div class=comment> -->",
+  );
+  assertEquals(
+    await renderToString(html`<div title='not class=${"not an attribute"}'></div>`),
+    "<div title='not class=not an attribute'></div>",
+  );
+  assertEquals(
+    await renderToString(html`<div title="not class=${"not an attribute"}"></div>`),
+    '<div title="not class=not an attribute"></div>',
+  );
+  assertEquals(
+    await renderToString(html`<div title="a > <span class=${"not an attribute"}"></div>`),
+    '<div title="a > <span class=not an attribute"></div>',
+  );
+  assertEquals(
+    await renderToString(html`<div class==${"not an attribute"}></div>`),
+    "<div class==not an attribute></div>",
+  );
+  assertEquals(
+    await renderToString(html`<script>const example = "<div class=${"script"}>";</script>`),
+    '<script>const example = "<div class=script>";</script>',
+  );
+  assertEquals(
+    await renderToString(html`<script>const x = "<div class=${'foo'}"</script>`),
+    '<script>const x = "<div class=foo"</script>',
+  );
+  assertEquals(
+    await renderToString(html`<script>code</scripture><div class=${"script"}`),
+    "<script>code</scripture><div class=script",
+  );
+});
+
+Deno.test(
+  "html currently does not add quotes in cases where a more complex implementation would",
+  async () => {
+    assertEquals(
+      await renderToString(html`<DIV class=${"uppercase"}></DIV>`),
+      "<DIV class=uppercase></DIV>",
+    );
+    assertEquals(
+      await renderToString(html`<div title="a > b" class=${'myClass'}></div>`),
+      '<div title="a > b" class=myClass></div>',
+    )
+    assertEquals(
+      await renderToString(html`<div title="<script>" class=${'after'}></div>`),
+      '<div title="<script>" class=after></div>',
+    )
+  },
+);
+
+Deno.test("html caches immutable template strings", async () => {
+  const Component = (value: string) => html`<p class=${value}>${value}</p>`;
+  const first = Component("first");
+  const second = Component("second");
+
+  assert(first !== second);
+  assert(first[0] === second[0]);
+  assert(Object.isFrozen(first[0]));
+  first[0] = "changed";
+  assertEquals(await renderToString(second), '<p class="second">second</p>');
+  assertEquals(await renderToString(Component("third")), '<p class="third">third</p>');
+});
 
 Deno.test("renderToStringSync", () => {
   assertEquals(

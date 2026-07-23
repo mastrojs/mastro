@@ -10,8 +10,7 @@
 /**
  * HTML primitive values like strings and numbers.
  *
- * Note that we use [`String` objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)
- * to store already properly escaped HTML.
+ * Note that we use `String` objects to store already properly escaped HTML.
  */
 // deno-lint-ignore ban-types
 export type HtmlPrimitive = String | string | number | undefined | null | false;
@@ -40,20 +39,19 @@ export type Html =
  * );
  * ```
  */
-export const html = (strings: TemplateStringsArray, ...params: Html[]): Html[] => {
+export const html = (templateParts: TemplateStringsArray, ...params: Html[]): Html[] => {
+  let parts = cache.get(templateParts); // soon we can use cache.getOrInsertComputed
+  if (!parts) cache.set(templateParts, parts = parseParts(templateParts));
   const output: Html[] = [];
-  let insideTag = false;
-  for (let i = 0; i < strings.length; i++) {
-    const str = strings[i];
-    output.push(unsafeInnerHtml(str));
-    insideTag = (insideTag ? 1 : 0) + nrOf(str, "<") - nrOf(str, ">") === 1;
+  for (let i = 0; i < parts.length; i++) {
+    const { html, quote } = parts[i];
+    output.push(html);
     if (i < params.length) {
       const p = params[i];
-      if (Array.isArray(p)) {
-        output.push(...p);
-      } else if (insideTag && endsWithEq(output.at(-1))) {
-        // add quotes around attribute for e.g. html`<div class=${'my class'}></div>`
+      if (quote) {
         output.push(unsafeInnerHtml('"'), p, unsafeInnerHtml('"'));
+      } else if (Array.isArray(p)) {
+        output.push(...p);
       } else {
         output.push(p);
       }
@@ -68,10 +66,7 @@ export const html = (strings: TemplateStringsArray, ...params: Html[]): Html[] =
  * This is similar to the DOM's [innerHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML#replacing_the_contents_of_an_element)
  * or React's `dangerouslySetInnerHTML`.
  */
-export const unsafeInnerHtml = (str: string): Html =>
-  // Alternatively, we could also use a plain object like `{ type: 'html', str }`
-  // but the String object's `.toString()` and `.valueOf()` behaviour are handy.
-  new String(str);
+export const unsafeInnerHtml = (val: string): HtmlPrimitive => Object.freeze(new String(val));
 
 /**
  * Returns true iff `val` is an async iterable
@@ -182,30 +177,36 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
   };
 };
 
+/**
+ * Tests HTML snippets heuristically to determine whether we should wrap the next part in quotes
+ * e.g. `<div class=${'myClass'}>`. We don't handle uppercase tags, HTML comments, or single-quoted
+ * attributes, and track only whether we're in <script> contents (not <style> etc).
+ */
+const parseParts = (templateParts: TemplateStringsArray) => {
+  let prefix = "";
+  return templateParts.map((str) => {
+    const scStart = (prefix += str).lastIndexOf("<script");
+    const inScript = scStart > prefix.lastIndexOf("</script>") && prefix.indexOf(">", scStart) >= 0;
+    const quote = !inScript && prefix.split('"').length % 2 === 1 &&
+      openingTagWithAttr.test(prefix.slice(prefix.lastIndexOf(">") + 1));
+    return { html: unsafeInnerHtml(str), quote };
+  });
+};
+const openingTagWithAttr = /^\s*<[a-z][\w-]*(?:[^"'<>]|"[^"]*")*\s[\w:-]+=$/;
+
 const escape = (n: HtmlPrimitive): string =>
   typeof n === "string"
     ? escapeForAttribute(n)
     : (n || typeof n === "number") ? n.toString() : "";
 
-const escapeForHtml = (st: string) =>
-  st.replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-
 const escapeForAttribute = (str: string) =>
-  escapeForHtml(str)
-    .replaceAll("'", "&#39;")
-    .replaceAll('"', "&quot;");
+  needsEscaping.test(str)
+    ? str.replace(/[&<>'"]/g, (char) => chars[char as keyof typeof chars])
+    : str;
+const needsEscaping = /[&<>'"]/;
+const chars = { "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" };
 
 const isAsyncIterator = <T>(val: any): val is AsyncIterator<T> =>
   val && typeof val.next === "function";
 
-const endsWithEq = (prev: Html) =>
-  typeof prev === "object" &&
-  typeof (prev as string)?.endsWith === "function" &&
-  (prev as string).endsWith("=");
-
-/**
- * `nrOf(str, char)` returns the number of times `char` occurs in `str`
- */
-const nrOf = (str: string, char: string) => str.split(char).length - 1;
+const cache = new Map<TemplateStringsArray, { html: HtmlPrimitive; quote: boolean }[]>();
