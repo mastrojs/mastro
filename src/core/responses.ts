@@ -1,5 +1,5 @@
 import { readTextFile } from "./fs.ts";
-import { type Html, renderToStream } from "./html.ts";
+import { type Html, isAsyncIterable, renderToStream } from "./html.ts";
 
 /**
  * Take the path of a URL and extract its parameters.
@@ -182,9 +182,6 @@ export const ghPagesBasePath = (): string => {
   }
   return "";
 };
-
-const isAsyncIterable = <T>(val: any): val is AsyncIterable<T> =>
-  val && typeof val[Symbol.asyncIterator] === "function";
 
 async function* mapIterable<T, R>(iter: AsyncIterable<T>, cb: (val: T) => R): AsyncIterable<R> {
   for await (const val of iter) {

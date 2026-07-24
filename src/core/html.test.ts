@@ -1,5 +1,5 @@
-import { assertEquals } from 'jsr:@std/assert'
-import { html, renderToString, renderToStringSync, unsafeInnerHtml } from './html.ts'
+import { assert, assertEquals } from 'jsr:@std/assert'
+import { html, renderToStream, renderToString, renderToStringSync, unsafeInnerHtml } from './html.ts'
 import { htmlToResponse } from "./responses.ts";
 
 Deno.test("html", async () => {
@@ -117,6 +117,17 @@ Deno.test("html with Promises", async () => {
     "<ol><li>foo</li><li>bar</li></ol>",
   );
 })
+
+Deno.test("renderToStream buffers sync content and flushes before async work", async () => {
+  async function* gen() {
+    yield "d";
+    yield "e";
+  }
+
+  const stream = renderToStream(html`a${Promise.resolve("b")}c${gen()}f`);
+  assert(typeof stream !== "string");
+  assertEquals(await Array.fromAsync(stream), ["a", "bc", "d", "e", "f"]);
+});
 
 Deno.test('htmlResponse', async () => {
   const res = htmlToResponse('hi')

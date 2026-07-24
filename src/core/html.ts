@@ -74,6 +74,12 @@ export const unsafeInnerHtml = (str: string): Html =>
   new String(str);
 
 /**
+ * Returns true iff `val` is an async iterable
+ */
+export const isAsyncIterable = <T>(val: any): val is AsyncIterable<T> =>
+  val && typeof val[Symbol.asyncIterator] === "function";
+
+/**
  * Convert an `Html` node to a properly escaped `Promise<string>`.
  *
  * See `renderToStream` for a more efficient but less ergonomic alternative.
@@ -138,7 +144,11 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
         next: async () => {
           while (stack.length > 0) {
             const nextUp = stack[stack.length - 1];
-            if (typeof nextUp === "object" && nextUp !== null && "next" in nextUp) {
+            if (buffer.length > 0 &&
+              (nextUp instanceof Promise || isAsyncIterable(nextUp) || isAsyncIterator(nextUp))) {
+              return flushBuffer();
+            }
+            if (isAsyncIterator(nextUp)) {
               // If an iterator is on top of the stack, consume its next element.
               // But only pop the iterator itself from the stack when it's done.
               const { value, done } = await nextUp.next();
@@ -147,8 +157,6 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
               } else {
                 stack.push(value);
               }
-            } else if (nextUp instanceof Promise && buffer.length > 0) {
-              return flushBuffer();
             } else {
               const current = await stack.pop();
               if (Array.isArray(current)) {
@@ -159,9 +167,6 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
                 // push iterator on stack for future consumption
                 const iterator = current[Symbol.asyncIterator]();
                 stack.push(iterator);
-                if (buffer.length > 0) {
-                  return flushBuffer();
-                }
               } else {
                 buffer += escape(current as HtmlPrimitive);
               }
@@ -192,8 +197,8 @@ const escapeForAttribute = (str: string) =>
     .replaceAll("'", "&#39;")
     .replaceAll('"', "&quot;");
 
-const isAsyncIterable = <T>(val: any): val is AsyncIterable<T> =>
-  val && typeof val[Symbol.asyncIterator] === "function";
+const isAsyncIterator = <T>(val: any): val is AsyncIterator<T> =>
+  val && typeof val.next === "function";
 
 const endsWithEq = (prev: Html) =>
   typeof prev === "object" &&
