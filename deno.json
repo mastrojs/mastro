@@ -12,6 +12,13 @@
     "./server-filebased": "./src/routers/fileRouter.ts",
     "./server-programmatic": "./src/routers/programmaticRouter.ts"
   },
+  "publish": {
+    "include": [
+      "LICENSE",
+      "README.md",
+      "src/**/*"
+    ]
+  },
   "compilerOptions": {
     "lib": ["deno.ns", "dom", "node"]
   },
