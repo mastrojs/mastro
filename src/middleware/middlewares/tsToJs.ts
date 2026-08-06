@@ -10,11 +10,10 @@ import type { Middleware } from "../middleware.ts";
  */
 export const tsToJs: Middleware = async (req, ctx) => {
   if (req.url.endsWith(".client.js")) {
-    const fileName = req.url.slice(0, -3) + ".ts";
-    const res = await ctx.fetchUpstream(new Request(fileName));
+    const res = await ctx.fetchUpstream(new Request(req.url.slice(0, -3) + ".ts"));
     if (res.status === 200) {
       const { headers } = res;
-      headers.set("Content-Disposition", `filename="${fileName}"`);
+      headers.set("Content-Disposition", `filename="${req.url}"`);
       headers.set("Content-Type", "text/javascript; charset=utf-8");
       headers.set("Accept-Ranges", "none");
 

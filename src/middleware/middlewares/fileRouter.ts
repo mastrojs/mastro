@@ -114,7 +114,7 @@ export const createFileRouter = (routes: Promise<Route[]> | Route[] = loadRoutes
   getStaticPaths: async () => {
     const rs = await routes;
     const paths = await Promise.all(rs.map(async r => {
-      if (hasRouteParams(r.name)) {
+      if (hasRouteParams(r.name)) { // replace with if (r.pattern.hasRegExpGroups) ?
         if (typeof r.getStaticPaths === "function") {
           return validateStaticPaths(r.name, await r.getStaticPaths());
         } else {

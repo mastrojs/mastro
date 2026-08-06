@@ -73,7 +73,6 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
         if (file === false) {
           completeSuccess = false;
         } else if (file) {
-          // TODO: file.outFilePath = res.headers.get("Content-Disposition");
           const outPath = outFolder + file.outFilePath; // call pathToFileURL here?
           await fs.mkdir(dirname(outPath), { recursive: true });
           const { body } = file.response;
@@ -94,17 +93,19 @@ const generatePage = async (handler: MiddlewareHandler, url: URL) => {
   try {
     const req = new Request(url);
     const response = await handler(req, { mode: "generator", fetchUpstream } );
-    const outFilePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
+    const path = parseContentDisposition(response.headers.get("Content-Disposition")) || pathname;
     if (!response.ok) {
       console.warn(`\nWARNING: skipped path ${pathname} since it returned HTTP ${response.status}:
 ${await response.text()}`);
     }
-    return { outFilePath, response };
+    return { response, outFilePath: path.endsWith("/") ? `${path}index.html` : path };
   } catch (e) {
     console.error(`\nERROR: failed to generate path ${pathname}\n `, e);
     return false;
   }
 };
+
+const parseContentDisposition = (val: string | null) => val?.match(/filename="?([^";]+)"?/i)?.[1];
 
 const fetchUpstream = () => new Response("Not found", { status: 404 });
 
