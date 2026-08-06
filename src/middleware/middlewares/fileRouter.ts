@@ -121,7 +121,7 @@ export const createFileRouter = (routes: Promise<Route[]> | Route[] = loadRoutes
           throw Error(r.name + " should export a function named getStaticPaths, returning an array of strings.");
         }
       } else {
-        return pathToFileURL(r.name).pathname;
+        return r.pattern.pathname;
       }
     }));
     return paths.flat();
