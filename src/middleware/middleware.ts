@@ -15,6 +15,8 @@ import type { Handler } from "../server/common.ts";
  * ```
  */
 export type Middleware = MiddlewareHandler | {
+  /** so that users can filter the built-in middlewares  */
+  name?: string;
   /** Fetch handler */
   handler: MiddlewareHandler,
   /** Called by the static site generator on routes with route parameters in the pattern. */
