@@ -7,32 +7,30 @@ import { contentTypeFromExt } from "./mediaTypes.ts";
 import { findFiles } from "../../../core/fs.ts";
 import type { Middleware } from "../../middleware.ts";
 
+/**
+ * Serve static files in routes folder (excluding *.client.ts, *.server.ts and *.server.js files)
+ *
+ * In production, we also look for files in the `generated` folder, which take precedence.
+ */
 export const staticFiles: Middleware = {
-  getStaticPaths: async () =>
-    (await findFiles(["routes/**/*", "routes/**/.*/**/*"]))
-      .filter((p) => !p.endsWith(".server.ts") && !p.endsWith(".server.js")).map((p) => p.slice(6)),
+  getStaticPaths: () => findFiles(["routes/**/*", "routes/**/.*/**/*"])
+    .then(paths => paths.filter(notReserved).map((p) => p.slice(6))),
   handler: async (req, ctx) => await serveStaticFile(req) || ctx.fetchUpstream(req),
 }
 
-/**
- * Utility function for the server to serve static files as well.
- *
- * 1. if production: look for matching file in `generated` folder
- * 2. look for matching file in `routes` folder.
- */
 const serveStaticFile = async (req: Request): Promise<Response | undefined> => {
-  if (req.method === "GET") {
+  if (req.method === "GET" && notReserved(req.url)) {
     const url = new URL(req.url);
-    const staticPath = url.pathname.endsWith("/") ? (url.pathname + "index.html") : url.pathname;
-    const pregeneratedFile = isDevServer(url) ? undefined : await tryServeFile(req, "generated" + staticPath);
-    const fileRes = pregeneratedFile || await tryServeFile(req, "routes" + staticPath);
+    const path = url.pathname.endsWith("/") ? (url.pathname + "index.html") : url.pathname;
+    const pregeneratedFile = isDevServer(url) ? null : await tryServeFile(req, "generated" + path);
+    const fileRes = pregeneratedFile || await tryServeFile(req, "routes" + path);
     if (fileRes) {
       return fileRes;
     }
   }
 };
 
-const tryServeFile = async (req: Request, path: string) => {
+export const tryServeFile = async (req: Request, path: string) => {
   const res = await serveFile(req, path);
   if (res.status === 404 || res.status === 405) {
     return;
@@ -119,6 +117,8 @@ const serveFile = async (req: Request, filePath: string): Promise<Response> => {
   const stream = file.readableWebStream({ autoClose: true }) as ReadableStream;
   return new Response(stream, { status: 200, headers });
 };
+
+const notReserved = (p: string) => !(p.endsWith(".client.ts") || /\.server\.(ts|js)$/.test(p));
 
 const newResponse = (status: number) => new Response(`HTTP ${status}`, { status });
 

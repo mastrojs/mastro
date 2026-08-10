@@ -93,6 +93,7 @@ const generatePage = async (handler: MiddlewareHandler, url: URL) => {
   try {
     const req = new Request(url);
     const response = await handler(req, { mode: "generator", fetchUpstream } );
+    // TODO: is Content-Disposition still needed?
     const path = parseContentDisposition(response.headers.get("Content-Disposition")) || pathname;
     if (!response.ok) {
       console.warn(`\nWARNING: skipped path ${pathname} since it returned HTTP ${response.status}:
