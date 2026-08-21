@@ -1,4 +1,3 @@
-import { findFiles } from "../../core/fs.ts";
 import type { Middleware } from "../middleware.ts";
 import { tryServeFile } from "./staticFiles/staticFiles.ts";
 
@@ -11,8 +10,7 @@ import { tryServeFile } from "./staticFiles/staticFiles.ts";
  * static file servers don't serve `.ts` files with `content-type: text/javascript`.
  */
 export const tsToJs: Middleware = {
-  getStaticPaths: () => findFiles("routes/**/*.client.ts")
-    .then(ps => ps.map((p) => p.slice(6, -3) + ".js")),
+  amendStaticPaths: (ps) => ps.map((p) => p.endsWith(".client.ts") ? `${p.slice(0, -3)}.js` : p),
   handler: async (req, ctx) => {
     const { pathname } = new URL(req.url);
     if (pathname.endsWith(".client.js")) {

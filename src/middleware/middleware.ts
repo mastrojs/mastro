@@ -19,8 +19,8 @@ export type Middleware = MiddlewareHandler | {
   name?: string;
   /** Fetch handler */
   handler: MiddlewareHandler,
-  /** Called by the static site generator on routes with route parameters in the pattern. */
-  getStaticPaths?: () => Promise<string[]> | string[];
+  /** Called by the static site generator */
+  amendStaticPaths?: (paths: string[]) => Promise<string[]> | string[];
 }
 
 export type MiddlewareHandler = (req: Request, ctx: Context) => Promise<Response> | Response;
