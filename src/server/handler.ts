@@ -29,15 +29,16 @@ async (req: Request) => {
     });
 
     if (route) {
-      const { handler, pregenerate } = route;
-      if (pregenerate && !isDev) {
+      /* TODO: only do this on server, not generate
+      if (route.pregenerate && !isDev) {
         return new Response(
           "404 Route was hit on non-localhost but exports pregenerate=true. " +
             "Did you forget to run `mastro/generator --only-pregenerate` as a build step?",
           { status: 404 },
         );
       }
-      const res = await handler(req);
+      */
+      const res = await route.handler(req);
       if (res instanceof Response) {
         if (isDev) console.info(logPrefix + route.name);
         return res;
