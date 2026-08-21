@@ -1,0 +1,11 @@
+{
+  "tasks": {
+    "start": "deno serve -A --watch=. ../../src/server/server.ts",
+    "generate": "deno run -A @mastrojs/mastro/generator",
+    "pregenerate": "deno run -A @mastrojs/mastro/generator --only-pregenerate"
+  },
+  "compilerOptions": {
+    "lib": ["dom", "deno.ns"]
+  },
+  "links": ["../../", "../../../images"]
+}
