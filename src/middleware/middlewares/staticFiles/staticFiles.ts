@@ -13,14 +13,13 @@ import type { Middleware } from "../../middleware.ts";
  * In production, we also look for files in the `generated` folder, which take precedence.
  */
 export const staticFiles: Middleware = {
-  amendStaticPaths: async (paths) => paths.concat(
-    (await findFiles(["routes/**/*", "routes/**/.*/**/*"])).filter(notRoute).map((p) => p.slice(6))
-  ),
+  getStaticPaths: () => findFiles(["routes/**/*", "routes/**/.*/**/*"])
+    .then(paths => paths.filter(notReserved).map((p) => p.slice(6))),
   handler: async (req, ctx) => await serveStaticFile(req) || ctx.fetchUpstream(req),
 }
 
 const serveStaticFile = async (req: Request): Promise<Response | undefined> => {
-  if (req.method === "GET" && notRoute(req.url)) {
+  if (req.method === "GET" && notReserved(req.url)) {
     const url = new URL(req.url);
     const path = url.pathname.endsWith("/") ? (url.pathname + "index.html") : url.pathname;
     const pregeneratedFile = isDevServer(url) ? null : await tryServeFile(req, "generated" + path);
@@ -119,7 +118,7 @@ const serveFile = async (req: Request, filePath: string): Promise<Response> => {
   return new Response(stream, { status: 200, headers });
 };
 
-const notRoute = (p: string) => !/\.server\.(ts|js)$/.test(p);
+const notReserved = (p: string) => !(p.endsWith(".client.ts") || /\.server\.(ts|js)$/.test(p));
 
 const newResponse = (status: number) => new Response(`HTTP ${status}`, { status });
 

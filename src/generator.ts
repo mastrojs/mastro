@@ -64,25 +64,22 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
 
   const handler = chainMiddlewares(middlewares);
 
-  let staticPaths: string[] = [];
-  for (const m of middlewares.toReversed()) {
-    if ("amendStaticPaths" in m && m.amendStaticPaths) {
-      staticPaths = await m.amendStaticPaths(staticPaths);
-    }
-  }
-
   let completeSuccess = true;
-  for (const path of staticPaths) {
-    // TODO: parallelize without opening too many file handles at once
-    const file = await generatePage(handler, new URL(baseUrl + path));
-    if (file === false) {
-      completeSuccess = false;
-    } else if (file) {
-      const outPath = outFolder + file.outFilePath; // call pathToFileURL here?
-      await fs.mkdir(dirname(outPath), { recursive: true });
-      const { body } = file.response;
-      if (body) {
-        await writeFile(outPath, body);
+  for (const m of middlewares) {
+    if ("getStaticPaths" in m && m.getStaticPaths) {
+      for (const path of await m.getStaticPaths()) {
+        // TODO: parallelize without opening too many file handles at once
+        const file = await generatePage(handler, new URL(baseUrl + path));
+        if (file === false) {
+          completeSuccess = false;
+        } else if (file) {
+          const outPath = outFolder + file.outFilePath; // call pathToFileURL here?
+          await fs.mkdir(dirname(outPath), { recursive: true });
+          const { body } = file.response;
+          if (body) {
+            await writeFile(outPath, body);
+          }
+        }
       }
     }
   }
