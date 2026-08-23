@@ -19,6 +19,7 @@ Deno.test("chainMiddlewares", async () => {
     new Request("http://localhost/"),
     {
       mode: "generator",
+      onlyPregenerate: false,
       fetchUpstream: () => Promise.resolve(new Response("welcome")),
     },
   );

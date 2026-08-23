@@ -111,9 +111,10 @@ const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 
 
 export const createFileRouter = (routes: Promise<Route[]> | Route[] = loadRoutes()): Middleware => ({
+  name: "fileRouter",
   getStaticPaths: async () => {
     const rs = await routes;
-    const paths = await Promise.all(rs.map(async r => {
+    const paths = await Promise.all(rs.toReversed().map(async r => {
       if (hasRouteParams(r.name)) { // replace with if (r.pattern.hasRegExpGroups) ?
         if (typeof r.getStaticPaths === "function") {
           return validateStaticPaths(r.name, await r.getStaticPaths());

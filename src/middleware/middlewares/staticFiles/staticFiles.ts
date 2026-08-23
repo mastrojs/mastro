@@ -2,10 +2,10 @@ import { Buffer } from "node:buffer";
 import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
 import { extname } from "node:path";
-import { isDevServer, staticCacheControlVal } from "../../../server/common.ts";
+import { staticCacheControlVal } from "../../../server/common.ts";
 import { contentTypeFromExt } from "./mediaTypes.ts";
 import { findFiles } from "../../../core/fs.ts";
-import type { Middleware } from "../../middleware.ts";
+import type { Context, Middleware } from "../../middleware.ts";
 
 /**
  * Serve static files in routes folder (excluding *.client.ts, *.server.ts and *.server.js files)
@@ -13,16 +13,18 @@ import type { Middleware } from "../../middleware.ts";
  * In production, we also look for files in the `generated` folder, which take precedence.
  */
 export const staticFiles: Middleware = {
+  name: "staticFiles",
   getStaticPaths: () => findFiles(["routes/**/*", "routes/**/.*/**/*"])
     .then(paths => paths.filter(notReserved).map((p) => p.slice(6))),
-  handler: async (req, ctx) => await serveStaticFile(req) || ctx.fetchUpstream(req),
+  handler: async (req, ctx) => await serveStaticFile(req, ctx) || ctx.fetchUpstream(req),
 }
 
-const serveStaticFile = async (req: Request): Promise<Response | undefined> => {
+const serveStaticFile = async (req: Request, ctx: Context): Promise<Response | undefined> => {
   if (req.method === "GET" && notReserved(req.url)) {
     const url = new URL(req.url);
     const path = url.pathname.endsWith("/") ? (url.pathname + "index.html") : url.pathname;
-    const pregeneratedFile = isDevServer(url) ? null : await tryServeFile(req, "generated" + path);
+    const isDev = ctx.mode === "server" && ctx.environment === "development";
+    const pregeneratedFile = isDev ? null : await tryServeFile(req, "generated" + path);
     const fileRes = pregeneratedFile || await tryServeFile(req, "routes" + path);
     if (fileRes) {
       return fileRes;

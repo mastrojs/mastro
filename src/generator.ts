@@ -54,9 +54,10 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   const {
     baseUrl = "http://127.0.0.1",
     outFolder = "generated",
+    onlyPregenerate = false,
     middlewares = defaultMiddlewares.concat(createFileRouter()),
   } = opts;
-  if (!opts.middlewares) {
+  if (middlewares.some(m => m.name === "fileRouter")) {
     await ensureDir(fs.stat("routes"));
   }
   await fs.rm(outFolder, { force: true, recursive: true });
@@ -69,7 +70,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     if ("getStaticPaths" in m && m.getStaticPaths) {
       for (const path of await m.getStaticPaths()) {
         // TODO: parallelize without opening too many file handles at once
-        const file = await generatePage(handler, new URL(baseUrl + path));
+        const file = await generatePage(handler, new URL(baseUrl + path), onlyPregenerate);
         if (file === false) {
           completeSuccess = false;
         } else if (file) {
@@ -83,17 +84,17 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
       }
     }
   }
-  completeSuccess
-    ? console.info(`Generated static site and wrote to ${outFolder}/ folder.`)
-    : process.exit(1);
+  if (!completeSuccess) process.exit(1);
+  const ctx = { mode: "generator" as const, onlyPregenerate };
+  await Promise.all(middlewares.map(m => "afterGenerate" in m ? m.afterGenerate?.(ctx) : null));
+  console.info(`Generated static site and wrote to ${outFolder} folder.`)
 };
 
-const generatePage = async (handler: MiddlewareHandler, url: URL) => {
+const generatePage = async (handler: MiddlewareHandler, url: URL, onlyPregenerate: boolean) => {
   const { pathname } = url;
   try {
     const req = new Request(url);
-    const response = await handler(req, { mode: "generator", fetchUpstream } );
-    // TODO: is Content-Disposition still needed?
+    const response = await handler(req, { mode: "generator", onlyPregenerate, fetchUpstream } );
     const path = parseContentDisposition(response.headers.get("Content-Disposition")) || pathname;
     if (!response.ok) {
       console.warn(`\nWARNING: skipped path ${pathname} since it returned HTTP ${response.status}:
