@@ -10,7 +10,6 @@ export type HttpMethod = (typeof httpMethods)[number];
  */
 export type Handler = (req: Request) => Promise<Response> | Response;
 
-
 /**
  * A Mastro Route
  */

@@ -14,10 +14,11 @@ import type { Context, Middleware } from "../../middleware.ts";
  */
 export const staticFiles: Middleware = {
   name: "staticFiles",
-  getStaticPaths: () => findFiles(["routes/**/*", "routes/**/.*/**/*"])
-    .then(paths => paths.filter(notReserved).map((p) => p.slice(6))),
+  getStaticPaths: () =>
+    findFiles(["routes/**/*", "routes/**/.*/**/*"])
+      .then((paths) => paths.filter(notReserved).map((p) => p.slice(6))),
   handler: async (req, ctx) => await serveStaticFile(req, ctx) || ctx.fetchUpstream(req),
-}
+};
 
 const serveStaticFile = async (req: Request, ctx: Context): Promise<Response | undefined> => {
   if (req.method === "GET" && notReserved(req.url)) {

@@ -12,8 +12,9 @@ import { tryServeFile } from "./staticFiles/staticFiles.ts";
  */
 export const tsToJs: Middleware = {
   name: "tsToJs",
-  getStaticPaths: () => findFiles("routes/**/*.client.ts")
-    .then(ps => ps.map((p) => p.slice(6, -3) + ".js")),
+  getStaticPaths: () =>
+    findFiles("routes/**/*.client.ts")
+      .then((ps) => ps.map((p) => p.slice(6, -3) + ".js")),
   handler: async (req, ctx) => {
     const { pathname } = new URL(req.url);
     if (pathname.endsWith(".client.js")) {
@@ -27,16 +28,16 @@ export const tsToJs: Middleware = {
         // @ts-expect-error no type definitions for Bun
         const { stripTypeScriptTypes } = typeof Bun === "object"
           ? await import(["npm", "ts-blank-space"].join(":"))
-              .then((m) => ({ stripTypeScriptTypes: m.default }))
+            .then((m) => ({ stripTypeScriptTypes: m.default }))
           : await import("node:module");
         const body = stripTypeScriptTypes(await res.text()).replace(importRegex, replacer);
-        return new Response(body, { headers })
+        return new Response(body, { headers });
       }
     }
     return ctx.fetchUpstream(req);
-  }
-}
+  },
+};
 
 const importRegex = /^import .*\.ts("|')(;)?$/gm;
 const replacer = (match: string, quote: string, semicolon: string) =>
-  match.slice(0, semicolon ? -5 : -4) + `.js${quote};`
+  match.slice(0, semicolon ? -5 : -4) + `.js${quote};`;

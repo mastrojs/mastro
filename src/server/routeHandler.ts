@@ -7,14 +7,12 @@ export interface RouteHandlerOpts {
   routes: Route[] | Promise<Route[]>;
 }
 
-export const routeHandler = (opts: RouteHandlerOpts): Handler =>
-async (req: Request) => {
+export const routeHandler = (opts: RouteHandlerOpts): Handler => async (req: Request) => {
   const routes = await opts.routes;
   const method = req.method.toUpperCase();
   const url = new URL(req.url);
   const logPrefix = `${req.method} ${url.pathname + url.search} => `;
   const isDev = isDevServer(url);
-
 
   try {
     let urlMatched: string | undefined;

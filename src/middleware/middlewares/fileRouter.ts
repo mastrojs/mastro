@@ -1,4 +1,3 @@
-
 import { extname } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -50,7 +49,7 @@ export const loadRoutes = async (
       return typeof handler === "function"
         ? {
           name,
-          handler: req => {
+          handler: (req) => {
             (req as any)._params = pattern.exec(req.url)?.pathname.groups;
             return handler(req);
           },
@@ -59,7 +58,7 @@ export const loadRoutes = async (
           getStaticPaths: module.getStaticPaths,
           pregenerate: module.pregenerate,
         } as Route
-        : []
+        : [];
     })
   );
 };
@@ -83,7 +82,7 @@ const compareRoutes = (a: string, b: string) => {
   if (a[7] === "[" && b[7] !== "[") return 1;
   if (b[7] === "[" && a[7] !== "[") return -1;
   return a < b ? 1 : -1;
-}
+};
 
 const toPattern = (filePath: string) => {
   const pathParts = filePath.split(sep).slice(1);
@@ -106,7 +105,7 @@ const toPattern = (filePath: string) => {
   return new URLPattern({ pathname: "/" + parts.join("/") });
 };
 
-const indexRegex = /^index(\.html)?\.server\.(ts|js)$/
+const indexRegex = /^index(\.html)?\.server\.(ts|js)$/;
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 
 export const createFileRouter = (opts?: {
@@ -117,24 +116,24 @@ export const createFileRouter = (opts?: {
   return {
     name: "fileRouter",
     getStaticPaths: async () => {
-      const pregenerate = (r: Route) => opts?.onlyPregenerate ? r.pregenerate : true;
-      const paths = await Promise.all((await routes).filter(pregenerate).toReversed().map(async r => {
+      const onlyPregenerate = (r: Route) => opts?.onlyPregenerate ? r.pregenerate : true;
+      const paths = (await routes).filter(onlyPregenerate).toReversed().map(async (r) => {
         if (hasRouteParams(r.name)) { // replace with if (r.pattern.hasRegExpGroups) ?
           if (typeof r.getStaticPaths === "function") {
             return validateStaticPaths(r.name, await r.getStaticPaths());
           } else {
-            throw Error(r.name + " should export a function named getStaticPaths, returning an array of strings.");
+            throw Error(r.name + errMsg);
           }
         } else {
           return r.pattern.pathname;
         }
-      }));
-      return paths.flat();
+      });
+      return (await Promise.all(paths)).flat();
     },
-    handler: routeHandler({ routes })
+    handler: routeHandler({ routes }),
   };
-}
-
+};
+const errMsg = " should export a function named getStaticPaths, returning an array of strings.";
 
 const validateStaticPaths = (name: string, paths: string[]) => {
   if (!Array.isArray(paths)) throw Error(name + notStringMsg);

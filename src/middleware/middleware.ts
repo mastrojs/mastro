@@ -1,4 +1,4 @@
-import { isDevServer, type Handler } from "../server/common.ts";
+import { type Handler, isDevServer } from "../server/common.ts";
 
 /**
  * Request Middleware
@@ -18,12 +18,12 @@ export type Middleware = MiddlewareHandler | {
   /** Name by which users can filter the middlewares.  */
   name: string;
   /** Fetch handler */
-  handler: MiddlewareHandler,
+  handler: MiddlewareHandler;
   /** Called by the static site generator. */
   getStaticPaths?: () => Promise<string[]> | string[];
   /** Called by the static site generator when its done. */
-  afterGenerate?: (ctx: {mode: "generator"; onlyPregenerate: boolean; }) => void;
-}
+  afterGenerate?: (ctx: { mode: "generator"; onlyPregenerate: boolean }) => void;
+};
 
 export type MiddlewareHandler = (req: Request, ctx: Context) => Promise<Response> | Response;
 
@@ -32,7 +32,7 @@ export type MiddlewareHandler = (req: Request, ctx: Context) => Promise<Response
  */
 export const createHandler = (middlewares: Middleware[]): Handler => {
   const handler = chainMiddlewares(middlewares);
-  return async req => {
+  return async (req) => {
     const isDev = isDevServer(new URL(req.url));
     const environment = isDev ? "development" : "production";
     try {
@@ -44,7 +44,7 @@ export const createHandler = (middlewares: Middleware[]): Handler => {
       );
     }
   };
-}
+};
 
 const fetchUpstream = () => new Response("Not found", { status: 404 });
 
@@ -56,7 +56,7 @@ export type Context = {
   fetchUpstream: Handler;
   mode: "server";
   environment: "development" | "production";
-}
+};
 
 export const chainMiddlewares = (middlewares: Middleware[]): MiddlewareHandler => {
   const [m, ...rest] = middlewares;
@@ -69,7 +69,8 @@ export const chainMiddlewares = (middlewares: Middleware[]): MiddlewareHandler =
     if (!(res instanceof Response)) {
       throw new Error(`Function ${handler.name || "<anonymous>"} did not return a Response object`);
     } else if (res.status >= 500) {
-      throw new Error(`Function ${handler.name || "<anonymous>"} returned HTTP ${res.status}: ${await res.text()}`);
+      throw new Error(`Function ${handler.name || "<anonymous>"} returned HTTP ${
+        res.status}: ${await res.text()}`);
     }
     // what about 404s and other non-200 responses?
     return res;

@@ -16,7 +16,7 @@ export const fingerprintAssets: Middleware = {
       assetHashes[pathname.slice("/_assets/".length)] = hashedPath;
 
       const headers = res.headers;
-      headers.set("Content-Disposition", `attachment; filename=${hashedPath}`)
+      headers.set("Content-Disposition", `attachment; filename=${hashedPath}`);
       return new Response(data, { headers, status: res.status });
     } else {
       return res;
@@ -27,7 +27,7 @@ export const fingerprintAssets: Middleware = {
       await fs.writeFile("generatedAssets.json", JSON.stringify(assetHashes, null, 2) + "\n");
     }
   },
-}
+};
 
 // during SSG all _assets/* routes should've been processed already before routes calling getAsset
 export const getAsset = (path: string) => Object.freeze(assetHashes)[path];

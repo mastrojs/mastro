@@ -6,14 +6,16 @@ Deno.bench({
   name: "generate only one page",
   async fn() {
     const middlewares = [
-      createFileRouter({ routes: [
-        {
-          name: "home",
-          method: "GET" as const,
-          pattern: new URLPattern({ pathname: "/" }),
-          handler: SyncPage,
-        },
-      ]}),
+      createFileRouter({
+        routes: [
+          {
+            name: "home",
+            method: "GET" as const,
+            pattern: new URLPattern({ pathname: "/" }),
+            handler: SyncPage,
+          },
+        ],
+      }),
     ];
     const outFolder = await Deno.makeTempDir();
     await generate({ outFolder, middlewares });
@@ -28,21 +30,23 @@ Deno.bench({
   name: "generate a blog",
   async fn() {
     const middlewares = [
-      createFileRouter({ routes: [
-        {
-          name: "home",
-          method: "GET" as const,
-          pattern: new URLPattern({ pathname: "/" }),
-          handler: SyncPage,
-        },
-        {
-          name: "blog",
-          method: "GET" as const,
-          pattern: new URLPattern({ pathname: "/blog/:slug/" }),
-          handler: SyncPage,
-          getStaticPaths: () => paths,
-        },
-      ]}),
+      createFileRouter({
+        routes: [
+          {
+            name: "home",
+            method: "GET" as const,
+            pattern: new URLPattern({ pathname: "/" }),
+            handler: SyncPage,
+          },
+          {
+            name: "blog",
+            method: "GET" as const,
+            pattern: new URLPattern({ pathname: "/blog/:slug/" }),
+            handler: SyncPage,
+            getStaticPaths: () => paths,
+          },
+        ],
+      }),
     ];
     const outFolder = await Deno.makeTempDir();
     await generate({ outFolder, middlewares });

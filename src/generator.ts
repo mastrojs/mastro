@@ -9,7 +9,7 @@ import type { Stats } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { chainMiddlewares } from "./middleware/middleware.ts";
-import type { MiddlewareHandler, Middleware } from "./middleware/middleware.ts";
+import type { Middleware, MiddlewareHandler } from "./middleware/middleware.ts";
 import { defaultMiddlewares } from "./middleware/defaultMiddlewares.ts";
 import { createFileRouter } from "./middleware/middlewares/fileRouter.ts";
 
@@ -57,7 +57,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     onlyPregenerate = false,
     middlewares = defaultMiddlewares.concat(createFileRouter({ onlyPregenerate })),
   } = opts;
-  if (middlewares.some(m => m.name === "fileRouter")) {
+  if (middlewares.some((m) => m.name === "fileRouter")) {
     await ensureDir(fs.stat("routes"));
   }
   await fs.rm(outFolder, { force: true, recursive: true });
@@ -86,15 +86,15 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
   }
   if (!completeSuccess) process.exit(1);
   const ctx = { mode: "generator" as const, onlyPregenerate };
-  await Promise.all(middlewares.map(m => "afterGenerate" in m ? m.afterGenerate?.(ctx) : null));
-  console.info(`Generated static site and wrote to ${outFolder} folder.`)
+  await Promise.all(middlewares.map((m) => "afterGenerate" in m ? m.afterGenerate?.(ctx) : null));
+  console.info(`Generated static site and wrote to ${outFolder} folder.`);
 };
 
 const generatePage = async (handler: MiddlewareHandler, url: URL, onlyPregenerate: boolean) => {
   const { pathname } = url;
   try {
     const req = new Request(url);
-    const response = await handler(req, { mode: "generator", onlyPregenerate, fetchUpstream } );
+    const response = await handler(req, { mode: "generator", onlyPregenerate, fetchUpstream });
     const path = parseContentDisposition(response.headers.get("Content-Disposition")) || pathname;
     if (!response.ok) {
       console.warn(`\nWARNING: skipped path ${pathname} since it returned HTTP ${response.status}:
