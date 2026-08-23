@@ -1,7 +1,7 @@
 import type { GenerateOpts } from "../generator.ts";
 import { createHandler, type Middleware } from "../middleware/middleware.ts";
 import type { Handler, HttpMethod, Route } from "../server/common.ts";
-import { routesToHandler } from "./handler.ts";
+import { routeHandler } from "./routeHandler.ts";
 
 /**
  * Either a plain `Handler` function, or an object with a `handler` and other fields.
@@ -83,7 +83,7 @@ export class Mastro {
 
   private async getMiddlewares(): Promise<Middleware[]> {
     if (!this.middlewares) this.addMiddlewares();
-    return (await this.middlewares || []).concat(routesToHandler({ routes: this.routes }));
+    return (await this.middlewares || []).concat(routeHandler({ routes: this.routes }));
   }
 }
 

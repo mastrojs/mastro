@@ -1,13 +1,13 @@
 import { type Handler, isDevServer, type Route } from "./common.ts";
 
 /**
- * Options for `routesToHandler`
+ * Options for `routeHandler`
  */
-export interface RoutesToHandlerOpts {
+export interface RouteHandlerOpts {
   routes: Route[] | Promise<Route[]>;
 }
 
-export const routesToHandler = (opts: RoutesToHandlerOpts): Handler =>
+export const routeHandler = (opts: RouteHandlerOpts): Handler =>
 async (req: Request) => {
   const routes = await opts.routes;
   const method = req.method.toUpperCase();

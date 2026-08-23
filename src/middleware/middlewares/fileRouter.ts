@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 import { findFiles, sep } from "../../core/fs.ts";
 import type { Middleware } from "../middleware.ts";
 import { httpMethods, type Route } from "../../server/common.ts";
-import { routesToHandler } from "../../server/handler.ts";
+import { routeHandler } from "../../server/routeHandler.ts";
 
 /**
  * Loads and returns file-based routes – either with the provided `loader`, or falling back to
@@ -127,7 +127,7 @@ export const createFileRouter = (routes: Promise<Route[]> | Route[] = loadRoutes
     }));
     return paths.flat();
   },
-  handler: routesToHandler({ routes })
+  handler: routeHandler({ routes })
 });
 
 
