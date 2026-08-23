@@ -55,7 +55,7 @@ export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
     baseUrl = "http://127.0.0.1",
     outFolder = "generated",
     onlyPregenerate = false,
-    middlewares = defaultMiddlewares.concat(createFileRouter()),
+    middlewares = defaultMiddlewares.concat(createFileRouter({ onlyPregenerate })),
   } = opts;
   if (middlewares.some(m => m.name === "fileRouter")) {
     await ensureDir(fs.stat("routes"));

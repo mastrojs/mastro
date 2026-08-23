@@ -109,26 +109,31 @@ const toPattern = (filePath: string) => {
 const indexRegex = /^index(\.html)?\.server\.(ts|js)$/
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
 
-
-export const createFileRouter = (routes: Promise<Route[]> | Route[] = loadRoutes()): Middleware => ({
-  name: "fileRouter",
-  getStaticPaths: async () => {
-    const rs = await routes;
-    const paths = await Promise.all(rs.toReversed().map(async r => {
-      if (hasRouteParams(r.name)) { // replace with if (r.pattern.hasRegExpGroups) ?
-        if (typeof r.getStaticPaths === "function") {
-          return validateStaticPaths(r.name, await r.getStaticPaths());
+export const createFileRouter = (opts?: {
+  routes?: Promise<Route[]> | Route[];
+  onlyPregenerate?: boolean;
+}): Middleware => {
+  const routes = opts?.routes || loadRoutes();
+  return {
+    name: "fileRouter",
+    getStaticPaths: async () => {
+      const pregenerate = (r: Route) => opts?.onlyPregenerate ? r.pregenerate : true;
+      const paths = await Promise.all((await routes).filter(pregenerate).toReversed().map(async r => {
+        if (hasRouteParams(r.name)) { // replace with if (r.pattern.hasRegExpGroups) ?
+          if (typeof r.getStaticPaths === "function") {
+            return validateStaticPaths(r.name, await r.getStaticPaths());
+          } else {
+            throw Error(r.name + " should export a function named getStaticPaths, returning an array of strings.");
+          }
         } else {
-          throw Error(r.name + " should export a function named getStaticPaths, returning an array of strings.");
+          return r.pattern.pathname;
         }
-      } else {
-        return r.pattern.pathname;
-      }
-    }));
-    return paths.flat();
-  },
-  handler: routeHandler({ routes })
-});
+      }));
+      return paths.flat();
+    },
+    handler: routeHandler({ routes })
+  };
+}
 
 
 const validateStaticPaths = (name: string, paths: string[]) => {

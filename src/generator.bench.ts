@@ -6,14 +6,14 @@ Deno.bench({
   name: "generate only one page",
   async fn() {
     const middlewares = [
-      createFileRouter([
+      createFileRouter({ routes: [
         {
           name: "home",
           method: "GET" as const,
           pattern: new URLPattern({ pathname: "/" }),
           handler: SyncPage,
         },
-      ]),
+      ]}),
     ];
     const outFolder = await Deno.makeTempDir();
     await generate({ outFolder, middlewares });
@@ -28,7 +28,7 @@ Deno.bench({
   name: "generate a blog",
   async fn() {
     const middlewares = [
-      createFileRouter([
+      createFileRouter({ routes: [
         {
           name: "home",
           method: "GET" as const,
@@ -42,7 +42,7 @@ Deno.bench({
           handler: SyncPage,
           getStaticPaths: () => paths,
         },
-      ]),
+      ]}),
     ];
     const outFolder = await Deno.makeTempDir();
     await generate({ outFolder, middlewares });
