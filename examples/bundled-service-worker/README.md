@@ -1,6 +1,6 @@
 # Service Worker, bundled with esbuild
 
-This example demonstrates how [Mastro](https://mastrojs.github.io) can be used to run on the client, inside a [Service Worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers). We bundle all client-side JavaScript for the Service Worker with [esbuild](https://esbuild.github.io/).
+This example demonstrates how [Mastro](https://mastrojs.github.io) can be used to run on the client, inside a [Service Worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers). We bundle all client-side JavaScript for the Service Worker with [esbuild](https://esbuild.github.io/), because [browser support for ESM Service Workers](https://caniuse.com/mdn-api_serviceworker_ecmascript_modules) was not great when we built this.
 
 
 ## Get started
@@ -11,7 +11,7 @@ The project structure:
 - [server.ts](server.ts) and [handlers/](handlers/) contains the code that runs on the server (or during static site generation). For example in [handlers/SW.ts](handlers/SW.ts), we call `esbuild` to bundle the code in the [sw/](sw/) folder.
 - [sw/](sw/) in turns contains the code that runs on the client inside the Service Worker.
 
-Both on the [server](server.ts) and on the [client](sw/sw.ts), we're using one instance each of the [Mastro programmatic router](https://mastrojs.github.io/docs/routing/#programmatic-router). (For the server, we could have used the default client-side router as well, but that doesn't run in Workers.)
+Both on the [server](server.ts) and on the [client](sw/sw.ts), we're using one instance each of the [Mastro programmatic router](https://mastrojs.github.io/docs/routing/#programmatic-router). (For the server, we could have used the default client-side router as well, but that doesn't run in Workers because they don't allow dynamic imports.)
 
 We're also sharing the same `package.json` file for both server and client and rely on eslint's tree-shaking to only include the dependencies used in the client bundle. However, tree-shaking behaviour can be surprising (primarily because imports in JavaScript can have side-effects and therefore can not always be automatically removed when they're not needed). You could also add a separate `sw/package.json` file and manage the client as a separate project for more control 
 
