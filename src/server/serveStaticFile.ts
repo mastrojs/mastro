@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
-import { extname } from "node:path";
+import { extname, posix } from "node:path";
 import { staticCacheControlVal } from "../routers/common.ts";
 import { tsToJs } from "../tsToJs.ts";
 import { contentTypeFromExt } from "./mediaTypes.ts";
@@ -17,7 +17,12 @@ export const serveStaticFile = async (
   req: Request,
   isDev: boolean,
 ): Promise<Response | undefined> => {
-  const { pathname } = new URL(req.url);
+  let pathname;
+  try {
+    pathname = posix.normalize(decodeURIComponent(new URL(req.url).pathname));
+  } catch {
+    return newResponse(400);
+  }
 
   const staticPath = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
   const pregeneratedFile = isDev ? undefined : await tryServeFile(req, "generated" + staticPath);

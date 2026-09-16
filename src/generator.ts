@@ -6,7 +6,7 @@
  */
 
 import type { Stats } from "node:fs";
-import { extname } from "node:path";
+import { extname, posix } from "node:path";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import { findFiles, sep } from "./core/fs.ts";
@@ -159,13 +159,13 @@ export const generatePagesForRoute = async (
 };
 
 const generatePage = async (route: Route, url: URL) => {
-  const { pathname } = url;
   try {
     const req = new Request(url);
     (req as any)._params = route.pattern.exec(url)?.pathname.groups;
     const response = await route.handler(req);
     if (response instanceof Response) {
-      const outFilePath = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
+      const filePath = posix.normalize(decodeURIComponent(url.pathname));
+      const outFilePath = filePath.endsWith("/") ? `${filePath}index.html` : filePath;
       if (response.ok) {
         if (!extname(outFilePath) && !outFilePath.startsWith("/.well-known/")) {
           console.warn(`\nWARNING: ${route.name} generated file ${outFilePath} without file extension.
@@ -179,7 +179,7 @@ const generatePage = async (route: Route, url: URL) => {
       console.warn(route.name + ": GET must return a Response object");
     }
   } catch (e) {
-    console.error(`\nFailed to generate path ${pathname} on route ${route.name}\n `, e);
+    console.error(`\nFailed to generate path ${url.pathname} on route ${route.name}\n `, e);
     return false;
   }
 };
