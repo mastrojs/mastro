@@ -21,6 +21,19 @@ async (
   const url = new URL(req.url);
   const logPrefix = `${req.method} ${url.pathname + url.search} => `;
   const isDev = isDevServer(url);
+  
+  // Treat a request for `/foo/index.html` the same as `/foo/` so that a
+  // `routes/foo/index.server.ts` route (and the generated `foo/index.html`
+  // file) is served. This makes the dev server behave like a static host, where
+  // both URLs resolve to the same file.
+  let request = req;
+  if (url.pathname.endsWith("/index.html")) {
+    const normalized = new URL(url);
+    normalized.pathname = normalized.pathname.slice(0, -"index.html".length);
+    request = new Request(normalized, req);
+    url.pathname = normalized.pathname;
+  }
+  
   const setCacheHeaders = (res: Response) => {
     if (!isDev && url.pathname.startsWith("/_assets/") && method === "GET") {
       res.headers.set("Cache-Control", "public, max-age=31556952, immutable");
@@ -34,7 +47,7 @@ async (
       const modPath2 = `./serveStaticFile.js`;
       // when there's a package.json present (as in the cloudflare template), Deno also needs .js
       const mod = await import(modPath1).catch(() => import(modPath2));
-      const fileRes = await mod.serveStaticFile(req, isDev);
+      const fileRes = await mod.serveStaticFile(request, isDev);
       if (fileRes) {
         setCacheHeaders(fileRes);
         return fileRes;
@@ -43,7 +56,7 @@ async (
 
     let urlMatched: string | undefined;
     const route = routes.find((r) => {
-      const match = r.pattern.exec(req.url);
+      const match = r.pattern.exec(request.url);
       if (match) {
         urlMatched = r.name;
         if ((r.method === method || r.method === "all") && typeof r.handler === "function") {
@@ -62,7 +75,7 @@ async (
           { status: 404 },
         );
       }
-      const res = await handler(req, env as any, ctx as any);
+      const res = await handler(request, env as any, ctx as any);
       if (res instanceof Response) {
         if (isDev) console.info(logPrefix + route.name);
         setCacheHeaders(res);
