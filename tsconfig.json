@@ -1,0 +1,22 @@
+{
+  "include": ["src"],
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "target": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
+    "strict": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "rewriteRelativeImportExtensions": true,
+    "isolatedDeclarations": true,
+    "declaration": true,
+    "declarationMap": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true
+  }
+}

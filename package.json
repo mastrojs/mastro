@@ -1,0 +1,52 @@
+{
+  "name": "@mastrojs/mastro",
+  "version": "0.9.0",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepack": "tsc"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./generator": {
+      "types": "./dist/generator.d.ts",
+      "default": "./dist/generator.js"
+    }
+  },
+  "type": "module",
+  "files": [
+    "README.md",
+    "dist",
+    "src"
+  ],
+  "description": "No dependencies,  no build step. Just a simple web framework and site generator.",
+  "homepage": "https://mastrojs.github.io",
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26",
+    "typescript": "^7"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.x",
+      "onFail": "download"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "26.x",
+      "onFail": "download"
+    }
+  }
+}
