@@ -6,17 +6,24 @@
     "prepack": "tsc"
   },
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./server": {
-      "types": "./dist/server.d.ts",
-      "default": "./dist/server.js"
-    },
-    "./generator": {
-      "types": "./dist/generator.d.ts",
-      "default": "./dist/generator.js"
+    ".": "./src/core/index.ts",
+    "./server": "./src/server.ts",
+    "./generator": "./src/generator.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/core/index.d.ts",
+        "default": "./dist/core/index.js"
+      },
+      "./server": {
+        "types": "./dist/server.d.ts",
+        "default": "./dist/server.js"
+      },
+      "./generator": {
+        "types": "./dist/generator.d.ts",
+        "default": "./dist/generator.js"
+      }
     }
   },
   "type": "module",

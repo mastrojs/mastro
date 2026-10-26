@@ -1,3 +1,4 @@
 .DS_Store
 generated
 node_modules/
+dist/
