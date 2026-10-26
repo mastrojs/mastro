@@ -1,0 +1,7 @@
+packages:
+  - "examples/*"
+allowBuilds:
+  esbuild: set this to true or false
+  workerd: set this to true or false
+linkWorkspacePackages: true
+preferWorkspacePackages: true
