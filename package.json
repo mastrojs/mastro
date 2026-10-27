@@ -5,6 +5,9 @@
     "check": "tsc --noEmit",
     "prepack": "tsc"
   },
+  "bin": {
+    "mastro": "./src/generator.ts"
+  },
   "exports": {
     ".": "./src/core/index.ts",
     "./server": "./src/server.ts",

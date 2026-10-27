@@ -1,4 +1,4 @@
-import type { Handler } from "./mastro.ts";
+import type { Handler } from "./core/mastro.ts";
 
 /**
  * Request Middleware

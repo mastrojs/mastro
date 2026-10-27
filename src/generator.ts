@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * This module contains all functions related to static site generation.
  * It is used both by the [vscode-extension](../vscode-extension/) and
@@ -5,10 +6,13 @@
  * @module
  */
 
-import type { Stats } from "node:fs";
+import { type Stats, statSync } from "node:fs";
+import fs from "node:fs/promises";
+import type { ParseArgsOptionDescriptor } from "node:util";
 
-import type { Mastro } from "./mastro.ts";
+import type { Mastro } from "./core/mastro.ts";
 import type { MiddlewareHandler } from "./middleware.ts";
+import { createFileRouterApp, defaultMiddlewares } from "./server.ts";
 
 /**
  * Config options for `generate`
@@ -49,6 +53,11 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<vo
     outFolder = "generated",
     onlyPregenerate = false,
   } = opts;
+  if (!app.middlewares) {
+    // when we got passed an app for Cloudflare Workers or similar, add static files etc.
+    console.info('Adding defaultMiddlewares from "@mastrojs/mastro/server"\n');
+    app.middlewares = defaultMiddlewares;
+  }
   const { middlewares } = app;
   if (middlewares.some((m) => m.name === "fileRouter")) {
     await ensureDir(fs.stat("routes"));
@@ -128,3 +137,56 @@ const ensureDir = async (statsP: Promise<Stats>) => {
     process.exit(1);
   }
 };
+
+if (typeof document === "undefined" && import.meta.main) {
+  const { resolve } = await import("node:path");
+  const { pathToFileURL } = await import("node:url");
+  const { parseArgs } = await import("node:util");
+
+  const options: { [opt: string]: ParseArgsOptionDescriptor & { description: string } } = {
+    help: {
+      description: "Print this page",
+      type: "boolean",
+      short: "h",
+    },
+    "base-url": {
+      description: "Base URL for the synthetic requests, defaults to http://127.0.0.1",
+      type: "string",
+    },
+    output: {
+      description: "Name of output folder that will be created, defaults to `generated`",
+      type: "string",
+    },
+    "only-pregenerate": {
+      description: "Only pregenerate routes with `export const pregenerate = true`",
+      type: "boolean",
+    },
+  };
+  try {
+    const { values, positionals } = parseArgs({ options, allowPositionals: true });
+    if (values.help || positionals[0] !== "generate") {
+      const keys = Object.keys(options);
+      const maxKeyLen = Math.max(...keys.map((k) => k.length));
+      const opts = keys.map((key) => ` --${key.padEnd(maxKeyLen)}  ${options[key]?.description}`);
+      console.info("Usage: mastro generate [options]\n\n" + opts.join("\n"));
+    } else {
+      const exists = (entry: string) => {
+        const path = pathToFileURL(resolve(entry));
+        return statSync(path, { throwIfNoEntry: false })?.isFile() ? path.href : undefined;
+      }
+      const appPath = exists("index.ts") || exists("index.js");
+      if (!appPath) {
+        console.info("Using file-based router.");
+      }
+      const app = appPath ? await import(appPath).then(m => m.app as Mastro) : createFileRouterApp();
+      await generate(app, {
+        baseUrl: values["base-url"] as string | undefined,
+        outFolder: values.output as string | undefined,
+        onlyPregenerate: !!values["only-pregenerate"],
+      });
+    }
+  } catch (e: any) {
+    console.error(`\n${e.message || e}`);
+    process.exit(1);
+  }
+}

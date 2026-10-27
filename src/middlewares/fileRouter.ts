@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 
 import { findFiles, sep } from "../core/fs.ts";
 import type { Middleware } from "../middleware.ts";
-import { httpMethods, routeHandler, type Route } from "../mastro.ts";
+import { httpMethods, routeHandler, type Route } from "../core/mastro.ts";
 
 export const createFileRouter = (opts?: {
   routes?: Promise<Route[]> | Route[];

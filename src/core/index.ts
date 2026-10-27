@@ -8,4 +8,5 @@
 
 export * from "./fs.ts";
 export * from "./html.ts";
+export * from "./mastro.ts";
 export * from "./responses.ts";
