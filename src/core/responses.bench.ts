@@ -1,11 +1,18 @@
+import assert from "node:assert/strict";
+import { bench } from "node:bench";
 import "node:process";
-import { assertEquals } from "jsr:@std/assert";
 import { type Html, html } from "./html.ts";
 import { htmlToResponse, sseResponse } from "./responses.ts";
 
+const OPS_PER_SAMPLE = 100;
+export const runBench = (name: string, fn: () => Promise<void>): ReturnType<bench> =>
+  bench(name, async (b) => {
+    b.start();
+    for (let i = 0; i < OPS_PER_SAMPLE; i++) await fn();
+    b.end(OPS_PER_SAMPLE);
+  });
+
 /**
- * Howto run: https://docs.deno.com/runtime/reference/cli/bench/
- *
  * Setup a few relatively realistic components and benchmark them.
  */
 
@@ -48,7 +55,7 @@ async function* widgetsIterable() {
   }
 }
 
-export const SyncPage = () =>
+export const SyncPage = (): Response =>
   htmlToResponse(
     Layout({
       children: html`
@@ -65,11 +72,11 @@ export const SyncPage = () =>
     }),
   );
 
-Deno.bench({
-  name: "Sync htmlToResponse",
-  async fn() {
+runBench(
+  "Sync htmlToResponse",
+  async () => {
     const res = SyncPage();
-    assertEquals(await res.text(), [
+    assert.deepEqual(await res.text(), [
       '',
       '    <!DOCTYPE html>',
       '    <html lang="en">',
@@ -105,11 +112,11 @@ Deno.bench({
       '  ',
     ].join("\n"));
   },
-});
+);
 
-Deno.bench({
-  name: "htmlToResponse with Promises and AsyncIterables",
-  async fn() {
+runBench(
+  "htmlToResponse with Promises and AsyncIterables",
+  async () => {
     const res = htmlToResponse(
       Layout({
         children: html`
@@ -121,7 +128,7 @@ Deno.bench({
         title,
       }),
     );
-    assertEquals(await res.text(), [
+    assert.deepEqual(await res.text(), [
       '',
       '    <!DOCTYPE html>',
       '    <html lang="en">',
@@ -146,12 +153,12 @@ Deno.bench({
       '    </html>',
       '  ',
     ].join("\n"));
-  },
-});
+  }
+);
 
-Deno.bench({
-  name: "sseResponse",
-  async fn() {
+runBench(
+  "sseResponse",
+  async () => {
     const length = 20;
     async function* generator() {
       let i = 0;
@@ -162,6 +169,6 @@ Deno.bench({
     }
     const res = sseResponse(generator());
     const arr = Array.from({ length }, (_, i) => `data: {"i":${i}}`);
-    assertEquals(await res.text(), arr.join("\n\n") + "\n\n");
+    assert.deepEqual(await res.text(), arr.join("\n\n") + "\n\n");
   },
-});
+);

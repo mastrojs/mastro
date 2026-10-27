@@ -1,4 +1,5 @@
-import { assertEquals } from "jsr:@std/assert";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 
 (globalThis.document as any) = {
   fs: {
@@ -21,12 +22,12 @@ import { assertEquals } from "jsr:@std/assert";
   },
 };
 
-Deno.test("fileRouter: route precedence order", async () => {
+test("fileRouter: route precedence order", async () => {
   // load router.ts only after `document.fs` has been patched.
   const { loadRoutes } = await import("./fileRouter.ts");
   const routes = await loadRoutes(undefined, () => Promise.resolve({ GET: () => {} }));
 
-  assertEquals(routes.map((r) => r.name), [
+  assert.deepEqual(routes.map((r) => r.name), [
     "routes/index.server.ts",
     "routes/blog/override.server.ts",
     "routes/blog/index.server.ts",

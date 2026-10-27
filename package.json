@@ -3,7 +3,9 @@
   "version": "0.9.0",
   "scripts": {
     "check": "tsc --noEmit",
-    "prepack": "tsc"
+    "prepack": "tsc",
+    "test": "node --test",
+    "bench": "node --experimental-bench --bench 'src/**/*.bench.ts'"
   },
   "bin": {
     "mastro": "./src/generator.ts"

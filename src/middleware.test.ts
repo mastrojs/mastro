@@ -1,7 +1,8 @@
-import { assertEquals } from "jsr:@std/assert";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { chainMiddlewares } from "./middleware.ts";
 
-Deno.test("chainMiddlewares", async () => {
+test("chainMiddlewares", async () => {
   const handler = chainMiddlewares([
     (req, ctx) => {
       req.headers.set("X-USER", "test user");
@@ -24,6 +25,6 @@ Deno.test("chainMiddlewares", async () => {
     },
   );
 
-  assertEquals(await res.text(), "Hi test user, welcome");
-  assertEquals(res.headers.get("Content-Disposition"), 'attachment; filename="file name.jpg"');
+  assert.deepEqual(await res.text(), "Hi test user, welcome");
+  assert.deepEqual(res.headers.get("Content-Disposition"), 'attachment; filename="file name.jpg"');
 });

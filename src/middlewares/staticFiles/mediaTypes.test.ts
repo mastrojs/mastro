@@ -1,17 +1,18 @@
-import { assertEquals } from "jsr:@std/assert";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { contentTypeFromExt } from "./mediaTypes.ts";
 
-Deno.test("contentTypeFromExt", () => {
-  assertEquals(contentTypeFromExt("json"), "application/json; charset=UTF-8");
-  assertEquals(contentTypeFromExt("html"), "text/html; charset=UTF-8");
-  assertEquals(contentTypeFromExt("css"), "text/css; charset=UTF-8");
-  assertEquals(contentTypeFromExt("js"), "text/javascript; charset=UTF-8");
-  assertEquals(contentTypeFromExt("txt"), "text/plain; charset=UTF-8");
-  assertEquals(contentTypeFromExt("xml"), "application/xml");
-  assertEquals(contentTypeFromExt("atom"), "application/atom+xml");
-  assertEquals(contentTypeFromExt("exe"), "application/x-msdos-program");
-  assertEquals(contentTypeFromExt("mp4"), "video/mp4");
-  assertEquals(contentTypeFromExt("foo"), undefined);
-  assertEquals(contentTypeFromExt("file.json"), undefined);
-  assertEquals(contentTypeFromExt(""), undefined);
+test("contentTypeFromExt", () => {
+  assert.deepEqual(contentTypeFromExt("json"), "application/json; charset=UTF-8");
+  assert.deepEqual(contentTypeFromExt("html"), "text/html; charset=UTF-8");
+  assert.deepEqual(contentTypeFromExt("css"), "text/css; charset=UTF-8");
+  assert.deepEqual(contentTypeFromExt("js"), "text/javascript; charset=UTF-8");
+  assert.deepEqual(contentTypeFromExt("txt"), "text/plain; charset=UTF-8");
+  assert.deepEqual(contentTypeFromExt("xml"), "application/xml");
+  assert.deepEqual(contentTypeFromExt("atom"), "application/atom+xml");
+  assert.deepEqual(contentTypeFromExt("exe"), "application/x-msdos-program");
+  assert.deepEqual(contentTypeFromExt("mp4"), "video/mp4");
+  assert.deepEqual(contentTypeFromExt("foo"), undefined);
+  assert.deepEqual(contentTypeFromExt("file.json"), undefined);
+  assert.deepEqual(contentTypeFromExt(""), undefined);
 });
