@@ -1,8 +1,8 @@
-import { assertEquals } from "jsr:@std/assert";
-import type { HttpMethod } from "./common.ts";
-import { Mastro } from "./programmaticRouter.ts";
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { Mastro, type HttpMethod } from "./mastro.ts";
 
-Deno.test("programmaticRouter", async () => {
+test("programmaticRouter", async () => {
   const handler = new Mastro()
     .get("/", () => new Response("root"))
     .post("/foo", () => new Response("posted"))
@@ -20,18 +20,18 @@ Deno.test("programmaticRouter", async () => {
     return res.ok ? text : { status: res.status };
   };
 
-  assertEquals(await access("/"), "root");
-  assertEquals(await access("/foo"), { status: 405 });
-  assertEquals(await access("/bar"), { status: 404 });
-  assertEquals(await access("/blog/mypost/"), "blog detail");
-  assertEquals(await access("/test/"), "GET handler");
-  assertEquals(await access("/users"), "got users");
-  assertEquals(await access("/users", "POST"), "posted users");
-  assertEquals(await access("/all"), "All");
-  assertEquals(await access("/all", "POST"), "All");
+  assert.deepEqual(await access("/"), "root");
+  assert.deepEqual(await access("/foo"), { status: 405 });
+  assert.deepEqual(await access("/bar"), { status: 404 });
+  assert.deepEqual(await access("/blog/mypost/"), "blog detail");
+  assert.deepEqual(await access("/test/"), "GET handler");
+  assert.deepEqual(await access("/users"), "got users");
+  assert.deepEqual(await access("/users", "POST"), "posted users");
+  assert.deepEqual(await access("/all"), "All");
+  assert.deepEqual(await access("/all", "POST"), "All");
 
   const middlewareHandler = new Mastro()
-    .setMiddlewares(
+    .addMiddlewares(
       async (req, ctx) => {
         const response = await ctx.fetchUpstream(req);
         return new Response(`${await response.text()} first`);
@@ -44,7 +44,7 @@ Deno.test("programmaticRouter", async () => {
     .get("/", () => new Response("root"))
     .createHandler();
 
-  assertEquals(
+  assert.deepEqual(
     await (await middlewareHandler(new Request("http://localhost/"))).text(),
     "root second first",
   );

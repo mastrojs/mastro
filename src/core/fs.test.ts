@@ -1,25 +1,28 @@
-import { assertEquals, assertRejects } from "jsr:@std/assert";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { findFiles, readJsonFiles } from "./fs.ts";
 
-Deno.test("findFiles", async () => {
-  assertEquals(await findFiles("*"), [
+test("findFiles", async () => {
+  assert.deepEqual(await findFiles("*"), [
     "LICENSE",
     "README.md",
-    "deno.json",
-    "deno.lock",
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "tsconfig.json",
   ]);
 
-  assertEquals(await findFiles("/etc/*"), []);
+  assert.deepEqual(await findFiles("/etc/*"), []);
 
-  assertRejects(() => findFiles("../*"));
+  assert.rejects(() => findFiles("../*"));
 
-  assertRejects(() => findFiles("foo/../../bar/*"));
+  assert.rejects(() => findFiles("foo/../../bar/*"));
 });
 
-Deno.test("readJsonFiles", async () => {
+test("readJsonFiles", async () => {
   const arr = await readJsonFiles<{ name: string }>("*.json");
-  assertEquals(arr.length, 1);
-  assertEquals(arr[0].path, "deno.json");
-  assertEquals(arr[0].slug, "deno");
-  assertEquals(arr[0].data.name, "@mastrojs/mastro");
+  assert.deepEqual(arr.length, 2);
+  assert.deepEqual(arr[0]?.path, "package.json");
+  assert.deepEqual(arr[0]?.slug, "package");
+  assert.deepEqual(arr[0]?.data.name, "@mastrojs/mastro");
 });

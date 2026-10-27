@@ -1,54 +1,33 @@
-import { SyncPage } from "./core/responses.bench.ts";
+import { mkdtemp } from "fs/promises";
+import { runBench, SyncPage as handler } from "./core/responses.bench.ts";
 import { generate } from "./generator.ts";
-import { createFileRouter } from "./middleware/middlewares/fileRouter.ts";
+import { join } from "path";
+import { tmpdir } from "os";
+import { Mastro } from "./core/mastro.ts";
 
-Deno.bench({
-  name: "generate only one page",
-  async fn() {
-    const middlewares = [
-      createFileRouter({
-        routes: [
-          {
-            name: "home",
-            method: "GET" as const,
-            pattern: new URLPattern({ pathname: "/" }),
-            handler: SyncPage,
-          },
-        ],
-      }),
-    ];
-    const outFolder = await Deno.makeTempDir();
-    await generate({ outFolder, middlewares });
+runBench(
+  "generate only one page",
+  async () => {
+    const app = new Mastro()
+      .get("/", handler);
+    const outFolder = await makeTempDir();
+    await generate(app, { outFolder });
 
     // curiously, this speeds things up tremendously. must be a benchmarking artefact
     await new Promise((resolve) => setTimeout(resolve, 0));
   },
-});
+);
 
 const paths = Array.from(Array(1000).keys().map((n) => `/blog/${n}/`));
-Deno.bench({
-  name: "generate a blog",
-  async fn() {
-    const middlewares = [
-      createFileRouter({
-        routes: [
-          {
-            name: "home",
-            method: "GET" as const,
-            pattern: new URLPattern({ pathname: "/" }),
-            handler: SyncPage,
-          },
-          {
-            name: "blog",
-            method: "GET" as const,
-            pattern: new URLPattern({ pathname: "/blog/:slug/" }),
-            handler: SyncPage,
-            getStaticPaths: () => paths,
-          },
-        ],
-      }),
-    ];
-    const outFolder = await Deno.makeTempDir();
-    await generate({ outFolder, middlewares });
+runBench(
+  "generate a blog",
+  async () => {
+    const app = new Mastro()
+      .get("/", handler)
+      .get("/blog/:slug/", { handler, getStaticPaths: () => paths });
+    const outFolder = await makeTempDir();
+    await generate(app, { outFolder });
   },
-});
+);
+
+const makeTempDir = () => mkdtemp(join(tmpdir(), "mastro-bench-"));
