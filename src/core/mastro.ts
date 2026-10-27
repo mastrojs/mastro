@@ -1,4 +1,4 @@
-import { chainMiddlewares, type Middleware } from "./middleware.ts";
+import { chainMiddlewares, type Middleware } from "../middleware.ts";
 
 /** Supported HTTP methods */
 export const httpMethods = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"] as const;
@@ -46,8 +46,14 @@ export type RouteOpts = Handler | {
  * Class to construct an app instance.
  */
 export class Mastro {
-  public middlewares: Middleware[] = [];
+  public middlewares: Middleware[] | undefined;
   private routes: Route[] = [];
+
+  /** Add new middlewares before existing ones */
+  addMiddlewares(...middlewares: Middleware[]): this {
+    this.middlewares = middlewares.concat(this.middlewares || []);
+    return this;
+  }
 
   /** Add route */
   addRoute(method: "all" | HttpMethod, pathname: string, opts: RouteOpts): this {
@@ -88,8 +94,8 @@ export class Mastro {
   /** Create fetch handler */
   createHandler(): Handler {
     const middlewares = this.routes.length > 0
-      ? this.middlewares.concat(routeHandler(this.routes))
-      : this.middlewares;
+      ? (this.middlewares || []).concat(routeHandler(this.routes))
+      : (this.middlewares || []);
     const handler = chainMiddlewares(middlewares);
     return async (req) => {
       const isDev = isDevServer(new URL(req.url));
@@ -103,12 +109,6 @@ export class Mastro {
         );
       }
     };
-  }
-
-  /** Add new middlewares before existing ones */
-  addMiddlewares(...middlewares: Middleware[]): this {
-    this.middlewares.unshift(...middlewares);
-    return this;
   }
 }
 
