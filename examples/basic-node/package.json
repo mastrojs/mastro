@@ -1,0 +1,32 @@
+{
+  "name": "my-website",
+  "type": "module",
+  "scripts": {
+    "start": "node --watch server.ts",
+    "generate": "mastro generate",
+    "check": "tsc"
+  },
+  "dependencies": {
+    "@mastrojs/mastro": "^0",
+    "@remix-run/node-fetch-server": "^1"
+  },
+  "devDependencies": {
+    "@types/node": "^26",
+    "typescript": "^7"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.x",
+      "onFail": "download"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "26.x",
+      "onFail": "download"
+    }
+  }
+}
