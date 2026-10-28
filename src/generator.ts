@@ -11,8 +11,9 @@ import fs from "node:fs/promises";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import type { Mastro } from "./core/mastro.ts";
-import type { MiddlewareHandler } from "./middleware.ts";
+import { chainMiddlewares, type Context, type MiddlewareHandler } from "./middleware.ts";
 import { createFileRouterApp, defaultMiddlewares } from "./server.ts";
+import { fetchUpstream } from "./core/routeHelpers.ts";
 
 /**
  * Config options for `generate`
@@ -44,7 +45,7 @@ export interface GenerateOpts {
  *
  * Can not be used in the VSCode extension.
  */
-export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<void> => {
+export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<boolean> => {
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
   const { fileURLToPath, pathToFileURL } = await import("node:url");
@@ -53,26 +54,27 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<vo
     outFolder = "generated",
     onlyPregenerate = false,
   } = opts;
-  if (!app.middlewares) {
-    // when we got passed an app for Cloudflare Workers or similar, add static files etc.
-    console.info('Adding defaultMiddlewares from "@mastrojs/mastro/server"\n');
-    app.middlewares = defaultMiddlewares;
+  const ctx: Context = { mode: "generator", onlyPregenerate, fetchUpstream };
+  const middlewares = app.getMiddlewares(ctx);
+  if (!middlewares.some(m => m.name === "staticFiles")) {
+    // when we got passed an app for Cloudflare Workers or similar, add staticFiles etc.
+    console.info("Did not find a staticFiles middleware, adding defaultMiddlewares.\n");
+    middlewares.unshift(...defaultMiddlewares);
   }
-  const { middlewares } = app;
+  const handler = chainMiddlewares(middlewares);
+
   if (middlewares.some((m) => m.name === "fileRouter")) {
     await ensureDir(fs.stat("routes"));
   }
   await fs.rm(outFolder, { force: true, recursive: true });
   await fs.mkdir(outFolder);
 
-  const handler = app.createHandler();
-
   let completeSuccess = true;
   for (const m of middlewares) {
     if ("getStaticPaths" in m && m.getStaticPaths) {
       for (const path of await m.getStaticPaths()) {
         // TODO: parallelize without opening too many file handles at once
-        const file = await generatePage(handler, new URL(baseUrl + path), onlyPregenerate);
+        const file = await generatePage(handler, new URL(baseUrl + path), ctx);
         if (file === false) {
           completeSuccess = false;
         } else if (file) {
@@ -86,21 +88,23 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<vo
       }
     }
   }
-  if (!completeSuccess) process.exit(1);
-  const ctx = { mode: "generator" as const, onlyPregenerate };
-  await Promise.all(middlewares.map((m) => "afterGenerate" in m ? m.afterGenerate?.(ctx) : null));
-  console.info(`Generated static site and wrote to ${outFolder} folder.`);
+  if (completeSuccess) {
+    await Promise.all(middlewares.map((m) => "afterGenerate" in m ? m.afterGenerate?.(ctx) : null));
+    console.info(`Generated static site and wrote to ${outFolder} folder.`);
+  }
+  return completeSuccess;
 };
 
-const generatePage = async (handler: MiddlewareHandler, url: URL, onlyPregenerate: boolean) => {
+const generatePage = async (handler: MiddlewareHandler, url: URL, ctx: Context) => {
   const { pathname } = url;
   try {
     const req = new Request(url);
-    const response = await handler(req, { mode: "generator", onlyPregenerate, fetchUpstream });
+    const response = await handler(req, ctx);
     const path = parseContentDisposition(response.headers.get("Content-Disposition")) || pathname;
     if (!response.ok) {
       console.warn(`\nWARNING: skipped path ${pathname} since it returned HTTP ${response.status}:
 ${await response.text()}`);
+      return false;
     }
     return { response, outFilePath: path.endsWith("/") ? `${path}index.html` : path };
   } catch (e) {
@@ -110,8 +114,6 @@ ${await response.text()}`);
 };
 
 const parseContentDisposition = (val: string | null) => val?.match(/filename="?([^";]+)"?/i)?.[1];
-
-const fetchUpstream = () => new Response("Not found", { status: 404 });
 
 const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer) => {
   const { createWriteStream } = await import("node:fs");
@@ -129,14 +131,14 @@ const ensureDir = async (statsP: Promise<Stats>) => {
   try {
     const routesDir = await statsP;
     if (!routesDir.isDirectory()) {
-      console.error(noRoutesMsg);
-      process.exit(1);
+      throw new GenerateError(noRoutesMsg);
     }
   } catch (e: any) {
-    console.error(e.code === "ENOENT" ? noRoutesMsg : e);
-    process.exit(1);
+    throw e.code === "ENOENT" ? new GenerateError(noRoutesMsg) : e;
   }
 };
+
+class GenerateError extends Error {}
 
 if (typeof document === "undefined" && import.meta.main) {
   const { resolve } = await import("node:path");
@@ -174,19 +176,20 @@ if (typeof document === "undefined" && import.meta.main) {
         const path = pathToFileURL(resolve(entry));
         return statSync(path, { throwIfNoEntry: false })?.isFile() ? path.href : undefined;
       }
-      const appPath = exists("index.ts") || exists("index.js");
-      if (!appPath) {
+      const server = exists("server.ts") || exists("server.js");
+      if (!server) {
         console.info("Using file-based router.");
       }
-      const app = appPath ? await import(appPath).then(m => m.app as Mastro) : createFileRouterApp();
-      await generate(app, {
+      const app = server ? await import(server).then(m => m.app as Mastro) : createFileRouterApp();
+      const success = await generate(app, {
         baseUrl: values["base-url"] as string | undefined,
         outFolder: values.output as string | undefined,
         onlyPregenerate: !!values["only-pregenerate"],
       });
+      if (!success) process.exit(1);
     }
   } catch (e: any) {
-    console.error(`\n${e.message || e}`);
+    console.error(`\n${e instanceof GenerateError ? e.message : e}`);
     process.exit(1);
   }
 }

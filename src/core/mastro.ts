@@ -1,9 +1,10 @@
-import { chainMiddlewares, type Middleware } from "../middleware.ts";
+import { chainMiddlewares, type Context, type Middleware } from "../middleware.ts";
+import { fetchUpstream, isDevServer, routeHandler } from "./routeHelpers.ts";
 
-/** Supported HTTP methods */
-export const httpMethods = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"] as const;
+/** HTTP methods */
+export const httpMethods = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "QUERY"] as const;
 
-/** Supported HTTP methods */
+/** HTTP methods */
 export type HttpMethod = (typeof httpMethods)[number];
 
 /**
@@ -27,9 +28,10 @@ export interface Route {
   method: "all" | HttpMethod;
   /** `URLPattern` with `pathname` set */
   pattern: URLPattern;
-  /** Called by the static site generator on routes with route parameters in the pattern. */
-  getStaticPaths?: () => Promise<string[]> | string[];
-  /** When running a server, set this to `true` to still build this route statically. */
+  /** Called by the static site generator. */
+  getStaticPaths: () => Promise<string[]> | string[];
+  /** Before starting your server, you can run `mastro generate --only-pregenerate` to
+   * only pregenerate routes which have this field set. */
   pregenerate?: true;
 }
 
@@ -46,13 +48,11 @@ export type RouteOpts = Handler | {
  * Class to construct an app instance.
  */
 export class Mastro {
-  public middlewares: Middleware[] | undefined;
+  private middlewares: Middleware[];
   private routes: Route[] = [];
 
-  /** Add new middlewares before existing ones */
-  addMiddlewares(...middlewares: Middleware[]): this {
-    this.middlewares = middlewares.concat(this.middlewares || []);
-    return this;
+  constructor(...middlewares: Middleware[]) {
+    this.middlewares = middlewares;
   }
 
   /** Add route */
@@ -91,90 +91,41 @@ export class Mastro {
     return this.addRoute("DELETE", pathname, handler);
   }
 
+  /** Add new middlewares before existing ones */
+  addMiddlewares(...middlewares: Middleware[]): this {
+    this.middlewares = middlewares.concat(this.middlewares);
+    return this;
+  }
+
+  /** Returns the middlewares. If there were routes added, it concats the programmaticRouter. */
+  getMiddlewares(ctx?: Context): Middleware[] {
+    const m = this.routes.length === 0
+      ? []
+      : {
+        name: "programmaticRouter",
+        handler: routeHandler(this.routes),
+        getStaticPaths: async () => {
+          const routes = ctx?.mode === "generator" && ctx.onlyPregenerate
+            ? this.routes.filter(r => r.pregenerate)
+            : this.routes;
+          return (await Promise.all(routes.map(r => r.getStaticPaths()))).flat();
+        },
+      };
+    return this.middlewares.concat(m);
+  }
+
   /** Create fetch handler */
   createHandler(): Handler {
-    const middlewares = this.routes.length > 0
-      ? (this.middlewares || []).concat(routeHandler(this.routes))
-      : (this.middlewares || []);
-    const handler = chainMiddlewares(middlewares);
+    const handler = chainMiddlewares(this.getMiddlewares());
     return async (req) => {
       const isDev = isDevServer(new URL(req.url));
       const environment = isDev ? "development" : "production";
       try {
         return await handler(req, { mode: "server", environment, fetchUpstream });
       } catch (e: any) {
-        return new Response(
-          `500 Internal Server Error\n\n${isDev ? (e.stack || e) : e.name || "Unknown error"}`,
-          { status: 500 },
-        );
+        const msg = `500 Internal Server Error\n\n${isDev ? (e.stack || e) : e.name || ""}`;
+        return new Response(msg, { status: 500 });
       }
     };
   }
 }
-
-const fetchUpstream = () => new Response("Not found", { status: 404 });
-
-/**
- * Attempts to determine whether we're running a development or production server.
- *
- * Currently this is done by checking whether the hostname is localhost, which is not perfect
- * but allows you to test production behaviour by connecting to `127.0.0.1` and
- * is easy to do without messing with environment variables.
- */
-const isDevServer = (url: URL) => url.hostname === "localhost";
-
-export const routeHandler = (rs: Route[] | Promise<Route[]>): Handler => async (req: Request) => {
-  const routes = await rs;
-  const method = req.method.toUpperCase();
-  const url = new URL(req.url);
-  const logPrefix = `${req.method} ${url.pathname + url.search} => `;
-  const isDev = isDevServer(url);
-
-  try {
-    let urlMatched: string | undefined;
-    const route = routes.find((r) => {
-      const match = r.pattern.exec(req.url);
-      if (match) {
-        urlMatched = r.name;
-        if ((r.method === method || r.method === "all") && typeof r.handler === "function") {
-          return true;
-        }
-      }
-    });
-
-    if (route) {
-      /* TODO: only do this on server, not generate
-      if (route.pregenerate && !isDev) {
-        return new Response(
-          "404 Route was hit on non-localhost but exports pregenerate=true. " +
-            "Did you forget to run `mastro/generator --only-pregenerate` as a build step?",
-          { status: 404 },
-        );
-      }
-      */
-      const res = await route.handler(req);
-      if (res instanceof Response) {
-        if (isDev) console.info(logPrefix + route.name);
-        return res;
-      } else {
-        throw Error(method + " must return a Response object");
-      }
-    } else if (urlMatched) {
-      const msg = `No ${method} handler found`;
-      if (isDev) console.info(logPrefix + msg);
-      const m = isDev ? ` by ${urlMatched}\n\nsee https://mastrojs.github.io/docs/routing/` : "";
-      return new Response(msg + m, { status: 405 });
-    } else {
-      if (isDev && url.pathname !== "/favicon.ico") console.info(logPrefix + "No route match");
-      // TODO: ctx.fetchUpstream here
-      return new Response("404 not found", { status: 404 });
-    }
-  } catch (e: any) {
-    if (e.name === "NotFound" || e.code === "ENOENT") {
-      console.warn(`\x1b[35m${logPrefix}404\x1b[0m`, e);
-      return new Response(`404 Not Found\n\n${isDev ? e.message : ""}`, { status: 404 });
-    } else {
-      throw e;
-    }
-  }
-};

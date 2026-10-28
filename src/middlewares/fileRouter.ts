@@ -3,7 +3,8 @@ import { pathToFileURL } from "node:url";
 
 import { findFiles, sep } from "../core/fs.ts";
 import type { Middleware } from "../middleware.ts";
-import { httpMethods, routeHandler, type Route } from "../core/mastro.ts";
+import { httpMethods, type Route } from "../core/mastro.ts";
+import { routeHandler } from "../core/routeHelpers.ts";
 
 export const createFileRouter = (opts?: {
   routes?: Promise<Route[]> | Route[];
@@ -13,9 +14,9 @@ export const createFileRouter = (opts?: {
   return {
     name: "fileRouter",
     getStaticPaths: async () => {
-      const onlyPregenerate = (r: Route) => opts?.onlyPregenerate ? r.pregenerate : true;
-      const paths = (await routes).filter(onlyPregenerate).toReversed().map(async (r) => {
-        if (hasRouteParams(r.name)) { // replace with if (r.pattern.hasRegExpGroups) ?
+      const rs = opts?.onlyPregenerate ? (await routes).filter(r => r.pregenerate) : await routes;
+      const paths = rs.toReversed().map(async (r) => {
+        if (hasRouteParams(r.name)) { // TODO: replace with if (r.pattern.hasRegExpGroups) ?
           if (typeof r.getStaticPaths === "function") {
             return validateStaticPaths(r.name, await r.getStaticPaths());
           } else {
