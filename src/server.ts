@@ -15,17 +15,11 @@ export const defaultMiddlewares: Middleware[] = [ fingerprintAssets, tsToJs, sta
 /**
  * Creates an app with the programmatic router.
  */
-export const createApp = (): Mastro => {
-  const app = new Mastro();
-  app.middlewares = defaultMiddlewares;
-  return app;
-}
+export const createApp = (): Mastro =>
+  new Mastro(...defaultMiddlewares);
 
 /**
  * Creates an app with the file-based router.
  */
-export const createFileRouterApp = (): Mastro => {
-  const app = new Mastro();
-  app.middlewares = defaultMiddlewares.concat(createFileRouter());
-  return app;
-}
+export const createFileRouterApp = (): Mastro =>
+  new Mastro(...defaultMiddlewares, createFileRouter());

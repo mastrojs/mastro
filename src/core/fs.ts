@@ -31,7 +31,7 @@ const vscodeExtensionFs = typeof document === "object"
  */
 export const readDir = async (path: string): Promise<string[]> =>
   fs
-    ? (await fs).readdir(await noLeadingSep(path), { withFileTypes: true })
+    ? (await fs).readdir(noLeadingSep(path), { withFileTypes: true })
       .then((files) =>
         files.flatMap((file) =>
           file.isSymbolicLink() || file.isDirectory() || file.name[0] === "." ? [] : file.name
