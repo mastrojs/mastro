@@ -1,23 +1,9 @@
-import {
-  chainMiddlewares,
-  type Context,
-  type GeneratorContext,
-  type Middleware,
-  type ServerContext,
-} from "../middleware.ts";
+import { chainMiddlewares, type Middleware, type ServerContext } from "../middleware.ts";
 import { fetchUpstream, isDevServer, routeHandler } from "./routeHelpers.ts";
 
-/** HTTP methods */
-export const httpMethods = [
-  "GET",
-  "HEAD",
-  "POST",
-  "PUT",
-  "DELETE",
-  "OPTIONS",
-  "PATCH",
-  "QUERY",
-] as const;
+/** Array of HTTP methods */
+const httpMethods = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "QUERY"] as const;
+export { httpMethods };
 
 /** HTTP methods */
 export type HttpMethod = (typeof httpMethods)[number];
@@ -50,30 +36,31 @@ export interface Route {
   pregenerate?: true;
 }
 
-/**
- * Either a plain `Handler` function, or an object with a `handler` and other fields.
- */
-export type RouteOpts =
-  | Handler
-  | {
-      handler: Handler;
-      getStaticPaths?: () => Promise<string[]> | string[];
-      pregenerate?: true;
-    };
+interface RouteOpts {
+  handler: Handler;
+  getStaticPaths?: () => Promise<string[]> | string[];
+  pregenerate?: true;
+}
 
 /**
  * Class to construct an app instance.
  */
 export class Mastro {
-  private middlewares: Middleware[];
+  public middlewares: Middleware[];
   private routes: Route[] = [];
+  private routesPromise?: Route[] | Promise<Route[]>;
 
-  constructor(...middlewares: Middleware[]) {
-    this.middlewares = middlewares;
+  constructor(middlewares?: Middleware[], routes?: Route[] | Promise<Route[]>) {
+    this.middlewares = middlewares || [];
+    this.routesPromise = routes;
+  }
+
+  async getRoutes(): Promise<Route[]> {
+    return ((await this.routesPromise) || []).concat(this.routes);
   }
 
   /** Add route */
-  addRoute(method: "all" | HttpMethod, pathname: string, opts: RouteOpts): this {
+  addRoute(method: "all" | HttpMethod, pathname: string, opts: Handler | RouteOpts): this {
     if (typeof opts === "function") {
       opts = { handler: opts };
     }
@@ -89,22 +76,22 @@ export class Mastro {
   }
 
   /** Add HTTP GET route */
-  get(pathname: string, handler: RouteOpts): this {
+  get(pathname: string, handler: Handler | RouteOpts): this {
     return this.addRoute("GET", pathname, handler);
   }
 
   /** Add HTTP POST route */
-  post(pathname: string, handler: RouteOpts): this {
+  post(pathname: string, handler: Handler | RouteOpts): this {
     return this.addRoute("POST", pathname, handler);
   }
 
   /** Add HTTP PUT route */
-  put(pathname: string, handler: RouteOpts): this {
+  put(pathname: string, handler: Handler | RouteOpts): this {
     return this.addRoute("PUT", pathname, handler);
   }
 
   /** Add HTTP DELETE route */
-  delete(pathname: string, handler: RouteOpts): this {
+  delete(pathname: string, handler: Handler | RouteOpts): this {
     return this.addRoute("DELETE", pathname, handler);
   }
 
@@ -114,27 +101,9 @@ export class Mastro {
     return this;
   }
 
-  /** Returns the middlewares. If there were routes added, it concats the programmaticRouter. */
-  getMiddlewares(): Middleware[] {
-    return this.middlewares.concat(
-      this.routes.length === 0
-        ? []
-        : {
-            name: "programmaticRouter",
-            handler: routeHandler(this.routes),
-            getStaticPaths: async (ctx) => {
-              const routes = ctx.onlyPregenerate
-                ? this.routes.filter((r) => r.pregenerate)
-                : this.routes;
-              return (await Promise.all(routes.map((r) => r.getStaticPaths()))).flat();
-            },
-          },
-    );
-  }
-
   /** Create fetch handler */
   createHandler(ctx?: Partial<ServerContext>): Handler {
-    const handler = chainMiddlewares(this.getMiddlewares());
+    const handler = chainMiddlewares([...this.middlewares, routeHandler(this.getRoutes())]);
     return async (req) => {
       const isDev = isDevServer(new URL(req.url));
       const environment = isDev ? "development" : "production";
