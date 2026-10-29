@@ -6,7 +6,7 @@ import { basename, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { generate } from "./generator.ts";
-import { createApp } from "./server.ts";
+import { createApp } from "./servers/server.ts";
 
 test("generate: programmatic router with createApp", async (t) => {
   const outFolder = await mkdtemp(join(tmpdir(), "mastro-test-"));

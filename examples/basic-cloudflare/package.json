@@ -1,0 +1,25 @@
+{
+  "name": "my-first-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "",
+    "dev": "pnpm run generate && wrangler dev",
+    "build": "pnpm run generate && wrangler build",
+    "generate": "mastro generate --only-pregenerate",
+    "deploy": "wrangler deploy",
+    "check": "tsc",
+    "cf-typegen": "wrangler types"
+  },
+  "engines": {
+    "node": ">=24.12"
+  },
+  "dependencies": {
+    "@mastrojs/mastro": "^0"
+  },
+  "devDependencies": {
+    "typescript": "^7",
+    "wrangler": "^4"
+  }
+}

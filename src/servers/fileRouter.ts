@@ -1,41 +1,38 @@
 import { findFiles, sep } from "../core/fs.ts";
 import { httpMethods, type Route } from "../core/mastro.ts";
 
-/**
- * Loads and returns file-based routes – either with the provided `loader`, or falling back to
- * reading the `routes/` folder from the file system.
- * You only need to call this manually when using a bundler like esbuild, where we don't have the
- * route file names in the bundle.
- *
- * Also called from the Mastro VSCode extension.
- */
-export const loadRoutes = async (
-  routeFiles?: string[],
-  loader?: (fileName: string) => Promise<Record<string, unknown>>,
-): Promise<Route[]> => {
-  if (!routeFiles) {
-    routeFiles = await findFiles([
-      "routes/**/*.server.{ts,js}",
-      "routes/**/.*/**/*.server.{ts,js}",
-    ]);
-  }
-  if (!loader) {
-    const { pathToFileURL } = await import("node:url");
-    loader = (fileName) => import(pathToFileURL(process.cwd() + sep + fileName).toString());
-  }
+interface FileRoute {
+  name: string;
+  pathname: string;
+}
+type RouteLoader = (fileName: string) => Promise<Record<string, unknown>>;
+
+export const loadFileRoutes = async (): Promise<Route[]> => {
+  const { pathToFileURL } = await import("node:url");
+  const loader = (name: string) => import(pathToFileURL(process.cwd() + sep + name).toString());
+  return loadRoutes(await findRoutes(), loader);
+};
+
+export const findRoutes = async (): Promise<FileRoute[]> => {
+  const routeFiles = await findFiles([
+    "routes/**/*.server.{ts,js}",
+    "routes/**/.*/**/*.server.{ts,js}",
+  ]);
 
   if (routeFiles.length === 0) {
     console.warn(
       "\n\nWARNING: No route files found!\n  see https://mastrojs.github.io/docs/routing/\n\n",
     );
   }
-  routeFiles.sort(compareRoutes);
+  return routeFiles.sort(compareRoutes).map((name) => ({ name, pathname: toPattern(name) }));
+};
 
+export const loadRoutes = async (routes: FileRoute[], loader: RouteLoader): Promise<Route[]> => {
   const modules = await Promise.all(
-    routeFiles.map(async (name) => ({
+    routes.map(async ({ name, pathname }) => ({
       module: await loader(name),
       name,
-      pattern: toPattern(name),
+      pattern: new URLPattern({ pathname }),
     })),
   );
 
@@ -92,7 +89,7 @@ const toPattern = (filePath: string) => {
       return part;
     }
   });
-  return new URLPattern({ pathname: "/" + parts.join("/") });
+  return "/" + parts.join("/");
 };
 
 const indexRegex = /^index(\.html)?\.server\.(ts|js)$/;

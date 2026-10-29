@@ -50,11 +50,12 @@ export class Mastro {
   private routes: Route[] = [];
   private routesPromise?: Route[] | Promise<Route[]>;
 
-  constructor(middlewares?: Middleware[], routes?: Route[] | Promise<Route[]>) {
-    this.middlewares = middlewares || [];
-    this.routesPromise = routes;
+  constructor(opts?: { middlewares?: Middleware[]; routes?: Route[] | Promise<Route[]> }) {
+    this.middlewares = opts?.middlewares || [];
+    this.routesPromise = opts?.routes;
   }
 
+  /** Get all routes */
   async getRoutes(): Promise<Route[]> {
     return ((await this.routesPromise) || []).concat(this.routes);
   }
@@ -93,12 +94,6 @@ export class Mastro {
   /** Add HTTP DELETE route */
   delete(pathname: string, handler: Handler | RouteOpts): this {
     return this.addRoute("DELETE", pathname, handler);
-  }
-
-  /** Add new middlewares before existing ones */
-  addMiddlewares(...middlewares: Middleware[]): this {
-    this.middlewares = middlewares.concat(this.middlewares);
-    return this;
   }
 
   /** Create fetch handler */
