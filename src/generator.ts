@@ -6,8 +6,7 @@
  * @module
  */
 
-import { type Stats, statSync } from "node:fs";
-import fs from "node:fs/promises";
+import { statSync } from "node:fs";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import type { Mastro, Route } from "./core/mastro.ts";
@@ -26,7 +25,7 @@ export interface GenerateOpts {
   assetsFolder?: string;
   /**
    * Base URL for the synthetic requests sent by the generator. Default is http://127.0.0.1
-   * to make them distinguishable from request from localhost (see `isDevServer`).
+   * to make them distinguishable from requests from localhost (see `isDevServer`).
    */
   baseUrl?: string;
   /**
