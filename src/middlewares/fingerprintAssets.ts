@@ -28,7 +28,7 @@ export const fingerprintAssets: Middleware = {
 };
 
 // during SSG all _assets/* routes should've been processed already before routes calling getAsset
-export const getAsset = (path: string): string | undefined => Object.freeze(assetHashes)[path];
+// export const getAsset = (path: string): string | undefined => Object.freeze(assetHashes)[path];
 
 const hash = createHash("sha256");
 const assetHashes: Record<string, string> = {};
