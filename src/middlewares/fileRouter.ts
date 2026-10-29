@@ -2,35 +2,32 @@ import { extname } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { findFiles, sep } from "../core/fs.ts";
-import type { Middleware } from "../middleware.ts";
 import { httpMethods, type Route } from "../core/mastro.ts";
 import { routeHandler } from "../core/routeHelpers.ts";
+import type { Middleware } from "../middleware.ts";
 
-export const createFileRouter = (opts?: {
-  routes?: Promise<Route[]> | Route[];
-  onlyPregenerate?: boolean;
-}): Middleware => {
-  const routes = opts?.routes || loadRoutes();
-  return {
-    name: "fileRouter",
-    getStaticPaths: async () => {
-      const rs = opts?.onlyPregenerate ? (await routes).filter(r => r.pregenerate) : await routes;
-      const paths = rs.toReversed().map(async (r) => {
-        if (hasRouteParams(r.name)) { // TODO: replace with if (r.pattern.hasRegExpGroups) ?
-          if (typeof r.getStaticPaths === "function") {
-            return validateStaticPaths(r.name, await r.getStaticPaths());
-          } else {
-            throw Error(r.name + errMsg);
-          }
+export const createFileRouter = (
+  routes: Promise<Route[]> | Route[] = loadRoutes(),
+): Middleware => ({
+  name: "fileRouter",
+  getStaticPaths: async (ctx) => {
+    const rs = ctx.onlyPregenerate ? (await routes).filter((r) => r.pregenerate) : await routes;
+    const paths = rs.toReversed().map(async (r) => {
+      if (hasRouteParams(r.name)) {
+        // TODO: replace with if (r.pattern.hasRegExpGroups) ?
+        if (typeof r.getStaticPaths === "function") {
+          return validateStaticPaths(r.name, await r.getStaticPaths());
         } else {
-          return r.pattern.pathname;
+          throw Error(r.name + errMsg);
         }
-      });
-      return (await Promise.all(paths)).flat();
-    },
-    handler: routeHandler(routes),
-  };
-};
+      } else {
+        return r.pattern.pathname;
+      }
+    });
+    return (await Promise.all(paths)).flat();
+  },
+  handler: routeHandler(routes),
+});
 
 /**
  * Loads and returns file-based routes – either with the provided `loader`, or falling back to
@@ -56,36 +53,42 @@ export const loadRoutes = async (
   }
 
   if (routeFiles.length === 0) {
-    console.warn([
-      "",
-      "WARNING: No route files found!",
-      "  see https://mastrojs.github.io/docs/routing/",
-      "",
-    ].join("\n"));
+    console.warn(
+      [
+        "",
+        "WARNING: No route files found!",
+        "  see https://mastrojs.github.io/docs/routing/",
+        "",
+      ].join("\n"),
+    );
   }
   routeFiles.sort(compareRoutes);
 
-  const modules = await Promise.all(routeFiles.map(async (name) => (
-    { module: await loader(name), name, pattern: toPattern(name) }
-  )));
+  const modules = await Promise.all(
+    routeFiles.map(async (name) => ({
+      module: await loader(name),
+      name,
+      pattern: toPattern(name),
+    })),
+  );
 
   return modules.flatMap(({ module, name, pattern }) =>
-    (typeof module.ALL === "function" ? ["ALL"] as const : httpMethods).flatMap((method) => {
+    (typeof module.ALL === "function" ? (["ALL"] as const) : httpMethods).flatMap((method) => {
       const handler = module[method];
       return typeof handler === "function"
-        ? {
-          name,
-          handler: (req) => {
-            (req as any)._params = pattern.exec(req.url)?.pathname.groups;
-            return handler(req);
-          },
-          method: method === "ALL" ? "all" : method,
-          pattern,
-          getStaticPaths: module.getStaticPaths,
-          pregenerate: module.pregenerate,
-        } as Route
+        ? ({
+            name,
+            handler: (req) => {
+              (req as any)._params = pattern.exec(req.url)?.pathname.groups;
+              return handler(req);
+            },
+            method: method === "ALL" ? "all" : method,
+            pattern,
+            getStaticPaths: module.getStaticPaths,
+            pregenerate: module.pregenerate,
+          } as Route)
         : [];
-    })
+    }),
   );
 };
 

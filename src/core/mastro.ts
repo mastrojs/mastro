@@ -1,8 +1,23 @@
-import { chainMiddlewares, type Context, type Middleware } from "../middleware.ts";
+import {
+  chainMiddlewares,
+  type Context,
+  type GeneratorContext,
+  type Middleware,
+  type ServerContext,
+} from "../middleware.ts";
 import { fetchUpstream, isDevServer, routeHandler } from "./routeHelpers.ts";
 
 /** HTTP methods */
-export const httpMethods = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "QUERY"] as const;
+export const httpMethods = [
+  "GET",
+  "HEAD",
+  "POST",
+  "PUT",
+  "DELETE",
+  "OPTIONS",
+  "PATCH",
+  "QUERY",
+] as const;
 
 /** HTTP methods */
 export type HttpMethod = (typeof httpMethods)[number];
@@ -38,11 +53,13 @@ export interface Route {
 /**
  * Either a plain `Handler` function, or an object with a `handler` and other fields.
  */
-export type RouteOpts = Handler | {
-  handler: Handler;
-  getStaticPaths?: () => Promise<string[]> | string[];
-  pregenerate?: true;
-};
+export type RouteOpts =
+  | Handler
+  | {
+      handler: Handler;
+      getStaticPaths?: () => Promise<string[]> | string[];
+      pregenerate?: true;
+    };
 
 /**
  * Class to construct an app instance.
@@ -98,32 +115,33 @@ export class Mastro {
   }
 
   /** Returns the middlewares. If there were routes added, it concats the programmaticRouter. */
-  getMiddlewares(ctx?: Context): Middleware[] {
-    const m = this.routes.length === 0
-      ? []
-      : {
-        name: "programmaticRouter",
-        handler: routeHandler(this.routes),
-        getStaticPaths: async () => {
-          const routes = ctx?.mode === "generator" && ctx.onlyPregenerate
-            ? this.routes.filter(r => r.pregenerate)
-            : this.routes;
-          return (await Promise.all(routes.map(r => r.getStaticPaths()))).flat();
-        },
-      };
-    return this.middlewares.concat(m);
+  getMiddlewares(): Middleware[] {
+    return this.middlewares.concat(
+      this.routes.length === 0
+        ? []
+        : {
+            name: "programmaticRouter",
+            handler: routeHandler(this.routes),
+            getStaticPaths: async (ctx) => {
+              const routes = ctx.onlyPregenerate
+                ? this.routes.filter((r) => r.pregenerate)
+                : this.routes;
+              return (await Promise.all(routes.map((r) => r.getStaticPaths()))).flat();
+            },
+          },
+    );
   }
 
   /** Create fetch handler */
-  createHandler(): Handler {
+  createHandler(ctx?: Partial<ServerContext>): Handler {
     const handler = chainMiddlewares(this.getMiddlewares());
     return async (req) => {
       const isDev = isDevServer(new URL(req.url));
       const environment = isDev ? "development" : "production";
       try {
-        return await handler(req, { mode: "server", environment, fetchUpstream });
+        return await handler(req, { mode: "server", environment, fetchUpstream, ...ctx });
       } catch (e: any) {
-        const msg = `500 Internal Server Error\n\n${isDev ? (e.stack || e) : e.name || ""}`;
+        const msg = `500 Internal Server Error\n\n${isDev ? e.stack || e : e.name || ""}`;
         return new Response(msg, { status: 500 });
       }
     };
