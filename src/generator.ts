@@ -11,7 +11,7 @@ import fs from "node:fs/promises";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
 import type { Mastro } from "./core/mastro.ts";
-import { chainMiddlewares, type Context, type MiddlewareHandler } from "./middleware.ts";
+import { chainMiddlewares, type Context, type GeneratorContext, type MiddlewareHandler } from "./middleware.ts";
 import { createFileRouterApp, defaultMiddlewares } from "./server.ts";
 import { fetchUpstream } from "./core/routeHelpers.ts";
 
@@ -54,25 +54,25 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
     outFolder = "generated",
     onlyPregenerate = false,
   } = opts;
-  const ctx: Context = { mode: "generator", onlyPregenerate, fetchUpstream };
-  const middlewares = app.getMiddlewares(ctx);
+  const middlewares = app.getMiddlewares();
   if (!middlewares.some(m => m.name === "staticFiles")) {
     // when we got passed an app for Cloudflare Workers or similar, add staticFiles etc.
     console.info("Did not find a staticFiles middleware, adding defaultMiddlewares.\n");
     middlewares.unshift(...defaultMiddlewares);
   }
-  const handler = chainMiddlewares(middlewares);
-
   if (middlewares.some((m) => m.name === "fileRouter")) {
     await ensureDir(fs.stat("routes"));
   }
   await fs.rm(outFolder, { force: true, recursive: true });
   await fs.mkdir(outFolder);
 
+  const handler = chainMiddlewares(middlewares);
+  const ctx: GeneratorContext = { mode: "generator", onlyPregenerate, fetchUpstream };
+
   let completeSuccess = true;
   for (const m of middlewares) {
     if ("getStaticPaths" in m && m.getStaticPaths) {
-      for (const path of await m.getStaticPaths()) {
+      for (const path of await m.getStaticPaths(ctx)) {
         // TODO: parallelize without opening too many file handles at once
         const file = await generatePage(handler, new URL(baseUrl + path), ctx);
         if (file === false) {

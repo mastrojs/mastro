@@ -14,10 +14,8 @@ export const fingerprintAssets: Middleware = {
       const digest = hash.update(data).digest("hex").slice(0, 8);
       const hashedPath = `${pathname.slice(0, -1 * ext.length)}-${digest}${ext}`;
       assetHashes[pathname.slice("/_assets/".length)] = hashedPath;
-
-      const headers = res.headers;
-      headers.set("Content-Disposition", `attachment; filename=${hashedPath}`);
-      return new Response(data, { headers, status: res.status });
+      res.headers.set("Content-Disposition", `attachment; filename=${hashedPath}`);
+      return new Response(data, res);
     } else {
       return res;
     }
@@ -30,7 +28,7 @@ export const fingerprintAssets: Middleware = {
 };
 
 // during SSG all _assets/* routes should've been processed already before routes calling getAsset
-export const getAsset = (path: string) => Object.freeze(assetHashes)[path];
+export const getAsset = (path: string): string | undefined => Object.freeze(assetHashes)[path];
 
 const hash = createHash("sha256");
 const assetHashes: Record<string, string> = {};

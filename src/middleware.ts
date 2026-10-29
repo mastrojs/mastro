@@ -20,18 +20,22 @@ export type Middleware = MiddlewareHandler | {
   /** Fetch handler */
   handler: MiddlewareHandler;
   /** Called by the static site generator. */
-  getStaticPaths?: () => Promise<string[]> | string[];
+  getStaticPaths?: (ctx: GeneratorContextBase) => Promise<string[]> | string[];
   /** Called by the static site generator when its done. */
-  afterGenerate?: (ctx: { mode: "generator"; onlyPregenerate: boolean }) => void;
+  afterGenerate?: (ctx: GeneratorContextBase) => void;
 };
 
 export type MiddlewareHandler = (req: Request, ctx: Context) => Promise<Response> | Response;
 
-export type Context = {
-  fetchUpstream: Handler;
+export type Context = GeneratorContext | ServerContext
+export interface GeneratorContextBase {
   mode: "generator";
   onlyPregenerate: boolean;
-} | {
+}
+export interface GeneratorContext extends GeneratorContextBase {
+  fetchUpstream: Handler;
+}
+export interface ServerContext {
   fetchUpstream: Handler;
   mode: "server";
   environment: "development" | "production";
