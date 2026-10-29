@@ -75,24 +75,12 @@ export const findFiles = async (pattern: string | string[]): Promise<string[]> =
   pattern = typeof pattern === "string" ? validatePattern(pattern) : pattern.map(validatePattern);
   if (fs) {
     const paths = [];
-    // @ts-expect-error no type definitions for Bun
-    if (typeof Bun === "object") {
-      // until https://github.com/oven-sh/bun/issues/22018 is fixed
-      const { glob, lstat } = await fs;
-      for await (const file of glob(pattern)) {
-        const entry = await lstat(file);
-        if (entry.isFile()) {
-          paths.push(file)
-        }
-      }
-    } else {
-      const { sep } = await import(nodePath);
-      for await (const entry of (await fs).glob(pattern, { withFileTypes: true })) {
-        if (entry.isFile()) {
-          const path = entry.parentPath + sep + entry.name;
-          const relativeToProjectRoot = path.slice(process.cwd().length + 1);
-          paths.push(relativeToProjectRoot);
-        }
+    const { sep } = await import(nodePath);
+    for await (const entry of (await fs).glob(pattern, { withFileTypes: true })) {
+      if (entry.isFile()) {
+        const path = entry.parentPath + sep + entry.name;
+        const relativeToProjectRoot = path.slice(process.cwd().length + 1);
+        paths.push(relativeToProjectRoot);
       }
     }
     return paths.sort();
