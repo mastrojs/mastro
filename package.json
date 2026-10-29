@@ -4,6 +4,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "prepack": "tsc",
+    "fmt": "oxfmt -c .oxfmtrc.json",
     "test": "node --test",
     "bench": "node --experimental-bench --bench 'src/**/*.bench.ts'"
   },
@@ -44,6 +45,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^26",
+    "oxfmt": "^0.75.0",
     "typescript": "^7"
   },
   "engines": {
