@@ -1,33 +1,5 @@
-import { extname } from "node:path";
-import { pathToFileURL } from "node:url";
-
 import { findFiles, sep } from "../core/fs.ts";
 import { httpMethods, type Route } from "../core/mastro.ts";
-import { routeHandler } from "../core/routeHelpers.ts";
-import type { Middleware } from "../middleware.ts";
-
-export const createFileRouter = (
-  routes: Promise<Route[]> | Route[] = loadRoutes(),
-): Middleware => ({
-  name: "fileRouter",
-  getStaticPaths: async (ctx) => {
-    const rs = ctx.onlyPregenerate ? (await routes).filter((r) => r.pregenerate) : await routes;
-    const paths = rs.toReversed().map(async (r) => {
-      if (hasRouteParams(r.name)) {
-        // TODO: replace with if (r.pattern.hasRegExpGroups) ?
-        if (typeof r.getStaticPaths === "function") {
-          return validateStaticPaths(r.name, await r.getStaticPaths());
-        } else {
-          throw Error(r.name + errMsg);
-        }
-      } else {
-        return r.pattern.pathname;
-      }
-    });
-    return (await Promise.all(paths)).flat();
-  },
-  handler: routeHandler(routes),
-});
 
 /**
  * Loads and returns file-based routes – either with the provided `loader`, or falling back to
@@ -54,12 +26,7 @@ export const loadRoutes = async (
 
   if (routeFiles.length === 0) {
     console.warn(
-      [
-        "",
-        "WARNING: No route files found!",
-        "  see https://mastrojs.github.io/docs/routing/",
-        "",
-      ].join("\n"),
+      "\n\nWARNING: No route files found!\n  see https://mastrojs.github.io/docs/routing/\n\n",
     );
   }
   routeFiles.sort(compareRoutes);
@@ -91,12 +58,6 @@ export const loadRoutes = async (
     }),
   );
 };
-
-/**
- * Returns true iff the given `filePath` contains dynamic route parameters.
- */
-const hasRouteParams = (filePath: string): boolean =>
-  filePath.split(sep).some((segment) => segment.match(paramRegex));
 
 /**
  * Perhaps we should sort this according to more solid route precedence criteria.
@@ -136,19 +97,3 @@ const toPattern = (filePath: string) => {
 
 const indexRegex = /^index(\.html)?\.server\.(ts|js)$/;
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
-
-const errMsg = " should export a function named getStaticPaths, returning an array of strings.";
-
-const validateStaticPaths = (name: string, paths: string[]) => {
-  if (!Array.isArray(paths)) throw Error(name + notStringMsg);
-  for (const path of paths) {
-    if (typeof path !== "string") throw Error(name + notStringMsg);
-    if (path[0] !== "/") throw Error(name + "#getStaticPaths: paths must start with a slash (/)");
-    if (!path.endsWith("/") && !extname(path) && !path.startsWith("/.well-known/")) {
-      console.warn(`\nWARNING: ${name} has path ${path} without file extension.
-  Consider renaming route to e.g. ${name.replace(".server", ".html.server")}\n`);
-    }
-  }
-  return paths;
-};
-const notStringMsg = "#getStaticPaths must return an array of strings";

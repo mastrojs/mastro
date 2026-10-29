@@ -10,10 +10,11 @@ import { type Stats, statSync } from "node:fs";
 import fs from "node:fs/promises";
 import type { ParseArgsOptionDescriptor } from "node:util";
 
-import type { Mastro } from "./core/mastro.ts";
-import { chainMiddlewares, type Context, type GeneratorContext, type MiddlewareHandler } from "./middleware.ts";
+import type { Mastro, Route } from "./core/mastro.ts";
+import { chainMiddlewares, type Context, type GeneratorContext, type GeneratorContextBase, type MiddlewareHandler } from "./middleware.ts";
 import { createFileRouterApp, defaultMiddlewares } from "./server.ts";
-import { fetchUpstream } from "./core/routeHelpers.ts";
+import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
+import { extname } from "node:path";
 
 /**
  * Config options for `generate`
@@ -54,20 +55,19 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
     outFolder = "generated",
     onlyPregenerate = false,
   } = opts;
-  const middlewares = app.getMiddlewares();
+  const resetP = fs.rm(outFolder, { force: true, recursive: true }).then(() => fs.mkdir(outFolder));
+
+  const { middlewares } = app;
   if (!middlewares.some(m => m.name === "staticFiles")) {
-    // when we got passed an app for Cloudflare Workers or similar, add staticFiles etc.
+    // when we get passed an app for Cloudflare Workers or similar, we add staticFiles etc.
     console.info("Did not find a staticFiles middleware, adding defaultMiddlewares.\n");
     middlewares.unshift(...defaultMiddlewares);
   }
-  if (middlewares.some((m) => m.name === "fileRouter")) {
-    await ensureDir(fs.stat("routes"));
-  }
-  await fs.rm(outFolder, { force: true, recursive: true });
-  await fs.mkdir(outFolder);
+  middlewares.push(createRouter(await app.getRoutes()));
 
   const handler = chainMiddlewares(middlewares);
   const ctx: GeneratorContext = { mode: "generator", onlyPregenerate, fetchUpstream };
+  await resetP;
 
   let completeSuccess = true;
   for (const m of middlewares) {
@@ -126,17 +126,38 @@ const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer
   );
 };
 
-const ensureDir = async (statsP: Promise<Stats>) => {
-  const noRoutesMsg = "No 'routes' folder found.\nAre you in the right place?";
-  try {
-    const routesDir = await statsP;
-    if (!routesDir.isDirectory()) {
-      throw new GenerateError(noRoutesMsg);
+const createRouter = (routes: Route[]) => ({
+  name: "router",
+  handler: routeHandler(routes),
+  getStaticPaths: async (ctx: GeneratorContextBase) => {
+    const rs = ctx.onlyPregenerate ? routes.filter((r) => r.pregenerate) : routes;
+    const paths = rs.toReversed().map(async (r) => {
+      if (r.pattern.hasRegExpGroups) {
+        if (typeof r.getStaticPaths !== "function") throw Error(r.name + errMsg);
+        return validateStaticPaths(r.name, await r.getStaticPaths());
+      } else {
+        return r.pattern.pathname;
+      }
+    });
+    return (await Promise.all(paths)).flat();
+  },
+});
+const errMsg = " should export a function named getStaticPaths, returning an array of strings.";
+
+const validateStaticPaths = (name: string, paths: string[]) => {
+  if (!Array.isArray(paths)) throw Error(name + notStringMsg);
+  for (const path of paths) {
+    if (typeof path !== "string") throw Error(name + notStringMsg);
+    if (path[0] !== "/") throw Error(name + "#getStaticPaths: paths must start with a slash (/)");
+    if (!path.endsWith("/") && !extname(path) && !path.startsWith("/.well-known/")) {
+      console.warn(`\nWARNING: ${name} has path ${path} without file extension.
+  Consider renaming route to e.g. ${name.replace(".server", ".html.server")}\n`);
     }
-  } catch (e: any) {
-    throw e.code === "ENOENT" ? new GenerateError(noRoutesMsg) : e;
   }
+  return paths;
 };
+const notStringMsg = "#getStaticPaths must return an array of strings";
+
 
 class GenerateError extends Error {}
 
