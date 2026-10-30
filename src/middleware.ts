@@ -14,34 +14,43 @@ import type { Handler } from "./core/mastro.ts";
  * return new Response(body, { headers, status })`
  * ```
  */
-export type Middleware = MiddlewareHandler | {
-  /** Name by which users can filter the middlewares.  */
-  name: string;
-  /** Fetch handler */
-  handler: MiddlewareHandler;
-  /** Called by the static site generator. */
-  getStaticPaths?: (ctx: GeneratorContextBase) => Promise<string[]> | string[];
-  /** Called by the static site generator when its done. */
-  afterGenerate?: (ctx: GeneratorContextBase) => void;
-};
+export type Middleware<E extends unknown[] = unknown[]> =
+  | MiddlewareHandler<E>
+  | {
+      /** Name by which users can filter the middlewares.  */
+      name: string;
+      /** Fetch handler */
+      handler: MiddlewareHandler<E>;
+      /** Called by the static site generator. */
+      getStaticPaths?: (ctx: GeneratorContextBase) => Promise<string[]> | string[];
+      /** Called by the static site generator when its done. */
+      afterGenerate?: (ctx: GeneratorContextBase) => void;
+    };
 
-export type MiddlewareHandler = (req: Request, ctx: Context) => Promise<Response> | Response;
+export type MiddlewareHandler<E extends unknown[] = unknown[]> = (
+  req: Request,
+  ctx: Context<E>,
+) => Promise<Response> | Response;
 
-export type Context = GeneratorContext | ServerContext
+export type Context<E extends unknown[] = unknown[]> = GeneratorContext | ServerContext<E>;
 export interface GeneratorContextBase {
   mode: "generator";
   onlyPregenerate: boolean;
 }
 export interface GeneratorContext extends GeneratorContextBase {
   fetchUpstream: Handler;
+  extra: [];
 }
-export interface ServerContext {
+export interface ServerContext<E extends unknown[] = unknown[]> {
   fetchUpstream: Handler;
   mode: "server";
   environment: "development" | "production";
-};
+  extra: E;
+}
 
-export const chainMiddlewares = (middlewares: Middleware[]): MiddlewareHandler => {
+export const chainMiddlewares = <E extends unknown[] = unknown[]>(
+  middlewares: Middleware<E>[],
+): MiddlewareHandler<E> => {
   const [m, ...rest] = middlewares;
   if (!m) return (req, ctx) => ctx.fetchUpstream(req); // base case of recursion
 

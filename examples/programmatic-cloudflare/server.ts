@@ -7,9 +7,9 @@ import * as Home from "./handlers/Home.ts";
 const { middlewares } =
   navigator.userAgent === "Cloudflare-Workers" ? {} : await import("../../src/servers/server.ts");
 
-export const app = new Mastro({ middlewares })
+export const app = new Mastro<[Env, ExecutionContext]>({ middlewares })
   .get("/", Home)
-  .get("/text/", (req) => new Response("Here is some plain text"));
+  .get("/text/", (req, env, ctx) => new Response("Here is some plain text"));
 // Add more routes here, see https://mastrojs.github.io/docs/routing/#programmatic-router
 
 export default {

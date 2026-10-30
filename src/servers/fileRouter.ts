@@ -42,9 +42,9 @@ export const loadRoutes = async (routes: FileRoute[], loader: RouteLoader): Prom
       return typeof handler === "function"
         ? ({
             name,
-            handler: (req) => {
+            handler: (req, ...extra) => {
               (req as any)._params = pattern.exec(req.url)?.pathname.groups;
-              return handler(req);
+              return handler(req, ...extra);
             },
             method: method === "ALL" ? "all" : method,
             pattern,

@@ -56,7 +56,7 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   middlewares.push(createRouter(await app.getRoutes()));
 
   const handler = chainMiddlewares(middlewares);
-  const ctx: GeneratorContext = { mode: "generator", onlyPregenerate, fetchUpstream };
+  const ctx: GeneratorContext = { mode: "generator", onlyPregenerate, fetchUpstream, extra: [] };
   await resetP;
 
   let completeSuccess = true;
