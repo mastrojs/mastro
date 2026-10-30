@@ -15,10 +15,19 @@ test("generate: programmatic router with createApp", async (t) => {
   const warnings = t.mock.method(console, "warn", () => {});
   const errors = t.mock.method(console, "error", () => {});
   const app = createApp()
-    .get("/", () => new Response("home"))
+    .get("/", (req, ...extra) => {
+      assert.deepEqual(extra, [], "Generation must not pass middleware context as runtime arguments");
+      return new Response("home");
+    })
     .get("/notfound", () => new Response("oops", { status: 404 }))
     .get("/error", () => { throw Error("thrown route error") })
     .get("/reject", () => Promise.reject(Error("rejected route error")));
+
+  app.middlewares.unshift((req, ctx) => {
+    assert.equal(ctx.mode, "generator");
+    assert.deepEqual(ctx.extra, []);
+    return ctx.fetchUpstream(req);
+  });
 
   const success = await generate(app, { outFolder });
   const diagnostics = [...warnings.mock.calls, ...errors.mock.calls]
