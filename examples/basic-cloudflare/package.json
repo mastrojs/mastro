@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "",
+    "start": "pnpx srvx",
     "dev": "pnpm run generate && wrangler dev",
     "build": "pnpm run generate && wrangler build",
-    "generate": "mastro generate --only-pregenerate",
+    "generate": "mastro write-file-routes && mastro generate --only-pregenerate",
     "deploy": "wrangler deploy",
     "check": "tsc",
     "cf-typegen": "wrangler types"
