@@ -10,9 +10,12 @@ export type HttpMethod = (typeof httpMethods)[number];
 
 /**
  * A fetch handler that takes a standard `Request` and returns a standard `Response`.
- * On some runtimes, there are two more arguments that Mastro passes through.
+ * May take extra arguments that can be typed with e.g. `Handler<[Env, ExecutionContext]>`.
  */
-export type Handler = (req: Request) => Promise<Response> | Response;
+export type Handler<E extends unknown[] = unknown[]> = (
+  req: Request,
+  ...extra: E
+) => Promise<Response> | Response;
 
 /**
  * A Mastro Route
@@ -36,8 +39,8 @@ export interface Route {
   pregenerate?: true;
 }
 
-interface RouteOpts {
-  handler: Handler;
+interface RouteOpts<E extends unknown[]> {
+  handler: Handler<E>;
   getStaticPaths?: () => Promise<string[]> | string[];
   pregenerate?: true;
 }
@@ -45,12 +48,12 @@ interface RouteOpts {
 /**
  * Class to construct an app instance.
  */
-export class Mastro {
-  public middlewares: Middleware[];
+export class Mastro<E extends unknown[] = unknown[]> {
+  public middlewares: Middleware<E>[];
   private routes: Route[] = [];
   private routesPromise?: Route[] | Promise<Route[]>;
 
-  constructor(opts?: { middlewares?: Middleware[]; routes?: Route[] | Promise<Route[]> }) {
+  constructor(opts?: { middlewares?: Middleware<E>[]; routes?: Route[] | Promise<Route[]> }) {
     this.middlewares = opts?.middlewares || [];
     this.routesPromise = opts?.routes;
   }
@@ -61,7 +64,7 @@ export class Mastro {
   }
 
   /** Add route */
-  addRoute(method: "all" | HttpMethod, pathname: string, opts: Handler | RouteOpts): this {
+  addRoute(method: "all" | HttpMethod, pathname: string, opts: Handler<E> | RouteOpts<E>): this {
     if (typeof opts === "function") {
       opts = { handler: opts };
     }
@@ -77,33 +80,33 @@ export class Mastro {
   }
 
   /** Add HTTP GET route */
-  get(pathname: string, handler: Handler | RouteOpts): this {
+  get(pathname: string, handler: Handler<E> | RouteOpts<E>): this {
     return this.addRoute("GET", pathname, handler);
   }
 
   /** Add HTTP POST route */
-  post(pathname: string, handler: Handler | RouteOpts): this {
+  post(pathname: string, handler: Handler<E> | RouteOpts<E>): this {
     return this.addRoute("POST", pathname, handler);
   }
 
   /** Add HTTP PUT route */
-  put(pathname: string, handler: Handler | RouteOpts): this {
+  put(pathname: string, handler: Handler<E> | RouteOpts<E>): this {
     return this.addRoute("PUT", pathname, handler);
   }
 
   /** Add HTTP DELETE route */
-  delete(pathname: string, handler: Handler | RouteOpts): this {
+  delete(pathname: string, handler: Handler<E> | RouteOpts<E>): this {
     return this.addRoute("DELETE", pathname, handler);
   }
 
   /** Create fetch handler */
-  createHandler(ctx?: Partial<ServerContext>): Handler {
+  createHandler(ctx?: Partial<Pick<ServerContext<E>, "environment" | "fetchUpstream">>): Handler<E> {
     const handler = chainMiddlewares([...this.middlewares, routeHandler(this.getRoutes())]);
-    return async (req) => {
+    return async (req, ...extra) => {
       const isDev = isDevServer(new URL(req.url));
       const environment = isDev ? "development" : "production";
       try {
-        return await handler(req, { mode: "server", environment, fetchUpstream, ...ctx });
+        return await handler(req, { environment, fetchUpstream, ...ctx, extra, mode: "server" });
       } catch (e: any) {
         const msg = `500 Internal Server Error\n\n${isDev ? e.stack || e : e.name || ""}`;
         return new Response(msg, { status: 500 });

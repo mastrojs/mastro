@@ -1,4 +1,5 @@
-import type { Handler, Route } from "./mastro.ts";
+import type { MiddlewareHandler } from "../middleware.ts";
+import type { Route } from "./mastro.ts";
 
 /**
  * Attempts to determine whether we're running a development or production server.
@@ -11,7 +12,7 @@ export const isDevServer = (url: URL): boolean => url.hostname === "localhost";
 
 export const fetchUpstream = (): Response => new Response("Not found", { status: 404 });
 
-export const routeHandler = (rs: Route[] | Promise<Route[]>): Handler => async (req: Request) => {
+export const routeHandler = (rs: Route[] | Promise<Route[]>): MiddlewareHandler => async (req, ctx) => {
   const routes = await rs;
   const method = req.method.toUpperCase();
   const url = new URL(req.url);
@@ -40,7 +41,7 @@ export const routeHandler = (rs: Route[] | Promise<Route[]>): Handler => async (
         );
       }
       */
-      const res = await route.handler(req);
+      const res = await route.handler(req, ...ctx.extra);
       if (res instanceof Response) {
         if (isDev) console.info(logPrefix + route.name);
         return res;

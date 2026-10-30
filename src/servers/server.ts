@@ -16,11 +16,11 @@ export const middlewares: Middleware[] = [ fingerprintAssets, tsToJs, staticFile
 /**
  * Creates an app with the programmatic router.
  */
-export const createApp = (): Mastro =>
+export const createApp = <E extends unknown[]>(): Mastro<E> =>
   new Mastro({ middlewares });
 
 /**
  * Creates an app with the file-based router.
  */
-export const createFileRouterApp = (): Mastro =>
+export const createFileRouterApp = <E extends unknown[]>(): Mastro<E> =>
   new Mastro({ middlewares, routes: loadFileRoutes() });
