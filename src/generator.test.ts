@@ -37,9 +37,9 @@ test("generate: programmatic router with createApp", async (t) => {
   assert.match(diagnostics, /rejected route error/);
 });
 
-const mastroCli = fileURLToPath(new URL("./generator.ts", import.meta.url));
+const mastroCli = fileURLToPath(new URL("./cli.ts", import.meta.url));
 
-test("generator: fails on missing routes folder", async (t) => {
+test("generator: fails on missing server file", async (t) => {
   const cwd = await mkdtemp(join(tmpdir(), "mastro-test-"));
   t.after(() => rm(cwd, { recursive: true, force: true }));
 
@@ -52,39 +52,41 @@ test("generator: fails on missing routes folder", async (t) => {
   assert.ifError(result.error);
   assert.equal(result.status, 1, result.stderr);
   assert.ok(
-    result.stderr.includes("No 'routes' folder found.\nAre you in the right place?"),
+    result.stderr.includes("No `server.ts` or `server.js` file found in the project directory."),
     result.stderr,
   );
 });
 
-test("generator: generates the basic-node example", async (t) => {
-  const cwd = await mkdtemp(join(tmpdir(), "mastro-test-"));
-  t.after(() => rm(cwd, { recursive: true, force: true }));
+for (const name of ["basic-node", "basic-bun"]) {
+  test(`generator: generates the ${name} example`, async (t) => {
+    const cwd = await mkdtemp(join(tmpdir(), "mastro-test-"));
+    t.after(() => rm(cwd, { recursive: true, force: true }));
 
-  const example = fileURLToPath(new URL("../examples/basic-node/", import.meta.url));
-  await cp(example, cwd, {
-    recursive: true,
-    filter: (source) => !["node_modules", "generated"].includes(basename(source)),
+    const example = fileURLToPath(new URL(`../examples/${name}/`, import.meta.url));
+    await cp(example, cwd, {
+      recursive: true,
+      filter: (source) => !["node_modules", "generated"].includes(basename(source)),
+    });
+    // Reuse installed workspace dependencies without copying pnpm's relative symlinks.
+    await symlink(join(example, "node_modules"), join(cwd, "node_modules"), "junction");
+
+    const result = spawnSync(process.execPath, [mastroCli, "generate"], {
+      cwd,
+      encoding: "utf8",
+      timeout: 10_000,
+    });
+
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+
+    const html = await readFile(join(cwd, "generated/index.html"), "utf8");
+    assert.match(html, /<title>Hello World<\/title>/);
+    assert.match(html, /<h1>Hello World<\/h1>/);
+    assert.match(html, /<p>Welcome!<\/p>/);
+    assert.match(html, /href="\/styles\.css"/);
+    assert.match(
+      await readFile(join(cwd, "generated/styles.css"), "utf8"),
+      /font-family: sans-serif;/
+    );
   });
-  // Reuse installed workspace dependencies without copying pnpm's relative symlinks.
-  await symlink(join(example, "node_modules"), join(cwd, "node_modules"), "junction");
-
-  const result = spawnSync(process.execPath, [mastroCli, "generate"], {
-    cwd,
-    encoding: "utf8",
-    timeout: 10_000,
-  });
-
-  assert.ifError(result.error);
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-
-  const html = await readFile(join(cwd, "generated/index.html"), "utf8");
-  assert.match(html, /<title>Hello World<\/title>/);
-  assert.match(html, /<h1>Hello World<\/h1>/);
-  assert.match(html, /<p>Welcome!<\/p>/);
-  assert.match(html, /href="\/styles\.css"/);
-  assert.match(
-    await readFile(join(cwd, "generated/styles.css"), "utf8"),
-    /font-family: sans-serif;/
-  );
-});
+}

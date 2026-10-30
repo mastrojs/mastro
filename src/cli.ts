@@ -8,7 +8,6 @@ import { parseArgs, type ParseArgsOptionDescriptor } from "node:util";
 import type { Mastro } from "./core/mastro.ts";
 import { generate, GenerateError } from "./generator.ts";
 import { findRoutes } from "./servers/fileRouter.ts";
-import { createFileRouterApp } from "./servers/server.ts";
 
 const main = async () => {
   const options: { [opt: string]: ParseArgsOptionDescriptor & { description: string } } = {
@@ -25,41 +24,43 @@ const main = async () => {
       type: "boolean",
     },
   };
-  try {
-    const { values, positionals } = parseArgs({ options, allowPositionals: true });
-    switch (positionals[0]) {
-      case "generate":
-        return mastroGenerate(values);
-      case "write-file-routes":
-        return writeFileRoutes();
-      default: {
-        const unknownCmd = positionals[0] !== "help";
-        if (unknownCmd) console.info(`'${positionals[0]}' is not a valid mastro command.`);
-        const keys = Object.keys(options);
-        const maxKeyLen = Math.max(...keys.map((k) => k.length));
-        const opts = keys.map(
-          (key) => `    --${key.padEnd(maxKeyLen)}  ${options[key]?.description}`,
-        );
-        console.info(`The 'mastro' CLI has the following commands:\n
+  const { values, positionals } = parseArgs({ options, allowPositionals: true });
+  switch (positionals[0]) {
+    case "generate":
+      return mastroGenerate(values);
+    case "write-file-routes":
+      return writeFileRoutes();
+    default: {
+      const unknownCmd = positionals[0] !== "help";
+      if (unknownCmd) console.info(`'${positionals[0]}' is not a valid mastro command.`);
+      const keys = Object.keys(options);
+      const maxKeyLen = Math.max(...keys.map((k) => k.length));
+      const opts = keys.map(
+        (key) => `    --${key.padEnd(maxKeyLen)}  ${options[key]?.description}`,
+      );
+      console.info(`The 'mastro' CLI has the following commands:\n
 generate a static site\n  mastro generate [options]\n${opts.join("\n")}\n
 print this help page\n  mastro help\n
 write a \`.routes.ts\` file (e.g. for Cloudflare or Service Workers)\n  mastro write-routes\n`);
-        if (unknownCmd) process.exit(1);
-      }
+      if (unknownCmd) process.exit(1);
     }
-  } catch (e: any) {
-    console.error(`\n${e instanceof GenerateError ? e.message : e}`);
-    process.exit(1);
   }
 };
 
 const mastroGenerate = async (values: ReturnType<typeof parseArgs>["values"]) => {
-  const server = exists("server.ts") || exists("server.js");
-  if (!server) {
-    console.info("Using file-based router.");
+  const serverPath = exists("server.ts") || exists("server.js");
+  const example = "`export const app = new Mastro()` or similar.";
+  if (!serverPath) {
+    throw new GenerateError(
+      "No `server.ts` or `server.js` file found in the project directory.\nCreate one containing " +
+        example,
+    );
   }
-  const app = server ? await import(server).then((m) => m.app as Mastro) : createFileRouterApp();
-  const success = await generate(app, {
+  // if we had https://github.com/nodejs/node/issues/63096, we could start server without server.ts:
+  // const app = server ? await import(server).then((m) => m.app as Mastro) : createFileRouterApp();
+  const { app } = await import(serverPath);
+  if (!app) throw new GenerateError(serverPath + "\nis missing " + example);
+  const success = await generate(app as Mastro, {
     baseUrl: values["base-url"] as string | undefined,
     outFolder: values.output as string | undefined,
     onlyPregenerate: !!values["only-pregenerate"],
@@ -82,4 +83,7 @@ export const routes = loadRoutes(${JSON.stringify(await findRoutes(), null, 2)},
   return fs.writeFile(".routes.ts", contents);
 };
 
-await main();
+await main().catch((e) => {
+  console.error(`\n${e instanceof GenerateError ? e.message : e}`);
+  process.exit(1);
+});

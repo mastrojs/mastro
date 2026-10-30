@@ -7,7 +7,6 @@
 
 import type { Mastro, Route } from "./core/mastro.ts";
 import { chainMiddlewares, type Context, type GeneratorContext, type GeneratorContextBase, type MiddlewareHandler } from "./middleware.ts";
-import { middlewares } from "./servers/server.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
 import { extname } from "node:path";
 
@@ -15,10 +14,6 @@ import { extname } from "node:path";
  * Config options for `generate`
  */
 export interface GenerateOpts {
-  /**
-   * Files in this folder get hashed output names. Default is `_assets`, empty string to disable.
-   */
-  assetsFolder?: string;
   /**
    * Base URL for the synthetic requests sent by the generator. Default is http://127.0.0.1
    * to make them distinguishable from requests from localhost (see `isDevServer`).
@@ -85,7 +80,7 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   }
   if (completeSuccess) {
     await Promise.all(middlewares.map((m) => "afterGenerate" in m ? m.afterGenerate?.(ctx) : null));
-    console.info(`Generated static site and wrote to ${outFolder} folder.`);
+    console.info(`Generated static site and wrote to \`${outFolder}\` folder.`);
   }
   return completeSuccess;
 };
