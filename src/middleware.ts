@@ -33,7 +33,7 @@ export type MiddlewareHandler<E extends unknown[] = unknown[]> = (
 ) => Promise<Response> | Response;
 
 export type Context<E extends unknown[] = unknown[]> = GeneratorContext | ServerContext<E>;
-export interface GeneratorContextBase {
+interface GeneratorContextBase {
   mode: "generator";
   onlyPregenerate: boolean;
   extra: [];

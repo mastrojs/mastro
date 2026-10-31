@@ -6,7 +6,7 @@
  */
 
 import type { Mastro, Route } from "./core/mastro.ts";
-import { chainMiddlewares, type Context, type GeneratorContext, type GeneratorContextBase, type MiddlewareHandler } from "./middleware.ts";
+import { chainMiddlewares, type Context, type GeneratorContext, type Middleware, type MiddlewareHandler } from "./middleware.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
 import { extname } from "node:path";
 
@@ -116,10 +116,10 @@ const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer
   );
 };
 
-const createRouter = (routes: Route[]) => ({
+const createRouter = (routes: Route[]): Middleware => ({
   name: "router",
   handler: routeHandler(routes),
-  getStaticPaths: async (ctx: GeneratorContextBase) => {
+  getStaticPaths: async (ctx) => {
     const rs = ctx.onlyPregenerate ? routes.filter((r) => r.pregenerate) : routes;
     const paths = rs.toReversed().map(async (r) => {
       if (r.pattern.hasRegExpGroups) {
