@@ -1,6 +1,15 @@
 {
   "name": "@mastrojs/mastro",
   "version": "0.9.0",
+  "description": "No dependencies,  no build step. Just a simple web framework and site generator.",
+  "homepage": "https://mastrojs.github.io",
+  "bugs": "https://github.com/mastrojs/mastro/issues",
+  "license": "MIT",
+  "type": "module",
+    "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git"
+  },
   "scripts": {
     "check": "tsc --noEmit",
     "prepack": "tsc",
@@ -37,19 +46,15 @@
       }
     }
   },
-  "type": "module",
   "files": [
     "README.md",
     "dist",
-    "src"
+    "src",
+    "!**/*.test.*",
+    "!**/*.bench.*"
   ],
-  "description": "No dependencies,  no build step. Just a simple web framework and site generator.",
-  "homepage": "https://mastrojs.github.io",
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
   "devDependencies": {
-    "@types/node": "^26",
+    "@types/node": "^24",
     "oxfmt": "^0.75.0",
     "typescript": "^7"
   },
