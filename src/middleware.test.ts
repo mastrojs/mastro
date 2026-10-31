@@ -20,6 +20,8 @@ test("chainMiddlewares", async () => {
     new Request("http://localhost/"),
     {
       mode: "generator",
+      onlyPregenerate: false,
+      extra: [],
       fetchUpstream: () => Promise.resolve(new Response("welcome")),
     },
   );

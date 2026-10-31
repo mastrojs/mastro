@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+//@ts-expect-error node:bench is only defined in types for node v27
 import { bench } from "node:bench";
 import "node:process";
 import { type Html, html } from "./html.ts";
@@ -6,7 +7,7 @@ import { htmlToResponse, sseResponse } from "./responses.ts";
 
 const OPS_PER_SAMPLE = 100;
 export const runBench = (name: string, fn: () => Promise<void>): ReturnType<bench> =>
-  bench(name, async (b) => {
+  bench(name, async (b: any) => {
     b.start();
     for (let i = 0; i < OPS_PER_SAMPLE; i++) await fn();
     b.end(OPS_PER_SAMPLE);
