@@ -148,6 +148,3 @@ const validateStaticPaths = (name: string, paths: string[]) => {
   return paths;
 };
 const notStringMsg = "#getStaticPaths must return an array of strings";
-
-
-export class GenerateError extends Error {}

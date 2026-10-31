@@ -6,8 +6,10 @@ import { pathToFileURL } from "node:url";
 import { parseArgs, type ParseArgsOptionDescriptor } from "node:util";
 
 import type { Mastro } from "./core/mastro.ts";
-import { generate, GenerateError } from "./generator.ts";
+import { generate } from "./generator.ts";
 import { findRoutes } from "./servers/fileRouter.ts";
+
+class GenerateError extends Error {}
 
 const main = async () => {
   const options: { [opt: string]: ParseArgsOptionDescriptor & { description: string } } = {
