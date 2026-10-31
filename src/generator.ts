@@ -56,7 +56,8 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   middlewares.push(createRouter(await app.getRoutes()));
 
   const handler = chainMiddlewares(middlewares);
-  const ctx: GeneratorContext = { mode: "generator", onlyPregenerate, fetchUpstream, extra: [] };
+  const ctx = { mode: "generator" as const, onlyPregenerate, extra: [] as [] };
+  const ctxWithFetchUpstream: GeneratorContext = { ...ctx, fetchUpstream };
   await resetP;
 
   let completeSuccess = true;
@@ -64,7 +65,7 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
     if ("getStaticPaths" in m && m.getStaticPaths) {
       for (const path of await m.getStaticPaths(ctx)) {
         // TODO: parallelize without opening too many file handles at once
-        const file = await generatePage(handler, new URL(baseUrl + path), ctx);
+        const file = await generatePage(handler, new URL(baseUrl + path), ctxWithFetchUpstream);
         if (file === false) {
           completeSuccess = false;
         } else if (file) {

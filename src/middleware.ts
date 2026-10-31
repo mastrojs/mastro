@@ -17,38 +17,38 @@ import type { Handler } from "./core/mastro.ts";
 export type Middleware<E extends unknown[] = unknown[]> =
   | MiddlewareHandler<E>
   | {
-      /** Name by which users can filter the middlewares.  */
+      /** Name by which users can identify the middlewares. */
       name: string;
       /** Fetch handler */
       handler: MiddlewareHandler<E>;
       /** Called by the static site generator. */
-      getStaticPaths?: (ctx: GeneratorContextBase) => Promise<string[]> | string[];
+      getStaticPaths?: (ctx: Omit<GeneratorContext, "fetchUpstream">) => Promise<string[]> | string[];
       /** Called by the static site generator when its done. */
-      afterGenerate?: (ctx: GeneratorContextBase) => void;
+      afterGenerate?: (ctx: Omit<GeneratorContext, "fetchUpstream">) => void;
     };
 
-export type MiddlewareHandler<E extends unknown[] = unknown[]> = (
+export type MiddlewareHandler<E = unknown[]> = (
   req: Request,
   ctx: Context<E>,
 ) => Promise<Response> | Response;
 
-export type Context<E extends unknown[] = unknown[]> = GeneratorContext | ServerContext<E>;
-interface GeneratorContextBase {
+export type Context<E = unknown[]> = GeneratorContext | ServerContext<E>;
+
+export interface GeneratorContext {
+  fetchUpstream: Handler;
   mode: "generator";
   onlyPregenerate: boolean;
   extra: [];
 }
-export interface GeneratorContext extends GeneratorContextBase {
-  fetchUpstream: Handler;
-}
-export interface ServerContext<E extends unknown[] = unknown[]> {
+
+export interface ServerContext<E> {
   fetchUpstream: Handler;
   mode: "server";
   environment: "development" | "production";
   extra: E;
 }
 
-export const chainMiddlewares = <E extends unknown[] = unknown[]>(
+export const chainMiddlewares = <E extends unknown[]>(
   middlewares: Middleware<E>[],
 ): MiddlewareHandler<E> => {
   const [m, ...rest] = middlewares;
@@ -61,8 +61,11 @@ export const chainMiddlewares = <E extends unknown[] = unknown[]>(
     if (!(res instanceof Response)) {
       throw new Error(`Function ${handler.name || "<anonymous>"} did not return a Response object`);
     } else if (res.status >= 500) {
-      throw new Error(`Function ${handler.name || "<anonymous>"} returned HTTP ${
-        res.status}: ${await res.text()}`);
+      throw new Error(
+        `Function ${handler.name || "<anonymous>"} returned HTTP ${
+          res.status
+        }: ${await res.text()}`,
+      );
     }
     // what about 404s and other non-200 responses?
     return res;
