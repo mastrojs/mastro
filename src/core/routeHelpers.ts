@@ -12,7 +12,7 @@ export const isDevServer = (url: URL): boolean => url.hostname === "localhost";
 
 export const fetchUpstream = (): Response => new Response("Not found", { status: 404 });
 
-export const routeHandler = (rs: Route[] | Promise<Route[]>): MiddlewareHandler => async (req, ctx) => {
+export const routeHandler = <E extends unknown[]>(rs: Route<E>[] | Promise<Route<E>[]>): MiddlewareHandler<E> => async (req, ctx) => {
   const routes = await rs;
   const method = req.method.toUpperCase();
   const url = new URL(req.url);

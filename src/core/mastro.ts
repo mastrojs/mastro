@@ -20,14 +20,14 @@ export type Handler<E extends unknown[] = unknown[]> = (
 /**
  * A Mastro Route
  */
-export interface Route {
+export interface Route<E extends unknown[] = unknown[]> {
   /**
    * Name of the route for error messages etc.
    * For file-based routes the `filePath`, e.g. `/routes/index.server.ts`
    */
   name: string;
   /** Fetch handler */
-  handler: Handler;
+  handler: Handler<E>;
   /** HTTP method, or "all" if the route should match any HTTP method. */
   method: "all" | HttpMethod;
   /** `URLPattern` with `pathname` set */
@@ -50,16 +50,16 @@ interface RouteOpts<E extends unknown[]> {
  */
 export class Mastro<E extends unknown[] = unknown[]> {
   public middlewares: Middleware<E>[];
-  private routes: Route[] = [];
-  private routesPromise?: Route[] | Promise<Route[]>;
+  private routes: Route<E>[] = [];
+  private routesPromise?: Route<E>[] | Promise<Route<E>[]>;
 
-  constructor(opts?: { middlewares?: Middleware<E>[]; routes?: Route[] | Promise<Route[]> }) {
+  constructor(opts?: { middlewares?: Middleware<E>[]; routes?: Route<E>[] | Promise<Route<E>[]> }) {
     this.middlewares = opts?.middlewares || [];
     this.routesPromise = opts?.routes;
   }
 
   /** Get all routes */
-  async getRoutes(): Promise<Route[]> {
+  async getRoutes(): Promise<Route<E>[]> {
     return ((await this.routesPromise) || []).concat(this.routes);
   }
 
@@ -70,7 +70,7 @@ export class Mastro<E extends unknown[] = unknown[]> {
     }
     this.routes.push({
       getStaticPaths: opts.getStaticPaths || (() => [pathname]),
-      handler: opts.handler as Handler,
+      handler: opts.handler,
       method,
       name: pathname,
       pattern: new URLPattern({ pathname }),

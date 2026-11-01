@@ -32,13 +32,13 @@ export type MiddlewareHandler<E = unknown[]> = (
   ctx: Context<E>,
 ) => Promise<Response> | Response;
 
-export type Context<E = unknown[]> = GeneratorContext | ServerContext<E>;
+export type Context<E = unknown[]> = GeneratorContext<E> | ServerContext<E>;
 
-export interface GeneratorContext {
+export interface GeneratorContext<E = []> {
   fetchUpstream: Handler;
   mode: "generator";
   onlyPregenerate: boolean;
-  extra: [];
+  extra: E;
 }
 
 export interface ServerContext<E> {
