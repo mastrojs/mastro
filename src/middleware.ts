@@ -14,23 +14,18 @@ import type { Handler } from "./core/mastro.ts";
  * return new Response(body, { headers, status })`
  * ```
  */
-export type Middleware<E extends unknown[] = unknown[]> =
-  | MiddlewareHandler<E>
+export type Middleware<E = unknown[]> =
+  | Handler<[Context<E>]>
   | {
       /** Name by which users can identify the middlewares. */
       name: string;
       /** Fetch handler */
-      handler: MiddlewareHandler<E>;
+      handler: Handler<[Context<E>]>;
       /** Called by the static site generator. */
       getStaticPaths?: (ctx: Omit<GeneratorContext, "fetchUpstream">) => Promise<string[]> | string[];
       /** Called by the static site generator when its done. */
       afterGenerate?: (ctx: Omit<GeneratorContext, "fetchUpstream">) => void;
     };
-
-export type MiddlewareHandler<E = unknown[]> = (
-  req: Request,
-  ctx: Context<E>,
-) => Promise<Response> | Response;
 
 export type Context<E = unknown[]> = GeneratorContext<E> | ServerContext<E>;
 
@@ -48,9 +43,7 @@ export interface ServerContext<E> {
   extra: E;
 }
 
-export const chainMiddlewares = <E extends unknown[]>(
-  middlewares: Middleware<E>[],
-): MiddlewareHandler<E> => {
+export const chainMiddlewares = <E>(middlewares: Middleware<E>[]): Handler<[Context<E>]> => {
   const [m, ...rest] = middlewares;
   if (!m) return (req, ctx) => ctx.fetchUpstream(req); // base case of recursion
 

@@ -5,8 +5,8 @@
  * @module
  */
 
-import type { Mastro, Route } from "./core/mastro.ts";
-import { chainMiddlewares, type Context, type GeneratorContext, type Middleware, type MiddlewareHandler } from "./middleware.ts";
+import type { Handler, Mastro, Route } from "./core/mastro.ts";
+import { chainMiddlewares, type Context, type GeneratorContext, type Middleware } from "./middleware.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
 import { extname } from "node:path";
 
@@ -86,7 +86,7 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   return completeSuccess;
 };
 
-const generatePage = async (handler: MiddlewareHandler, url: URL, ctx: Context) => {
+const generatePage = async (handler: Handler<[Context]>, url: URL, ctx: Context) => {
   const { pathname } = url;
   try {
     const req = new Request(url);
