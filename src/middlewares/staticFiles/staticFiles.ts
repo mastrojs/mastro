@@ -5,6 +5,7 @@ import { extname } from "node:path";
 import { contentTypeFromExt } from "./mediaTypes.ts";
 import { findFiles } from "../../core/fs.ts";
 import type { Context, Middleware } from "../../middleware.ts";
+import { staticCacheControlVal } from "../../core/routeHelpers.ts";
 
 /**
  * Serve static files in routes folder (excluding *.client.ts, *.server.ts and *.server.js files)
@@ -34,12 +35,8 @@ export const tryServeFile = async (req: Request, path: string): Promise<Response
   if (res.status === 404 || res.status === 405) {
     return;
   } else {
-    /*
     const cacheHeader = staticCacheControlVal(req);
-    if (cacheHeader) {
-      res.headers.set("Cache-Control", cacheHeader);
-    }
-    */
+    if (cacheHeader) res.headers.set("Cache-Control", cacheHeader);
     return res;
   }
 };

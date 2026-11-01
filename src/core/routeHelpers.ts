@@ -10,6 +10,9 @@ import type { Handler, Route } from "./mastro.ts";
  */
 export const isDevServer = (url: URL): boolean => url.hostname === "localhost";
 
+export const staticCacheControlVal = (req: Request): string | undefined =>
+  isDevServer(new URL(req.url)) ? "max-age=0" : undefined;
+
 export const fetchUpstream = (): Response => new Response("Not found", { status: 404 });
 
 export const routeHandler = <E extends unknown[]>(rs: Route<E>[] | Promise<Route<E>[]>): Handler<[Context<E>]> => async (req, ctx) => {
