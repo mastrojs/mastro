@@ -22,9 +22,9 @@ export type Middleware<E = unknown[]> =
       /** Fetch handler */
       handler: Handler<[Context<E>]>;
       /** Called by the static site generator. */
-      getStaticPaths?: (ctx: Omit<GeneratorContext, "fetchUpstream">) => Promise<string[]> | string[];
+      getStaticPaths?: (ctx: GeneratorContextSimple) => Promise<string[]> | string[];
       /** Called by the static site generator when its done. */
-      afterGenerate?: (ctx: Omit<GeneratorContext, "fetchUpstream">) => void;
+      afterGenerate?: (ctx: GeneratorContextSimple) => void;
     };
 
 export type Context<E = unknown[]> = GeneratorContext<E> | ServerContext<E>;
@@ -35,6 +35,8 @@ export interface GeneratorContext<E = []> {
   onlyPregenerate: boolean;
   extra: E;
 }
+
+export type GeneratorContextSimple = Omit<GeneratorContext, "fetchUpstream">;
 
 export interface ServerContext<E> {
   fetchUpstream: Handler;

@@ -6,7 +6,7 @@
  */
 
 import type { Handler, Mastro, Route } from "./core/mastro.ts";
-import { chainMiddlewares, type Context, type GeneratorContext, type Middleware } from "./middleware.ts";
+import { chainMiddlewares, type Context, type GeneratorContext, type GeneratorContextSimple, type Middleware } from "./middleware.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
 import { extname } from "node:path";
 
@@ -56,7 +56,7 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   middlewares.push(createRouter(await app.getRoutes()));
 
   const handler = chainMiddlewares(middlewares);
-  const ctx = { mode: "generator" as const, onlyPregenerate, extra: [] as [] };
+  const ctx: GeneratorContextSimple = { mode: "generator", onlyPregenerate, extra: [] };
   const ctxWithFetchUpstream: GeneratorContext = { ...ctx, fetchUpstream };
   await resetP;
 
