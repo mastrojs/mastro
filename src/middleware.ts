@@ -17,13 +17,13 @@ import type { Handler } from "./core/mastro.ts";
 export type Middleware<E = unknown[]> =
   | Handler<[Context<E>]>
   | {
-      /** Name by which users can identify the middlewares. */
+      /** Name by which users can identify the middleware. */
       name: string;
-      /** Fetch handler */
+      /** Fetch handler like `handler = (req, ctx) => ctx.fetchUpstream(req)` */
       handler: Handler<[Context<E>]>;
       /** Called by the static site generator. */
       getStaticPaths?: (ctx: GeneratorContextSimple) => Promise<string[]> | string[];
-      /** Called by the static site generator when its done. */
+      /** Called by the static site generator after generating all pages. */
       afterGenerate?: (ctx: GeneratorContextSimple) => void;
     };
 
@@ -62,7 +62,7 @@ export const chainMiddlewares = <E>(middlewares: Middleware<E>[]): Handler<[Cont
         }: ${await res.text()}`,
       );
     }
-    // what about 404s and other non-200 responses?
+    // TODO: what about 404s and other non-200 responses?
     return res;
   };
 };
