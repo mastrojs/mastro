@@ -9,6 +9,7 @@ import type { Handler, Mastro, Route } from "./core/mastro.ts";
 import { chainMiddlewares, type Context, type GeneratorContext, type GeneratorContextSimple, type Middleware } from "./middleware.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
 import { extname } from "node:path";
+import { hasRouteParams } from "./servers/fileRouter.ts";
 
 /**
  * Config options for `generate`
@@ -123,7 +124,7 @@ const createRouter = (routes: Route[]): Middleware => ({
   getStaticPaths: async (ctx) => {
     const rs = ctx.onlyPregenerate ? routes.filter((r) => r.pregenerate) : routes;
     const paths = rs.toReversed().map(async (r) => {
-      if (r.pattern.hasRegExpGroups) {
+      if (hasRouteParams(r.name)) {
         if (typeof r.getStaticPaths !== "function") throw Error(r.name + errMsg);
         return validateStaticPaths(r.name, await r.getStaticPaths());
       } else {
@@ -134,6 +135,7 @@ const createRouter = (routes: Route[]): Middleware => ({
   },
 });
 const errMsg = " should export a function named getStaticPaths, returning an array of strings.";
+
 
 const validateStaticPaths = (name: string, paths: string[]) => {
   if (!Array.isArray(paths)) throw Error(name + notStringMsg);

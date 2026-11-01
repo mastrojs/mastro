@@ -92,5 +92,11 @@ const toPattern = (filePath: string) => {
   return "/" + parts.join("/");
 };
 
+/**
+ * Returns true iff the given `filePath` contains dynamic route parameters.
+ */
+export const hasRouteParams = (filePath: string): boolean =>
+  filePath.split(sep).some((segment) => segment.match(paramRegex));
+
 const indexRegex = /^index(\.html)?\.server\.(ts|js)$/;
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;
