@@ -171,7 +171,7 @@ importers:
         version: 24.19.2
       node:
         specifier: runtime:26.x
-        version: runtime:26.12.1
+        version: runtime:26.13.0
       oxfmt:
         specifier: ^0.75.0
         version: 0.75.0
@@ -203,7 +203,7 @@ importers:
         version: 7.0.2
       wrangler:
         specifier: ^4
-        version: 4.152.0(@types/node@24.19.2)
+        version: 4.156.0(@types/node@24.19.2)
 
   examples/basic-node:
     dependencies:
@@ -216,7 +216,29 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^26
-        version: 26.6.5
+        version: 26.6.6
+      node:
+        specifier: runtime:26.x
+        version: runtime:26.13.0
+      typescript:
+        specifier: ^7
+        version: 7.0.2
+
+  examples/blog:
+    dependencies:
+      '@mastrojs/markdown':
+        specifier: jsr:@mastrojs/markdown@0.2.2
+        version: '@jsr/mastrojs__markdown@0.2.2(supports-color@10.2.2)'
+      '@mastrojs/mastro':
+        specifier: ^0
+        version: link:../..
+      '@remix-run/node-fetch-server':
+        specifier: ^1
+        version: 1.0.0
+    devDependencies:
+      '@types/node':
+        specifier: ^26
+        version: 26.6.6
       node:
         specifier: runtime:26.x
         version: runtime:26.13.0
@@ -257,7 +279,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.56.0
-        version: 4.152.0(@types/node@24.19.2)
+        version: 4.156.0(@types/node@24.19.2)
 
   examples/programmatic-cloudflare:
     dependencies:
@@ -270,7 +292,29 @@ importers:
         version: 7.0.2
       wrangler:
         specifier: ^4
-        version: 4.152.0(@types/node@24.19.2)
+        version: 4.156.0(@types/node@24.19.2)
+
+  examples/todo-list-server:
+    dependencies:
+      '@mastrojs/mastro':
+        specifier: ^0
+        version: link:../..
+      '@mastrojs/reactive':
+        specifier: jsr:@mastrojs/reactive@0
+        version: '@jsr/mastrojs__reactive@0.4.1'
+      '@remix-run/node-fetch-server':
+        specifier: ^1
+        version: 1.0.0
+    devDependencies:
+      '@types/node':
+        specifier: ^26
+        version: 26.6.6
+      node:
+        specifier: runtime:26.x
+        version: runtime:26.13.0
+      typescript:
+        specifier: ^7
+        version: 7.0.2
 
 packages:
 
@@ -287,32 +331,32 @@ packages:
       workerd:
         optional: true
 
-  '@cloudflare/workerd-darwin-64@1.20261019.1':
-    resolution: {integrity: sha512-5ZILbAta/fBQvhmAYeCE7dKMMYIr7N9wJEX50fEGLKSIwGtvT0HzSfHNIK/O7cBQ4gHQ2WfIiPClvwcye6E0fA==}
+  '@cloudflare/workerd-darwin-64@1.20261023.1':
+    resolution: {integrity: sha512-lsEx0i7nR0PNG/erUFFHmQmiidEhLfDE5uQmAL9421/y4/ycuxDDOSaxu3VGGYFFPK5sduyUeMmjIlX4CwOBFg==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [darwin]
 
-  '@cloudflare/workerd-darwin-arm64@1.20261019.1':
-    resolution: {integrity: sha512-cww2Ab6lVMxpTiEEjKmPI58p5EMo0vYTZSH+3WkqXJdQgc3ES66GuL247+U2B2YWajhhu2tqj7jySrXneU749g==}
+  '@cloudflare/workerd-darwin-arm64@1.20261023.1':
+    resolution: {integrity: sha512-5e79fHgabdDD8EgmjOhJ1S+xMsf6DbC7fL7IgTBizMnzOp0P2isDn7pYmUxI9AJZE9FVQ4RUilH/I36YNg+GQQ==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
 
-  '@cloudflare/workerd-linux-64@1.20261019.1':
-    resolution: {integrity: sha512-4++VRi9vkQROYqrpZYOixIJuVDmujkwrT4kszsxNFlvcmsX6Mr2GumvxIN3gIixS3vJUh3Umdtkthqj5X0S3Xw==}
+  '@cloudflare/workerd-linux-64@1.20261023.1':
+    resolution: {integrity: sha512-VHQ6jKFSihjR2+x1buby8XTdBLLJztVnYiB7OLOTYO8aDXB+c1Rd2410PdgFuFYc4AgFEk6PCJLyCLL5L1KBnw==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [linux]
 
-  '@cloudflare/workerd-linux-arm64@1.20261019.1':
-    resolution: {integrity: sha512-75PVtJOwfjScQ53sbLtQXI7D8yP1c21t+WEUPaYbqkzaz4ZqfR5wAd+zuWs8G5Q7kOj2SQIvEfY5Sn8Y+UVrnA==}
+  '@cloudflare/workerd-linux-arm64@1.20261023.1':
+    resolution: {integrity: sha512-ilpRHzfDN8YFRM5CLRKuFw40x/LJBS89yVdhdQmxehlVDuBqjKpJB++zPFbTgKRRFaNupgnXc8RHktXAIhgCmQ==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
-  '@cloudflare/workerd-windows-64@1.20261019.1':
-    resolution: {integrity: sha512-z49fvKTETMCnG6wnMcQwxx9CpryFceiKz04FRjq26EkhCyzRNJ6c3UXhyZz3r5f1CXnnBZc5DcU8ZouPkUJCqw==}
+  '@cloudflare/workerd-windows-64@1.20261023.1':
+    resolution: {integrity: sha512-279WLVjNsMycAwr0EZNiNEf0l2SY6NUtsN80NwZzbTHzakmiN+WSx4w38muxPm+PAU0oSPPAPXKVD+H6Hya8xw==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -811,8 +855,59 @@ packages:
   '@jsr/mastrojs__markdown@0.1.5':
     resolution: {integrity: sha512-r0pxs3fF54z50Rk6aqLeK6GSvpfNWRPf691bH9EWkomFz9Tk93sRXwatGLOyUhVXNtaVNGmeIWL5fn1DS0nsYw==, tarball: https://npm.jsr.io/~/11/@jsr/mastrojs__markdown/0.1.5.tgz}
 
+  '@jsr/mastrojs__markdown@0.2.2':
+    resolution: {integrity: sha512-jfweAIdg5DgvrQ1v+Lv13J5rq6TQsfkcfrrxEyAJamXZhygvaBqRN4VbYLZV8RiuQlREQ+07SqLNzycSPqbnMw==, tarball: https://npm.jsr.io/~/11/@jsr/mastrojs__markdown/0.2.2.tgz}
+
+  '@jsr/mastrojs__mastro@0.4.6':
+    resolution: {integrity: sha512-fkPxnUWYT+rccb8YrhhsjLbj3eyz5JAhlJrGi4ICVrSfUlMgC3GiuikHTMky2h9wO0BBKuA7ldpZY5fymq56VQ==, tarball: https://npm.jsr.io/~/11/@jsr/mastrojs__mastro/0.4.6.tgz}
+
   '@jsr/mastrojs__mastro@0.8.10':
     resolution: {integrity: sha512-93hFq5dNbSLdXW9ePxjqu/qP47cCEkNiASEcaJv4UrZYL0cIWmhaaslYCNaMzAmRlFOAjjZC6ylzdiBTpMRtSA==, tarball: https://npm.jsr.io/~/11/@jsr/mastrojs__mastro/0.8.10.tgz}
+
+  '@jsr/mastrojs__reactive@0.4.1':
+    resolution: {integrity: sha512-xwfU/QF5oAILDIOYiRMVtym7xZCzUKYtRtK6LWzOBNbV62kYqhjjSr4WjFoJyv1MCNyE5CWE9oldz5ipG++3SA==, tarball: https://npm.jsr.io/~/11/@jsr/mastrojs__reactive/0.4.1.tgz}
+
+  '@jsr/std__bytes@1.0.6':
+    resolution: {integrity: sha512-St6yKggjFGhxS52IFLJWvkchRFbAKg2Xh8UxA4S1EGz7GJ2Ui+ssDDldj/w2c8vCxvl6qgR0HaYbKeFJNqujmA==, tarball: https://npm.jsr.io/~/11/@jsr/std__bytes/1.0.6.tgz}
+
+  '@jsr/std__cli@1.0.32':
+    resolution: {integrity: sha512-piaFso6urosCHGLkmy49pXXBJrW8zf1FlXXF4Zj0R2FGQdOGeoDDIfBejMzh+5W/GfJy3kbZGKqP8V2XHzZobQ==, tarball: https://npm.jsr.io/~/11/@jsr/std__cli/1.0.32.tgz}
+
+  '@jsr/std__encoding@1.0.11':
+    resolution: {integrity: sha512-4SmW8WXf4x4FjkxVpxbir06QYwxw/h/2+RU5A66iKXbJC9WAYCICZkH01mcOGj8FgSitF/lSTlT585RZfo8Ukg==, tarball: https://npm.jsr.io/~/11/@jsr/std__encoding/1.0.11.tgz}
+
+  '@jsr/std__fmt@1.0.10':
+    resolution: {integrity: sha512-Q2N8XDNkh/c1IKTi+sO4Vm64M5m4W0o47qTURmMX0vgHm9AJ6jL7jEQ2kw0M1T2rBZiwAY78eUbYzFyOYWaCqQ==, tarball: https://npm.jsr.io/~/11/@jsr/std__fmt/1.0.10.tgz}
+
+  '@jsr/std__fs@1.0.24':
+    resolution: {integrity: sha512-UunW2Rg++9sA74NJnYMGTsMVQgoFRAwPP02wRRohL0PQBNorbyxHiyCMRaxYQCtLepTLkC4nUyMtcwrGKqTR6g==, tarball: https://npm.jsr.io/~/11/@jsr/std__fs/1.0.24.tgz}
+
+  '@jsr/std__html@1.0.7':
+    resolution: {integrity: sha512-GtiN92YolMLr3YGtuqkejQCclff+tSYvnHhJorSjw/C9OG+ua+zwpRA/Xcsvfe+otI/dCT4PcNEub6XzBTUNsA==, tarball: https://npm.jsr.io/~/11/@jsr/std__html/1.0.7.tgz}
+
+  '@jsr/std__http@1.1.4':
+    resolution: {integrity: sha512-Jl4RZ3G07r6SbSbxEtU9/fQusZKKW3s0q00J5pEEfnuOWNDp36XkOJfpMT1bfTvI/vM1JWTI2wRSpEcuFzNc+w==, tarball: https://npm.jsr.io/~/11/@jsr/std__http/1.1.4.tgz}
+
+  '@jsr/std__internal@1.0.14':
+    resolution: {integrity: sha512-JT8b/t40WcR9q0GDwRZUooY7aXeXnFal8iidE/5TckdAFtvpVAsaJ71/Xgf1SfoChs41s6CZkuCYM8toaNgdvA==, tarball: https://npm.jsr.io/~/11/@jsr/std__internal/1.0.14.tgz}
+
+  '@jsr/std__media-types@1.1.0':
+    resolution: {integrity: sha512-dHvaxHL7ENWnltgL653uo3KnKFse3ZbopZop2gqsT7yrscx7irZEClu5Cba7gMPPRk4Lg1FbriNcaBViM2RSBw==, tarball: https://npm.jsr.io/~/11/@jsr/std__media-types/1.1.0.tgz}
+
+  '@jsr/std__net@1.0.7':
+    resolution: {integrity: sha512-f357wwHwSCYFjvAulpImH8ijkQoUws+afTIal4/gDbrtJeXhXTBG278cBMT9wejDb7Gy0aqaL8t3YV/Sx7vU8Q==, tarball: https://npm.jsr.io/~/11/@jsr/std__net/1.0.7.tgz}
+
+  '@jsr/std__path@1.1.6':
+    resolution: {integrity: sha512-H1Cmg6z8jFyIsQbVV+vZB4eOx4k6Qg8lyUM6l7nZysj5MZumg89kb0M1bsPBTGQis3fw6mJFkJELo5+AK6oCFA==, tarball: https://npm.jsr.io/~/11/@jsr/std__path/1.1.6.tgz}
+
+  '@jsr/std__streams@1.2.0':
+    resolution: {integrity: sha512-cQnU2wdP12rYRy+gGAiFarEK9YmWjVwnFMiOGIe0wMKmRLY68INH9hB/mqjKdPX/ruUhNYB70x5YRPLzUYIrbg==, tarball: https://npm.jsr.io/~/11/@jsr/std__streams/1.2.0.tgz}
+
+  '@jsr/std__yaml@1.3.0':
+    resolution: {integrity: sha512-TuFbXlSy3nRuQuR8co2t7yzhv53ObdYZZidn8M958Glj6vBp5b7nxg7wTN8VTyCwC3vpbr6Mfdx9auNe/BMAVA==, tarball: https://npm.jsr.io/~/11/@jsr/std__yaml/1.3.0.tgz}
+
+  '@maverick-js/signals@6.0.0':
+    resolution: {integrity: sha512-aPAxQOjxcGaLpjMcfE0mRuMgnCVLfdPSGINYmKDjTbTfY37lZdz9CGnVDrkr+svNSADZbUVk7oPVjXA2+vtxYg==}
 
   '@oxfmt/binding-android-arm-eabi@0.75.0':
     resolution: {integrity: sha512-zHJ7LcTN46/5mtoLxsUu14pdF9ixFwDURtmxZ0CeNwqom5qB5NRVqU6o2GRZ7QPdNBW8G6j9UTJzQ+EDevMH0w==}
@@ -970,8 +1065,8 @@ packages:
   '@types/node@24.19.2':
     resolution: {integrity: sha512-93d49wCWJkCyN87MxLpNN6KXPCwFw7bVUg79mGUV1OS40JGWwVCr8n61DXCSqz7CV6/VfPkb7xec7uP2M+QHWQ==}
 
-  '@types/node@26.6.5':
-    resolution: {integrity: sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==}
+  '@types/node@26.6.6':
+    resolution: {integrity: sha512-MzQj+8Kx3XI40OmUAE6Qoh58ZMNstNNMwn2nfd3qWsfe7nDNSqJNzes4njhz6AHwrSHOffSLwXU6yb474Q4aog==}
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     resolution: {integrity: sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==}
@@ -1242,144 +1337,12 @@ packages:
   micromark@4.0.3:
     resolution: {integrity: sha512-oGYfQzHSG5dOMovQcJ3fyTmZlWAWpi0XA0sJwJs+i6OT88o1+Jtw/8z0CmdowSLxGhhFK89rQ/oXph/wN02PNw==}
 
-  miniflare@5.20261019.2-beta:
-    resolution: {integrity: sha512-QNgCA/axizZ7kv7RV3nwbRoz+w4watBlwIsyXjwgYHw4eSw5BrR1F2152s3Kz+Bzy/YxjKFHrZl3LzBRbPgYoQ==}
+  miniflare@5.20261023.3-beta:
+    resolution: {integrity: sha512-thdXzlktu5GE1o/BlmMAPeJ0Cu6Tu5LpMbRlyfRrpVvMRrhd6p52TMqcITCZZLVzt1UO92VGBkLDhLOpryUAyQ==}
     engines: {node: '>=22.0.0'}
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
-
-  node@runtime:26.12.1:
-    resolution:
-      type: variations
-      variants:
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-DLlub0CRtke2b4EQMNXEvw0Kbm9H5B4SSBe2RMr/kcE=
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-aix-ppc64.tar.gz
-          targets:
-            - cpu: ppc64
-              os: aix
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-GQHVOZEsAq+hDRzBJpQ6iFWn7t6+gwEZRjRw215sWeg=
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-darwin-arm64.tar.gz
-          targets:
-            - cpu: arm64
-              os: darwin
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-uFwupEIK0LxKvy3Gzx9VEw7WgfHKv2DPP1JuTJ4nEv8=
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-darwin-x64.tar.gz
-          targets:
-            - cpu: x64
-              os: darwin
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-psAa9FndiXKrP7CO5dqBJE0muoxJRKYtW7uoxZeuFU8=
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-linux-arm64.tar.gz
-          targets:
-            - cpu: arm64
-              os: linux
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-lnFXnUWHMf6rAX+bGZ8hUAVKtxkQotbN81QAQoUbMnA=
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-linux-ppc64le.tar.gz
-          targets:
-            - cpu: ppc64le
-              os: linux
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-2oK09HBZlNL5IpHjStc2IHpaa4sTm2k5OHXYEwLtedg=
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-linux-s390x.tar.gz
-          targets:
-            - cpu: s390x
-              os: linux
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-Q8QG48qIFItZaBoHu5Ru3HXeAF1e9IuZg1IizyyHiT0=
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-linux-x64-musl.tar.gz
-          targets:
-            - cpu: x64
-              os: linux
-              libc: musl
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-D9Hrd3BZj1KiGZXt9u01/GkEAPpDfCOGrzKVGekUMTI=
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-linux-x64.tar.gz
-          targets:
-            - cpu: x64
-              os: linux
-        - resolution:
-            archive: zip
-            bin:
-              node: node.exe
-            integrity: sha256-NFZ1ge5jlns3r7a3oMxjotVQpD1dg4rbdZgtfjVvLiw=
-            prefix: node-v26.12.1-win-arm64
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-win-arm64.zip
-          targets:
-            - cpu: arm64
-              os: win32
-        - resolution:
-            archive: zip
-            bin:
-              node: node.exe
-            integrity: sha256-s+/Vxwy6MwjtRufmmam4qsB1u8awJ/yznITDGswl4rQ=
-            prefix: node-v26.12.1-win-x64
-            type: binary
-            url: https://nodejs.org/download/release/v26.12.1/node-v26.12.1-win-x64.zip
-          targets:
-            - cpu: x64
-              os: win32
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-w2lFUfbLiI/gvvtMsuE//kWwuyUo7BQefDopp9eXTRM=
-            type: binary
-            url: https://unofficial-builds.nodejs.org/download/release/v26.12.1/node-v26.12.1-linux-arm64-musl.tar.gz
-          targets:
-            - cpu: arm64
-              os: linux
-              libc: musl
-        - resolution:
-            archive: tarball
-            bin:
-              node: bin/node
-            integrity: sha256-i/nMDn+OPH7FNo3KGSQsrWUbawnTW83PKQrD+Akl6N0=
-            type: binary
-            url: https://unofficial-builds.nodejs.org/download/release/v26.12.1/node-v26.12.1-linux-x64-musl.tar.gz
-          targets:
-            - cpu: x64
-              os: linux
-              libc: musl
-    version: 26.12.1
-    hasBin: true
 
   node@runtime:26.13.0:
     resolution:
@@ -1557,8 +1520,17 @@ packages:
     resolution: {integrity: sha512-jBrmx4lYmaC9k/mgPbylxs7kBUxHtD8256up+HjLaDFfXScKJQyil+SWXSvhAtT7XHo+yTVlpB81PGmHP8oLSQ==}
     engines: {node: ^20.0.0 || >=22.0.0}
 
-  tslib@2.8.1:
-    resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
+  ts-blank-space@0.6.1:
+    resolution: {integrity: sha512-LcM3W5HEyzTaXUeQITV8ploUOGe+zuuoFYsCfPscFLhx3bZn2sSfHMKxsULVG/zA7an9UhReiHv4Kk/6QzlpXQ==}
+    engines: {node: '>=18.0.0'}
+
+  tslib@2.9.1:
+    resolution: {integrity: sha512-a4Ux9VKuIMHsOS7ENbEq6hK2ZGYIT27Rtl0E4eD9KqwxhKiQeMZE/9xb3IdYwWaSOyIBQLExhQgXDTYoiCxnWA==}
+
+  typescript@5.8.3:
+    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -1573,27 +1545,30 @@ packages:
   undici-types@7.24.6:
     resolution: {integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==}
 
+  undici-types@8.12.3:
+    resolution: {integrity: sha512-EXE4ydL3S76dFb27UFjNVZHTyv/TLdATj/KUe29ptdcg6qXL48J2tZ3126E5kICj5jn781OR+XlVH1N6Mz8jbA==}
+
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
-  undici@7.29.1:
-    resolution: {integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==}
+  undici@7.30.1:
+    resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
     engines: {node: '>=20.18.1'}
 
   unenv@2.0.0-rc.24:
     resolution: {integrity: sha512-i7qRCmY42zmCwnYlh9H2SvLEypEFGye5iRmEMKjcGi7zk9UquigRjFtTLz0TYqr0ZGLZhaMHl/foy1bZR+Cwlw==}
 
-  workerd@1.20261019.1:
-    resolution: {integrity: sha512-UUYRUq/7DmeCl11YriNbcVbjUZVLtt8uuCXFu+nz77hGFf8d4DEVXoCYtnA+MlBatE4+wxoj47DVqzK3xGBAiw==}
+  workerd@1.20261023.1:
+    resolution: {integrity: sha512-NeofJFyaYNpqKpFRJW3ApuonaerPd6/JWlfTtLDYf2A6ygqrDEFnYgEXmc0hhOxqnJsSM+kXJN6VebPojzRrsg==}
     engines: {node: '>=16'}
     hasBin: true
 
-  wrangler@4.152.0:
-    resolution: {integrity: sha512-lmXTF1sCDEqBaEMpreGczvg/x3AIh1d/qxc4BN7utQ4jEDwdA4YG0L6kr3ev0TtVLHRb6QLySNAOAunwn+dHeA==}
+  wrangler@4.156.0:
+    resolution: {integrity: sha512-kVLAShuLiNgE3jcrmXcymDf/iPKDPrSxACe5ueugW/33HeNB9E9CkKYchudCeBwgmsnl4k+1zt4NO7vqb/fRuQ==}
     engines: {node: '>=22.0.0'}
     hasBin: true
     peerDependencies:
-      '@cloudflare/workers-types': ^5.20261019.1
+      '@cloudflare/workers-types': ^5.20261023.1
     peerDependenciesMeta:
       '@cloudflare/workers-types':
         optional: true
@@ -1620,25 +1595,25 @@ snapshots:
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 
-  '@cloudflare/unenv-preset@2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261019.1)':
+  '@cloudflare/unenv-preset@2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261023.1)':
     dependencies:
       unenv: 2.0.0-rc.24
     optionalDependencies:
-      workerd: 1.20261019.1
+      workerd: 1.20261023.1
 
-  '@cloudflare/workerd-darwin-64@1.20261019.1':
+  '@cloudflare/workerd-darwin-64@1.20261023.1':
     optional: true
 
-  '@cloudflare/workerd-darwin-arm64@1.20261019.1':
+  '@cloudflare/workerd-darwin-arm64@1.20261023.1':
     optional: true
 
-  '@cloudflare/workerd-linux-64@1.20261019.1':
+  '@cloudflare/workerd-linux-64@1.20261023.1':
     optional: true
 
-  '@cloudflare/workerd-linux-arm64@1.20261019.1':
+  '@cloudflare/workerd-linux-arm64@1.20261023.1':
     optional: true
 
-  '@cloudflare/workerd-windows-64@1.20261019.1':
+  '@cloudflare/workerd-windows-64@1.20261023.1':
     optional: true
 
   '@cspotcode/source-map-support@0.8.1':
@@ -1647,7 +1622,7 @@ snapshots:
 
   '@emnapi/runtime@1.11.3':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@esbuild/aix-ppc64@0.27.7':
@@ -1930,7 +1905,75 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@jsr/mastrojs__markdown@0.2.2(supports-color@10.2.2)':
+    dependencies:
+      '@jsr/mastrojs__mastro': 0.8.10
+      '@jsr/std__yaml': 1.3.0
+      micromark: 4.0.3(supports-color@10.2.2)
+      micromark-extension-gfm: 3.0.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@jsr/mastrojs__mastro@0.4.6':
+    dependencies:
+      '@jsr/std__http': 1.1.4
+      '@jsr/std__media-types': 1.1.0
+      ts-blank-space: 0.6.1
+
   '@jsr/mastrojs__mastro@0.8.10': {}
+
+  '@jsr/mastrojs__reactive@0.4.1':
+    dependencies:
+      '@jsr/mastrojs__mastro': 0.4.6
+      '@maverick-js/signals': 6.0.0
+
+  '@jsr/std__bytes@1.0.6': {}
+
+  '@jsr/std__cli@1.0.32':
+    dependencies:
+      '@jsr/std__fmt': 1.0.10
+      '@jsr/std__internal': 1.0.14
+
+  '@jsr/std__encoding@1.0.11': {}
+
+  '@jsr/std__fmt@1.0.10': {}
+
+  '@jsr/std__fs@1.0.24':
+    dependencies:
+      '@jsr/std__internal': 1.0.14
+      '@jsr/std__path': 1.1.6
+
+  '@jsr/std__html@1.0.7': {}
+
+  '@jsr/std__http@1.1.4':
+    dependencies:
+      '@jsr/std__cli': 1.0.32
+      '@jsr/std__encoding': 1.0.11
+      '@jsr/std__fmt': 1.0.10
+      '@jsr/std__fs': 1.0.24
+      '@jsr/std__html': 1.0.7
+      '@jsr/std__media-types': 1.1.0
+      '@jsr/std__net': 1.0.7
+      '@jsr/std__path': 1.1.6
+      '@jsr/std__streams': 1.2.0
+
+  '@jsr/std__internal@1.0.14': {}
+
+  '@jsr/std__media-types@1.1.0': {}
+
+  '@jsr/std__net@1.0.7': {}
+
+  '@jsr/std__path@1.1.6':
+    dependencies:
+      '@jsr/std__internal': 1.0.14
+
+  '@jsr/std__streams@1.2.0':
+    dependencies:
+      '@jsr/std__bytes': 1.0.6
+
+  '@jsr/std__yaml@1.3.0': {}
+
+  '@maverick-js/signals@6.0.0': {}
 
   '@oxfmt/binding-android-arm-eabi@0.75.0':
     optional: true
@@ -2023,7 +2066,7 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
-  '@types/node@26.6.5':
+  '@types/node@26.6.6':
     dependencies:
       undici-types: 8.9.0
 
@@ -2093,8 +2136,8 @@ snapshots:
 
   bun-types@1.4.4:
     dependencies:
-      '@types/node': 26.6.5
-      undici-types: 8.9.0
+      '@types/node': 26.6.6
+      undici-types: 8.12.3
 
   character-entities@2.0.2: {}
 
@@ -2377,12 +2420,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  miniflare@5.20261019.2-beta(@types/node@24.19.2):
+  miniflare@5.20261023.3-beta(@types/node@24.19.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.35.5(@types/node@24.19.2)
-      undici: 7.29.1
-      workerd: 1.20261019.1
+      undici: 7.30.1
+      workerd: 1.20261023.1
       ws: 8.21.0
       youch: 4.1.0-beta.10
     transitivePeerDependencies:
@@ -2391,8 +2434,6 @@ snapshots:
       - utf-8-validate
 
   ms@2.1.3: {}
-
-  node@runtime:26.12.1: {}
 
   node@runtime:26.13.0: {}
 
@@ -2463,8 +2504,14 @@ snapshots:
 
   tinypool@2.2.0: {}
 
-  tslib@2.8.1:
+  ts-blank-space@0.6.1:
+    dependencies:
+      typescript: 5.8.3
+
+  tslib@2.9.1:
     optional: true
+
+  typescript@5.8.3: {}
 
   typescript@5.9.3: {}
 
@@ -2493,32 +2540,34 @@ snapshots:
 
   undici-types@7.24.6: {}
 
+  undici-types@8.12.3: {}
+
   undici-types@8.9.0: {}
 
-  undici@7.29.1: {}
+  undici@7.30.1: {}
 
   unenv@2.0.0-rc.24:
     dependencies:
       pathe: 2.0.3
 
-  workerd@1.20261019.1:
+  workerd@1.20261023.1:
     optionalDependencies:
-      '@cloudflare/workerd-darwin-64': 1.20261019.1
-      '@cloudflare/workerd-darwin-arm64': 1.20261019.1
-      '@cloudflare/workerd-linux-64': 1.20261019.1
-      '@cloudflare/workerd-linux-arm64': 1.20261019.1
-      '@cloudflare/workerd-windows-64': 1.20261019.1
+      '@cloudflare/workerd-darwin-64': 1.20261023.1
+      '@cloudflare/workerd-darwin-arm64': 1.20261023.1
+      '@cloudflare/workerd-linux-64': 1.20261023.1
+      '@cloudflare/workerd-linux-arm64': 1.20261023.1
+      '@cloudflare/workerd-windows-64': 1.20261023.1
 
-  wrangler@4.152.0(@types/node@24.19.2):
+  wrangler@4.156.0(@types/node@24.19.2):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
-      '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261019.1)
+      '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261023.1)
       blake3-wasm: 2.1.5
       esbuild: 0.28.2
-      miniflare: 5.20261019.2-beta(@types/node@24.19.2)
+      miniflare: 5.20261023.3-beta(@types/node@24.19.2)
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.24
-      workerd: 1.20261019.1
+      workerd: 1.20261023.1
     optionalDependencies:
       fsevents: 2.3.3
     transitivePeerDependencies:

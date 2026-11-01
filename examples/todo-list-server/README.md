@@ -16,6 +16,5 @@ Finally, we share the [`renderTodo` function](https://github.com/mastrojs/mastro
     - `index.server.ts` – API route for the whole collection
   - `index.server.ts` – HTML page
   - `todo-list.client.ts` – client-side JavaScript
-- `deno.json` – replace with package.json if you're not using Deno
 
 See also the corresponding [chapter in the Mastro guide](https://mastrojs.github.io//guide/forms-and-rest-apis/#client-side-fetching-a-rest-api).

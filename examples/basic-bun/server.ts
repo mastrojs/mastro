@@ -3,7 +3,7 @@ import { createFileRouterApp } from "@mastrojs/mastro/server";
 export const app = createFileRouterApp();
 
 if (import.meta.main) {
-  const port = 8000;
+  const port = process.env.PORT || 8000;
   Bun.serve({
     port,
     fetch: app.createHandler(),
