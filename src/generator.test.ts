@@ -12,6 +12,7 @@ test("generate: programmatic router with createApp", async (t) => {
   const outFolder = await mkdtemp(join(tmpdir(), "mastro-test-"));
   t.after(() => rm(outFolder, { recursive: true, force: true }));
 
+  const infos = t.mock.method(console, "info", () => {});
   const warnings = t.mock.method(console, "warn", () => {});
   const errors = t.mock.method(console, "error", () => {});
   const app = createApp()
@@ -29,14 +30,17 @@ test("generate: programmatic router with createApp", async (t) => {
     .join("\n");
 
   assert.equal(success, false, "Generation must report failed routes");
+  assert.equal(infos.mock.callCount(), 1);
+  assert.deepEqual(infos.mock.calls[0]!.arguments, ["GET / => 200", "/"]);
   assert.equal(await readFile(join(outFolder, "index.html"), "utf8"), "home");
   const files = await readdir(outFolder);
+  assert.ok(!files.includes("notfound"), "A 404 response must not produce a file");
   assert.ok(!files.includes("error"), "A throwing route must not produce a file");
   assert.ok(!files.includes("reject"), "A rejected route must not produce a file");
-  assert.match(diagnostics, /WARNING: skipped path \/notfound since it returned HTTP 404:/);
-  assert.match(diagnostics, /ERROR: failed to generate path \/error/);
+  assert.match(diagnostics, /GET \/notfound => 404/);
+  assert.match(diagnostics, /GET \/error => 500/);
   assert.match(diagnostics, /thrown route error/);
-  assert.match(diagnostics, /ERROR: failed to generate path \/reject/);
+  assert.match(diagnostics, /GET \/reject => 500/);
   assert.match(diagnostics, /rejected route error/);
 });
 
