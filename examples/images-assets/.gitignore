@@ -1,0 +1,4 @@
+.DS_Store
+generated
+node_modules/
+/generatedAssets.json
