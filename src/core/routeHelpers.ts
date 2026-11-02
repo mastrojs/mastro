@@ -18,9 +18,7 @@ export const fetchUpstream = (): Response => new Response("Not found", { status:
 export const routeHandler = <E extends unknown[]>(rs: Route<E>[] | Promise<Route<E>[]>): Handler<[Context<E>]> => async (req, ctx) => {
   const routes = await rs;
   const method = req.method.toUpperCase();
-  const url = new URL(req.url);
-  const logPrefix = `${req.method} ${url.pathname + url.search} => `;
-  const isDev = isDevServer(url);
+  const isDev = ctx.mode === "generator" || ctx.environment === "development";
 
   let urlMatched: string | undefined;
   const route = routes.find((r) => {
@@ -43,19 +41,16 @@ export const routeHandler = <E extends unknown[]>(rs: Route<E>[] | Promise<Route
     }
     const res = await route.handler(req, ...ctx.extra);
     if (res instanceof Response) {
-      if (isDev) console.info(logPrefix + route.name);
-      return res;
+      return isDev ? Object.assign(res, { routeName: route.name }) : res;
     } else {
-      throw Error(method + " must return a Response object. Did you forget `htmlToResponse`?");
+      throw Error(`${method} handler in ${route.name} must return a Response object. Did you forget \`htmlToResponse\`?`);
     }
   } else if (urlMatched) {
-    const msg = `No ${method} handler found`;
-    if (isDev) console.info(logPrefix + msg);
+    const msg = `405 Method Not Allowed\n\nNo ${method} handler found`;
     const m = isDev ? ` by ${urlMatched}\n\nsee https://mastrojs.github.io/docs/routing/` : "";
     return new Response(msg + m, { status: 405 });
   } else {
-    if (isDev && url.pathname !== "/favicon.ico") console.info(logPrefix + "No route match");
-    // TODO: ctx.fetchUpstream here
-    return new Response("404 not found", { status: 404 });
+    const res = new Response("404 Not Found", { status: 404 });
+    return isDev ? Object.assign(res, { error: "No route match" }) : res;
   }
 };

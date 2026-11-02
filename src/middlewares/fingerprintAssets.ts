@@ -7,6 +7,7 @@ export const fingerprintAssets: Middleware = {
   name: "fingerprintAssets",
   handler: async (req, ctx) => {
     const res = await ctx.fetchUpstream(req);
+    if (!res.ok) return res;
     const { pathname } = new URL(req.url);
     if (ctx.mode === "generator" && pathname.startsWith("/_assets/")) {
       const ext = extname(pathname);

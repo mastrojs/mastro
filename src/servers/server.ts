@@ -5,13 +5,14 @@
 
 import { Mastro } from "../core/mastro.ts";
 import type { Middleware } from "../middleware.ts";
-import { loadFileRoutes } from "./fileRouter.ts";
 import { fingerprintAssets } from "../middlewares/fingerprintAssets.ts";
+import { logger } from "../middlewares/logger.ts";
 import { staticFiles } from "../middlewares/staticFiles/staticFiles.ts";
 import { tsToJs } from "../middlewares/tsToJs.ts";
+import { loadFileRoutes } from "./fileRouter.ts";
 
-export { fingerprintAssets, tsToJs, staticFiles };
-export const middlewares: Middleware[] = [ fingerprintAssets, tsToJs, staticFiles ];
+export { logger, fingerprintAssets, tsToJs, staticFiles };
+export const middlewares: Middleware[] = [logger, fingerprintAssets, tsToJs, staticFiles];
 
 /**
  * Creates an app with the programmatic router.

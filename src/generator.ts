@@ -5,10 +5,17 @@
  * @module
  */
 
-import type { Handler, Mastro, Route } from "./core/mastro.ts";
-import { chainMiddlewares, type Context, type GeneratorContext, type GeneratorContextSimple, type Middleware } from "./middleware.ts";
-import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
 import { extname } from "node:path";
+
+import type { Handler, Mastro, Route } from "./core/mastro.ts";
+import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
+import {
+  chainMiddlewares,
+  type Context,
+  type GeneratorContext,
+  type GeneratorContextSimple,
+  type Middleware,
+} from "./middleware.ts";
 import { hasRouteParams } from "./servers/fileRouter.ts";
 
 /**
@@ -41,15 +48,11 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   const fs = await import("node:fs/promises");
   const { dirname } = await import("node:path");
   const { fileURLToPath, pathToFileURL } = await import("node:url");
-  const {
-    baseUrl = "http://127.0.0.1",
-    outFolder = "generated",
-    onlyPregenerate = false,
-  } = opts;
+  const { baseUrl = "http://127.0.0.1", outFolder = "generated", onlyPregenerate = false } = opts;
   const resetP = fs.rm(outFolder, { force: true, recursive: true }).then(() => fs.mkdir(outFolder));
 
   const { middlewares } = app;
-  if (!middlewares.some(m => m.name === "staticFiles")) {
+  if (!middlewares.some((m) => m.name === "staticFiles")) {
     // when we get passed an app for Cloudflare Workers or similar, we add staticFiles etc.
     console.info("Did not find a staticFiles middleware, adding defaultMiddlewares.\n");
     middlewares.unshift(...middlewares);
@@ -66,43 +69,36 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
     if ("getStaticPaths" in m && m.getStaticPaths) {
       for (const path of await m.getStaticPaths(ctx)) {
         // TODO: parallelize without opening too many file handles at once
-        const file = await generatePage(handler, new URL(baseUrl + path), ctxWithFetchUpstream);
-        if (file === false) {
-          completeSuccess = false;
-        } else if (file) {
-          const outPath = outFolder + file.outFilePath; // call pathToFileURL here?
+        const { response, outFilePath } = await generatePage(handler, new URL(baseUrl + path), ctxWithFetchUpstream);
+        if (response.ok) {
+          const outPath = outFolder + outFilePath; // TODO: call pathToFileURL here for Windows?
           await fs.mkdir(dirname(outPath), { recursive: true });
-          const { body } = file.response;
-          if (body) {
-            await writeFile(outPath, body);
+          if (response.body) {
+            await writeFile(outPath, response.body);
+          } else {
+            console.warn(`\nWARNING: ${path} returned no body (HTTP ${response.status})\n.`);
           }
+        } else {
+          completeSuccess = false;
         }
       }
     }
   }
   if (completeSuccess) {
-    await Promise.all(middlewares.map((m) => "afterGenerate" in m ? m.afterGenerate?.(ctx) : null));
+    await Promise.all(
+      middlewares.map((m) => ("afterGenerate" in m ? m.afterGenerate?.(ctx) : null)),
+    );
     console.info(`Generated static site and wrote to \`${outFolder}\` folder.`);
   }
   return completeSuccess;
 };
 
 const generatePage = async (handler: Handler<[Context]>, url: URL, ctx: Context) => {
-  const { pathname } = url;
-  try {
-    const req = new Request(url);
-    const response = await handler(req, ctx);
-    const path = parseContentDisposition(response.headers.get("Content-Disposition")) || pathname;
-    if (!response.ok) {
-      console.warn(`\nWARNING: skipped path ${pathname} since it returned HTTP ${response.status}:
-${await response.text()}`);
-      return false;
-    }
-    return { response, outFilePath: path.endsWith("/") ? `${path}index.html` : path };
-  } catch (e) {
-    console.error(`\nERROR: failed to generate path ${pathname}\n `, e);
-    return false;
-  }
+  const req = new Request(url);
+  const response = await handler(req, ctx);
+  const path = parseContentDisposition(response.headers.get("Content-Disposition")) || url.pathname;
+  const outFilePath = path.endsWith("/") ? `${path}index.html` : path;
+  return { response, outFilePath };
 };
 
 const parseContentDisposition = (val: string | null) => val?.match(/filename="?([^";]+)"?/i)?.[1];
@@ -114,7 +110,7 @@ const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer
     Readable.fromWeb(data as any)
       .pipe(createWriteStream(path))
       .on("finish", resolve)
-      .on("error", reject)
+      .on("error", reject),
   );
 };
 
@@ -135,7 +131,6 @@ const createRouter = (routes: Route[]): Middleware => ({
   },
 });
 const errMsg = " should export a function named getStaticPaths, returning an array of strings.";
-
 
 const validateStaticPaths = (name: string, paths: string[]) => {
   if (!Array.isArray(paths)) throw Error(name + notStringMsg);

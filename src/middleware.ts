@@ -3,6 +3,10 @@ import type { Handler } from "./core/mastro.ts";
 /**
  * Request Middleware
  *
+ * No need to wrap `ctx.fetchUpstream()` in try...catch – Mastro already does that for you
+ * and returns a 500 Response with an `error` field that contains whatever value was thrown.
+ * Be sure to check for `res.ok` if your middleware should behave differently for 4xx or 5xx.
+ *
  * When doing static site generation (or asset generation),
  * suppress generation of a page by returning `new Response(null, { status: 404 })`.
  * To change the file name of the generated file, set a `Content-Disposition` header on your
@@ -46,23 +50,23 @@ export interface ServerContext<E> {
 }
 
 export const chainMiddlewares = <E>(middlewares: Middleware<E>[]): Handler<[Context<E>]> => {
-  const [m, ...rest] = middlewares;
-  if (!m) return (req, ctx) => ctx.fetchUpstream(req); // base case of recursion
-
-  const handler = typeof m === "function" ? m : m.handler;
-  const next = chainMiddlewares(rest);
-  return async (req, ctx) => {
-    const res = await handler(req, { ...ctx, fetchUpstream: (nextReq) => next(nextReq, ctx) });
-    if (!(res instanceof Response)) {
-      throw new Error(`Function ${handler.name || "<anonymous>"} did not return a Response object`);
-    } else if (res.status >= 500) {
-      throw new Error(
-        `Function ${handler.name || "<anonymous>"} returned HTTP ${
-          res.status
-        }: ${await res.text()}`,
-      );
-    }
-    // TODO: what about 404s and other non-200 responses?
-    return res;
+  const handlers = middlewares.map((m) => (typeof m === "function" ? m : m.handler));
+  return (req, ctx) => {
+    const dispatch = async (req: Request, index: number): Promise<Response> => {
+      const handler = handlers[index];
+      try {
+        const res = handler
+          ? await handler(req, { ...ctx, fetchUpstream: (nextReq) => dispatch(nextReq, index + 1) })
+          : await ctx.fetchUpstream(req);
+        if (!(res instanceof Response)) {
+          const name = (handler || ctx.fetchUpstream).name || "<anonymous>";
+          throw new Error(`Function '${name}' did not return a Response object`);
+        }
+        return res;
+      } catch (error) {
+        return Object.assign(new Response("500 Internal Server Error", { status: 500 }), { error });
+      }
+    };
+    return dispatch(req, 0);
   };
 };

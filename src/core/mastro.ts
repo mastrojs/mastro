@@ -106,23 +106,8 @@ export class Mastro<E extends unknown[] = unknown[]> {
     const handler = chainMiddlewares([...this.middlewares, routeHandler(this.getRoutes())]);
     return async (req, ...extra) => {
       const url = new URL(req.url);
-      const isDev = isDevServer(url);
-      const environment = isDev ? "development" : "production";
-      try {
-        return await handler(req, { environment, fetchUpstream, ...ctx, extra, mode: "server" });
-      } catch (e: any) {
-        const [ansiStart, ansiReset] = isDev ? ["\x1b[35m", "\x1b[0m"] : ["", ""]
-        const log = (status: number) =>
-          `${ansiStart}${req.method} ${url.pathname + url.search} => ${status}${ansiReset} `;
-        if (e.name === "NotFound" || e.code === "ENOENT") {
-          console.warn(log(404), e);
-          return new Response(`404 Not Found\n\n${isDev ? e.message : ""}`, { status: 404 });
-        } else {
-          console.error(log(500), e);
-          const msg = `500 Internal Server Error\n\n${isDev ? e.stack || e : e.name || ""}`;
-          return new Response(msg, { status: 500 });
-        }
-      }
+      const environment = isDevServer(url) ? "development" : "production";
+      return handler(req, { environment, fetchUpstream, ...ctx, extra, mode: "server" });
     };
   }
 }
