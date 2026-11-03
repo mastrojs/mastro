@@ -12,7 +12,7 @@ export const fingerprintAssets: Middleware = {
     if (ctx.mode === "generator" && pathname.startsWith("/_assets/")) {
       const ext = extname(pathname);
       const data = await res.arrayBuffer().then(Buffer.from);
-      const digest = hash.update(data).digest("hex").slice(0, 8);
+      const digest = createHash("sha256").update(data).digest("hex").slice(0, 8);
       const hashedPath = `${pathname.slice(0, -1 * ext.length)}-${digest}${ext}`;
       assetHashes[pathname.slice("/_assets/".length)] = hashedPath;
       res.headers.set("Content-Disposition", `attachment; filename=${hashedPath}`);
@@ -28,8 +28,4 @@ export const fingerprintAssets: Middleware = {
   },
 };
 
-// during SSG all _assets/* routes should've been processed already before routes calling getAsset
-// export const getAsset = (path: string): string | undefined => Object.freeze(assetHashes)[path];
-
-const hash = createHash("sha256");
 const assetHashes: Record<string, string> = {};
