@@ -281,6 +281,50 @@ importers:
         specifier: ^4.56.0
         version: 4.156.0(@types/node@24.19.2)
 
+  examples/images:
+    dependencies:
+      '@mastrojs/images':
+        specifier: jsr:@mastrojs/images@0.0.6
+        version: '@jsr/mastrojs__images@0.0.6'
+      '@mastrojs/mastro':
+        specifier: ^0
+        version: link:../..
+      '@remix-run/node-fetch-server':
+        specifier: ^1
+        version: 1.0.0
+    devDependencies:
+      '@types/node':
+        specifier: ^26
+        version: 26.6.6
+      node:
+        specifier: runtime:26.x
+        version: runtime:26.13.0
+      typescript:
+        specifier: ^7
+        version: 7.0.2
+
+  examples/images-assets:
+    dependencies:
+      '@mastrojs/images':
+        specifier: jsr:@mastrojs/images
+        version: '@jsr/mastrojs__images@0.0.7'
+      '@mastrojs/mastro':
+        specifier: ^0
+        version: link:../..
+      '@remix-run/node-fetch-server':
+        specifier: ^1
+        version: 1.0.0
+    devDependencies:
+      '@types/node':
+        specifier: ^26
+        version: 26.6.6
+      node:
+        specifier: runtime:26.x
+        version: runtime:26.13.0
+      typescript:
+        specifier: ^7
+        version: 7.0.2
+
   examples/programmatic-cloudflare:
     dependencies:
       '@mastrojs/mastro':
@@ -680,6 +724,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@imagemagick/magick-wasm@0.0.36':
+    resolution: {integrity: sha512-qSe4DVkpaU9VKGpOjClUZPjlIOrzoJtP22qAb11Gsw+ZvGX5dLmBBE5pRpLxRTEgpp9lRXW29nas2oppjcVLPQ==}
+
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
     engines: {node: '>=18'}
@@ -851,6 +898,12 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
+
+  '@jsr/mastrojs__images@0.0.6':
+    resolution: {integrity: sha512-iVCbd+7B0BLZWT1CKSlkoFQFLqVQRrHjZ8xaudXqeBb565jTNCIBUfgxW+Jm6+6C1D5p8uNR9iINycDoiQmJtA==, tarball: https://npm.jsr.io/~/11/@jsr/mastrojs__images/0.0.6.tgz}
+
+  '@jsr/mastrojs__images@0.0.7':
+    resolution: {integrity: sha512-an/406YjAVIuxr2gCZ2/YFb1sqNYmt9y7M/eSG4L0PhdqkiNlFMGPjnhyr7TbOiYM9vuOqlNtmzgQHhF6gyk+w==, tarball: https://npm.jsr.io/~/11/@jsr/mastrojs__images/0.0.7.tgz}
 
   '@jsr/mastrojs__markdown@0.1.5':
     resolution: {integrity: sha512-r0pxs3fF54z50Rk6aqLeK6GSvpfNWRPf691bH9EWkomFz9Tk93sRXwatGLOyUhVXNtaVNGmeIWL5fn1DS0nsYw==, tarball: https://npm.jsr.io/~/11/@jsr/mastrojs__markdown/0.1.5.tgz}
@@ -1781,6 +1834,8 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
+  '@imagemagick/magick-wasm@0.0.36': {}
+
   '@img/colour@1.1.0': {}
 
   '@img/sharp-darwin-arm64@0.35.5':
@@ -1895,6 +1950,18 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@jsr/mastrojs__images@0.0.6':
+    dependencies:
+      '@imagemagick/magick-wasm': 0.0.36
+      '@jsr/mastrojs__mastro': 0.8.10
+      '@jsr/std__media-types': 1.1.0
+
+  '@jsr/mastrojs__images@0.0.7':
+    dependencies:
+      '@imagemagick/magick-wasm': 0.0.36
+      '@jsr/mastrojs__mastro': 0.8.10
+      '@jsr/std__media-types': 1.1.0
 
   '@jsr/mastrojs__markdown@0.1.5(supports-color@10.2.2)':
     dependencies:
