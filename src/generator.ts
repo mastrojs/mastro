@@ -17,6 +17,7 @@ import {
   type Middleware,
 } from "./middleware.ts";
 import { hasRouteParams } from "./servers/fileRouter.ts";
+import { middlewares as defaultMiddlewares } from "./servers/server.ts";
 
 /**
  * Config options for `generate`
@@ -51,11 +52,11 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   const { baseUrl = "http://127.0.0.1", outFolder = "generated", onlyPregenerate = false } = opts;
   const resetP = fs.rm(outFolder, { force: true, recursive: true }).then(() => fs.mkdir(outFolder));
 
-  const { middlewares } = app;
+  const middlewares = [...app.middlewares];
   if (!middlewares.some((m) => m.name === "staticFiles")) {
     // when we get passed an app for Cloudflare Workers or similar, we add staticFiles etc.
     console.info("Did not find a staticFiles middleware, adding defaultMiddlewares.\n");
-    middlewares.unshift(...middlewares);
+    middlewares.unshift(...defaultMiddlewares);
   }
   middlewares.push(createRouter(await app.getRoutes()));
 

@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+
+import { Mastro } from "./core/mastro.ts";
 import { generate } from "./generator.ts";
 import { createApp } from "./servers/server.ts";
 
@@ -21,7 +23,9 @@ test("generate: programmatic router with createApp", async (t) => {
       return new Response("home");
     })
     .get("/notfound", () => new Response("oops", { status: 404 }))
-    .get("/error", () => { throw Error("thrown route error") })
+    .get("/error", () => {
+      throw Error("thrown route error");
+    })
     .get("/reject", () => Promise.reject(Error("rejected route error")));
 
   const success = await generate(app, { outFolder });
@@ -45,6 +49,51 @@ test("generate: programmatic router with createApp", async (t) => {
 });
 
 const mastroCli = fileURLToPath(new URL("./cli.ts", import.meta.url));
+
+test("generation does not alter shared middleware or intercept another app's routes", async (t) => {
+  t.mock.method(console, "info", () => {});
+  const outFolder = await mkdtemp(join(tmpdir(), "mastro-test-"));
+  t.after(() => rm(outFolder, { recursive: true, force: true }));
+  const app = createApp().get("/", () => new Response("app A"));
+  const other = createApp().get("/", () => new Response("app B"));
+  const original = [...app.middlewares];
+
+  for (let i = 0; i < 2; i++) {
+    assert.equal(await generate(app, { outFolder }), true);
+    assert.deepEqual(app.middlewares, original);
+    assert.deepEqual(other.middlewares, original);
+    assert.equal(await readFile(join(outFolder, "index.html"), "utf8"), "app A");
+    const response = await other.createHandler()(new Request("https://example.com/"));
+    assert.equal(await response.text(), "app B");
+  }
+});
+
+test("generation adds standard middleware when staticFiles is absent", async (t) => {
+  t.mock.method(console, "info", () => {});
+  const errors = t.mock.method(console, "error", () => {});
+  const outFolder = await mkdtemp(join(tmpdir(), "mastro-test-"));
+  t.after(() => rm(outFolder, { recursive: true, force: true }));
+  let calls = 0;
+  const failure = new Error("route failed");
+  const app = new Mastro({
+    middlewares: [
+      (req, ctx) => {
+        calls++;
+        return ctx.fetchUpstream(req);
+      },
+    ],
+  }).get("/", () => {
+    throw failure;
+  });
+  const original = [...app.middlewares];
+
+  assert.equal(await generate(app, { outFolder }), false);
+  assert.deepEqual(app.middlewares, original);
+  assert.equal(calls, 1);
+  assert.equal(errors.mock.callCount(), 1);
+  assert.equal(errors.mock.calls[0]!.arguments[1], failure);
+  assert.deepEqual(await readdir(outFolder), []);
+});
 
 test("generator: fails on missing server file", async (t) => {
   const cwd = await mkdtemp(join(tmpdir(), "mastro-test-"));
@@ -93,7 +142,7 @@ for (const name of ["basic-node", "basic-bun"]) {
     assert.match(html, /href="\/styles\.css"/);
     assert.match(
       await readFile(join(cwd, "generated/styles.css"), "utf8"),
-      /font-family: sans-serif;/
+      /font-family: sans-serif;/,
     );
   });
 }
