@@ -25,6 +25,7 @@ export const tsToJs: Middleware = {
           const { headers } = res;
           headers.set("Content-Type", "text/javascript; charset=utf-8");
           headers.set("Accept-Ranges", "none");
+          headers.delete("Content-Length");
 
           // @ts-expect-error no type definitions for Bun
           const { stripTypeScriptTypes } = typeof Bun === "object"
