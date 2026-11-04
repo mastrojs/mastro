@@ -2,10 +2,26 @@
  * Lightweight wrapper around Node.js's file system functions and using RPC for the
  * [vscode-extension](../../vscode-extension/README.md).
  * Cloudflare Workers work with Node.js compatibility.
- * For Service Workers (where there is no filesystem), we just fall back to undefined, but at least
- * we don't want to break the module, hence no top-level await.
+ * For Service Workers (where there is no filesystem), we fall back to undefined
+ * and skip Node.js imports so the module can still load.
  */
 import type { StandardSchemaV1 } from "./standard-schema.d.ts";
+
+/** A decoded project-relative filesystem path, with forward slashes on every platform. */
+export type FilePath = string & { readonly __filePath: unique symbol };
+
+/** Convert a URL path to a project-relative filesystem path, stripping leading slashes and rejecting .. segments. */
+export const filePath = (urlPath: string & { readonly __filePath?: never }): FilePath => {
+  const path = normalizeSlashes(decodeURIComponent(urlPath)).replace(/^\/+/, "");
+  if (path.split("/").includes("..")) throw Error("File paths must not include .. segments");
+  // on Windows, prevent paths starting like `C:` and `./C:`
+  if (sep === "\\" && /^(?:\.\/+)*[a-z]:/i.test(path)) throw Error("File paths must be relative");
+  return (path || ".") as FilePath;
+};
+
+/** Encode a filesystem path for use as a URL path, preserving directory slashes. */
+export const urlPath = (path: FilePath): string =>
+  path.split("/").map(encodeURIComponent).join("/");
 
 // in variables to prevent bundling by esbuild:
 const nodeFs = "node:fs/promises";
@@ -18,6 +34,10 @@ const fs = typeof document === "object" || isWorker
   ? undefined
   : import(nodeFs) as Promise<typeof import("node:fs/promises")>;
 
+const { sep = "/" } = typeof document === "object" || isWorker
+  ? {}
+  : await import(nodePath) as typeof import("node:path");
+
 // we use document.fs because dnt would add a shim for window https://github.com/denoland/dnt/issues/454
 const vscodeExtensionFs = typeof document === "object"
   ? (document as any).fs
@@ -27,43 +47,46 @@ const vscodeExtensionFs = typeof document === "object"
  * Read the directory on the local file system and return its files,
  * non-recursive and ignoring symlinks.
  *
- * Input path needs to be relative to project root.
+ * Input is a URL path relative to project root. Returned filenames are URL-encoded.
  */
-export const readDir = async (path: string): Promise<string[]> =>
-  fs
-    ? (await fs).readdir(noLeadingSep(path), { withFileTypes: true })
+export const readDir = async (path: string): Promise<string[]> => {
+  const files: string[] = await (fs
+    ? (await fs).readdir(filePath(path), { withFileTypes: true })
       .then((files) =>
         files.flatMap((file) =>
           file.isSymbolicLink() || file.isDirectory() || file.name[0] === "." ? [] : file.name
         )
       )
-    : vscodeExtensionFs.readDir(leadingSlash(path));
+    : vscodeExtensionFs.readDir(leadingSlash(filePath(path))));
+  return files.map((name) => urlPath(normalizeSlashes(name)));
+};
 
 /**
  * Return the contents of a text file on the local file system as a string.
  *
- * Input path needs to be relative to project root.
+ * Input is a URL path relative to project root, decoded once before reading.
  */
 export const readTextFile = async (path: string): Promise<string> =>
   fs
-    ? (await fs).readFile(noLeadingSep(path), { encoding: "utf8" })
-    : vscodeExtensionFs.readTextFile(leadingSlash(path));
+    ? (await fs).readFile(filePath(path), { encoding: "utf8" })
+    : vscodeExtensionFs.readTextFile(leadingSlash(filePath(path)));
 
 /**
  * Return the contents of a binary file on the local file system.
  *
- * Input path needs to be relative to project root.
+ * Input is a URL path relative to project root, decoded once before reading.
  */
 export const readFile = async (path: string): Promise<Uint8Array<ArrayBufferLike>> =>
   fs
-    ? (await fs).readFile(noLeadingSep(path))
-    : vscodeExtensionFs.readFile(leadingSlash(path));
+    ? (await fs).readFile(filePath(path))
+    : vscodeExtensionFs.readFile(leadingSlash(filePath(path)));
 
 /**
  * Return the file paths on the local file system, relative to the current working directory,
  * expanding glob patterns like `*` and `**`. Do not pass it untrusted input.
  *
- * Returned paths are sorted alphabetically and don't start with a slash (or other path separator).
+ * Returned URL paths are encoded, use forward slashes, are sorted alphabetically
+ * and don't start with a slash. Glob patterns use filesystem names, not URL encoding.
  *
  * Except for when using the Mastro VSCode extension, this is a thin wrapper around
  * [fs.glob](https://nodejs.org/api/fs.html#fspromisesglobpattern-options).
@@ -74,24 +97,24 @@ export const readFile = async (path: string): Promise<Uint8Array<ArrayBufferLike
 export const findFiles = async (pattern: string | string[]): Promise<string[]> => {
   pattern = typeof pattern === "string" ? validatePattern(pattern) : pattern.map(validatePattern);
   if (fs) {
-    const paths = [];
-    const { sep } = await import(nodePath);
+    const paths: string[] = [];
     for await (const entry of (await fs).glob(pattern, { withFileTypes: true })) {
       if (entry.isFile()) {
         const path = entry.parentPath + sep + entry.name;
         const relativeToProjectRoot = path.slice(process.cwd().length + 1);
-        paths.push(relativeToProjectRoot);
+        paths.push(urlPath(normalizeSlashes(relativeToProjectRoot)));
       }
     }
     return paths.sort();
   } else {
-    return vscodeExtensionFs.findFiles(pattern);
+    return ((await vscodeExtensionFs.findFiles(pattern)) as string[])
+      .map((path) => urlPath(normalizeSlashes(path))).sort();
   }
 };
 
 /**
  * Read all files from the local filesystem that match the supplied glob pattern, (via `findFiles`)
- * and parse then as JSON. Filepath is in `path`, filename without suffix in `slug`.
+ * and parse then as JSON. URL path is in `path`, URL-encoded filename without suffix in `slug`.
  *
  * The default TypeScript type for the data is `unknown`. You can override that with e.g.
  * `readJsonFiles<{ title: string }>("data/*.json")`. But to actually verify the metadata is
@@ -119,7 +142,7 @@ export const readJsonFiles = async <T>(
         }
         data = res.value;
       }
-      const slug = path.split(sep).at(-1)?.split(".").at(0) || "";
+      const slug = path.split("/").at(-1)?.split(".").at(0) || "";
       return { data, path, slug };
     }),
   );
@@ -130,19 +153,13 @@ export const readJsonFiles = async <T>(
  */
 const validatePattern = (p: string) => {
   p = p.startsWith("/") ? p.slice(1) : p;
-  if (p.startsWith("../") || p.includes("/../")) {
-    throw Error("findFiles pattern must not include ../");
-  }
+  if (p.split("/").includes("..")) throw Error("findFiles pattern must not include .. segments");
   return p;
 }
 
 const leadingSlash = (path: string) =>
   path.startsWith("/") ? path : "/" + path;
 
-/**
- * File path separator. `\` on Windows, `/` otherwise.
- */
-export const sep: string = typeof document === "object" ? "/" : (await import(nodePath)).sep;
-
-const noLeadingSep = (path: string) =>
-  path.startsWith(sep) ? path.slice(1) : path;
+// Replace backslashes with forward slashes on Windows.
+const normalizeSlashes = (path: string): FilePath =>
+  (sep === "\\" ? path.replaceAll("\\", "/") : path) as FilePath;

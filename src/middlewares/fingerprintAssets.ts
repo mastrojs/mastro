@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
-import { extname } from "node:path";
+import { posix } from "node:path";
 import type { Middleware } from "../middleware.ts";
 
 export const fingerprintAssets: Middleware = {
@@ -10,7 +10,7 @@ export const fingerprintAssets: Middleware = {
     if (!res.ok) return res;
     const { pathname } = new URL(req.url);
     if (ctx.mode === "generator" && pathname.startsWith("/_assets/")) {
-      const ext = extname(pathname);
+      const ext = posix.extname(pathname);
       const data = await res.arrayBuffer().then(Buffer.from);
       const digest = createHash("sha256").update(data).digest("hex").slice(0, 8);
       const hashedPath = `${pathname.slice(0, -1 * ext.length)}-${digest}${ext}`;

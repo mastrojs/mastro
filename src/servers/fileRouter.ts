@@ -1,4 +1,4 @@
-import { findFiles, sep } from "../core/fs.ts";
+import { filePath, type FilePath, findFiles } from "../core/fs.ts";
 import { httpMethods, type Route } from "../core/mastro.ts";
 
 interface FileRoute {
@@ -9,7 +9,7 @@ type RouteLoader = (fileName: string) => Promise<Record<string, unknown>>;
 
 export const loadFileRoutes = async (): Promise<Route[]> => {
   const { pathToFileURL } = await import("node:url");
-  const loader = (name: string) => import(pathToFileURL(process.cwd() + sep + name).toString());
+  const loader = (name: string) => import(pathToFileURL(process.cwd() + "/" + name).toString());
   return loadRoutes(await findRoutes(), loader);
 };
 
@@ -24,7 +24,7 @@ export const findRoutes = async (): Promise<FileRoute[]> => {
       "\n\nWARNING: No route files found!\n  see https://mastrojs.github.io/docs/routing/\n\n",
     );
   }
-  return routeFiles.sort(compareRoutes).map((name) => ({ name, pathname: toPattern(name) }));
+  return routeFiles.map(filePath).sort(compareRoutes).map((name) => ({ name, pathname: toPattern(name) }));
 };
 
 export const loadRoutes = async (routes: FileRoute[], loader: RouteLoader): Promise<Route[]> => {
@@ -71,8 +71,8 @@ const compareRoutes = (a: string, b: string) => {
   return a < b ? 1 : -1;
 };
 
-const toPattern = (filePath: string) => {
-  const pathParts = filePath.split(sep).slice(1);
+const toPattern = (filePath: FilePath) => {
+  const pathParts = filePath.split("/").slice(1);
   const parts = pathParts.map((part, i) => {
     const param = part.match(paramRegex)?.[1];
     if (param) {
@@ -84,9 +84,9 @@ const toPattern = (filePath: string) => {
     if (folder && (part === `(${folder}).server.ts` || part === `(${folder}).server.js`)) {
       return "";
     } else if (part.endsWith(".server.ts") || part.endsWith(".server.js")) {
-      return part.slice(0, -10);
+      return encodeURIComponent(part.slice(0, -10));
     } else {
-      return part;
+      return encodeURIComponent(part);
     }
   });
   return "/" + parts.join("/");
@@ -96,7 +96,7 @@ const toPattern = (filePath: string) => {
  * Returns true iff the given `filePath` contains dynamic route parameters.
  */
 export const hasRouteParams = (filePath: string): boolean =>
-  filePath.split(sep).some((segment) => segment.match(paramRegex));
+  filePath.split("/").some((segment) => segment.match(paramRegex));
 
 const indexRegex = /^index(\.html)?\.server\.(ts|js)$/;
 const paramRegex = /^\[([a-zA-Z0-9\.]+)\]/;

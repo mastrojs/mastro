@@ -16,22 +16,24 @@ export const tsToJs: Middleware = {
     findFiles("routes/**/*.client.ts")
       .then((ps) => ps.map((p) => p.slice(6, -3) + ".js")),
   handler: async (req, ctx) => {
-    const { pathname } = new URL(req.url);
-    if (pathname.endsWith(".client.js")) {
-      const res = await tryServeFile(req, "routes" + pathname.slice(0, -3) + ".ts");
-      if (res) {
-        if (!res.ok) return res; // 304 Not Modified, etc. get passed through
-        const { headers } = res;
-        headers.set("Content-Type", "text/javascript; charset=utf-8");
-        headers.set("Accept-Ranges", "none");
+    if (ctx.mode === "generator" || ctx.environment === "development") {
+      const { pathname } = new URL(req.url);
+      if (pathname.endsWith(".client.js")) {
+        const res = await tryServeFile(req, "routes" + pathname.slice(0, -3) + ".ts");
+        if (res) {
+          if (!res.ok) return res; // 304 Not Modified, etc. get passed through
+          const { headers } = res;
+          headers.set("Content-Type", "text/javascript; charset=utf-8");
+          headers.set("Accept-Ranges", "none");
 
-        // @ts-expect-error no type definitions for Bun
-        const { stripTypeScriptTypes } = typeof Bun === "object"
-          ? await import(["npm", "ts-blank-space"].join(":"))
-            .then((m) => ({ stripTypeScriptTypes: m.default }))
-          : await import("node:module");
-        const body = stripTypeScriptTypes(await res.text()).replace(importRegex, replacer);
-        return new Response(body, { headers });
+          // @ts-expect-error no type definitions for Bun
+          const { stripTypeScriptTypes } = typeof Bun === "object"
+            ? await import(["npm", "ts-blank-space"].join(":"))
+              .then((m) => ({ stripTypeScriptTypes: m.default }))
+            : await import("node:module");
+          const body = stripTypeScriptTypes(await res.text()).replace(importRegex, replacer);
+          return new Response(body, { headers });
+        }
       }
     }
     return ctx.fetchUpstream(req);

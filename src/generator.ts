@@ -5,8 +5,9 @@
  * @module
  */
 
-import { extname } from "node:path";
+import { posix } from "node:path";
 
+import { filePath } from "./core/fs.ts";
 import type { Handler, Mastro, Route } from "./core/mastro.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
 import {
@@ -47,8 +48,7 @@ export interface GenerateOpts {
  */
 export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<boolean> => {
   const fs = await import("node:fs/promises");
-  const { dirname } = await import("node:path");
-  const { fileURLToPath, pathToFileURL } = await import("node:url");
+  const { dirname, join } = await import("node:path");
   const { baseUrl = "http://127.0.0.1", outFolder = "generated", onlyPregenerate = false } = opts;
   const resetP = fs.rm(outFolder, { force: true, recursive: true }).then(() => fs.mkdir(outFolder));
 
@@ -68,11 +68,11 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   let completeSuccess = true;
   for (const m of middlewares) {
     if ("getStaticPaths" in m && m.getStaticPaths) {
-      for (const path of await m.getStaticPaths(ctx)) {
+      for (const path of validateStaticPaths(m.name, await m.getStaticPaths(ctx))) {
         // TODO: parallelize without opening too many file handles at once
         const { response, outFilePath } = await generatePage(handler, new URL(baseUrl + path), ctxWithFetchUpstream);
         if (response.ok) {
-          const outPath = outFolder + outFilePath; // TODO: call pathToFileURL here for Windows?
+          const outPath = join(outFolder, outFilePath);
           await fs.mkdir(dirname(outPath), { recursive: true });
           if (response.body) {
             await writeFile(outPath, response.body);
@@ -97,8 +97,9 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
 const generatePage = async (handler: Handler<[Context]>, url: URL, ctx: Context) => {
   const req = new Request(url);
   const response = await handler(req, ctx);
-  const path = parseContentDisposition(response.headers.get("Content-Disposition")) || url.pathname;
-  const outFilePath = path.endsWith("/") ? `${path}index.html` : path;
+  const filename = parseContentDisposition(response.headers.get("Content-Disposition"));
+  const path = filename ? "/" + encodeURIComponent(filename) : url.pathname;
+  const outFilePath = filePath(path.endsWith("/") ? `${path}index.html` : path);
   return { response, outFilePath };
 };
 
@@ -123,7 +124,7 @@ const createRouter = (routes: Route[]): Middleware => ({
     const paths = rs.toReversed().map(async (r) => {
       if (hasRouteParams(r.name)) {
         if (typeof r.getStaticPaths !== "function") throw Error(r.name + errMsg);
-        return validateStaticPaths(r.name, await r.getStaticPaths());
+        return r.getStaticPaths();
       } else {
         return r.pattern.pathname;
       }
@@ -134,15 +135,19 @@ const createRouter = (routes: Route[]): Middleware => ({
 const errMsg = " should export a function named getStaticPaths, returning an array of strings.";
 
 const validateStaticPaths = (name: string, paths: string[]) => {
-  if (!Array.isArray(paths)) throw Error(name + notStringMsg);
+  const prefix = `${name}"#getStaticPaths`;
+  const notStringMsg = " must return an array of strings";
+  if (!Array.isArray(paths)) throw Error(prefix + notStringMsg);
   for (const path of paths) {
-    if (typeof path !== "string") throw Error(name + notStringMsg);
-    if (path[0] !== "/") throw Error(name + "#getStaticPaths: paths must start with a slash (/)");
-    if (!path.endsWith("/") && !extname(path) && !path.startsWith("/.well-known/")) {
+    if (typeof path !== "string") throw Error(prefix + notStringMsg);
+    if (path[0] !== "/") throw Error(prefix + ": paths must start with a slash (/)");
+    if (path.includes("#") || path.includes("?") || path.includes("\\")) {
+      throw Error(`${prefix} must return encoded URL paths. Encode path segments with encodeURIComponent.`);
+    }
+    if (!path.endsWith("/") && !posix.extname(path) && !path.startsWith("/.well-known/")) {
       console.warn(`\nWARNING: ${name} has path ${path} without file extension.
   Consider renaming route to e.g. ${name.replace(".server", ".html.server")}\n`);
     }
   }
   return paths;
 };
-const notStringMsg = "#getStaticPaths must return an array of strings";
