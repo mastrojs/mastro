@@ -3,7 +3,7 @@ import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
 import { extname } from "node:path";
 import { contentTypeFromExt } from "./mediaTypes.ts";
-import { filePath, type FilePath, findFiles, urlPath } from "../../core/fs.ts";
+import { filePath, type FilePath, findFiles } from "../../core/fs.ts";
 import type { Context, Middleware } from "../../middleware.ts";
 import { staticCacheControlVal } from "../../core/routeHelpers.ts";
 
@@ -16,27 +16,29 @@ export const staticFiles: Middleware = {
   name: "staticFiles",
   getStaticPaths: () =>
     findFiles(["routes/**/*", "routes/**/.*/**/*"])
-      .then((paths) => paths.filter(notReserved).map((p) => urlPath(p).slice(6))),
+      .then((paths) => paths.filter(notReserved).map((p) => p.slice(6))),
   handler: async (req, ctx) => await serveStaticFile(req, ctx) || ctx.fetchUpstream(req),
 };
 
 const serveStaticFile = async (req: Request, ctx: Context): Promise<Response | undefined> => {
   if (req.method === "GET" && notReserved(req.url)) {
     const { pathname } = new URL(req.url);
-    let path: FilePath;
-    try {
-      path = filePath(pathname.endsWith("/") ? (pathname + "index.html") : pathname);
-    } catch {
-      return newResponse(400);
-    }
+    const path = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
     const isDev = ctx.mode === "server" && ctx.environment === "development";
-    const pregenerated = isDev ? null : await tryServeFile(req, ("generated" + path) as FilePath);
-    return pregenerated || await tryServeFile(req, ("routes" + path) as FilePath);
+    const pregenerated = isDev ? null : await tryServeFile(req, "generated" + path);
+    return pregenerated || await tryServeFile(req, "routes" + path);
   }
 };
 
-export const tryServeFile = async (req: Request, path: FilePath): Promise<Response | undefined> => {
-  const res = await serveFile(req, path);
+/** Decode the URL path and reject parent-directory segments before reading. */
+export const tryServeFile = async (req: Request, path: string): Promise<Response | undefined> => {
+  let decodedPath: FilePath;
+  try {
+    decodedPath = filePath(path);
+  } catch {
+    return newResponse(400);
+  }
+  const res = await serveFile(req, decodedPath);
   if (res.status === 404 || res.status === 405) {
     return;
   } else {

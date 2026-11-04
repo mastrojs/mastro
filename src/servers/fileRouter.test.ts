@@ -4,6 +4,18 @@ import { Mastro } from "../core/mastro.ts";
 
 (globalThis.document as any) = {
   fs: {
+    readDir: (path: string) => {
+      assert.equal(path, "/data/hello %20");
+      return ["post # %20.md"];
+    },
+    readTextFile: (path: string) => {
+      assert.equal(path, "/data/hello %20/post # %20.md");
+      return "post";
+    },
+    readFile: (path: string) => {
+      assert.equal(path, "/data/hello %20/post # %20.md");
+      return new TextEncoder().encode("post");
+    },
     findFiles: () => {
       return [
         "routes/index.server.ts",
@@ -17,6 +29,23 @@ import { Mastro } from "../core/mastro.ts";
     },
   },
 };
+
+test("filesystem bridge decodes URL paths once and encodes returned filenames", async () => {
+  const { readDir, readFile, readTextFile } = await import("../core/fs.ts");
+  const directory = "data/hello%20%2520";
+  const names: string[] = await readDir(directory);
+  assert.deepEqual(names, ["post%20%23%20%2520.md"]);
+  const path = directory + "/" + names[0];
+  assert.equal(await readTextFile(path), "post");
+  assert.equal(new TextDecoder().decode(await readFile(path)), "post");
+});
+
+test("filesystem bridge rejects parent-directory segments before calling the backend", async () => {
+  const { readDir, readFile, readTextFile } = await import("../core/fs.ts");
+  for (const read of [readDir, readFile, readTextFile]) {
+    await assert.rejects(read("data/%2e%2e%2fsecret"), /must not include \.\. segments/);
+  }
+});
 
 test("fileRouter: route precedence order", async () => {
   // Load fileRouter.ts only after `document.fs` has been patched.
