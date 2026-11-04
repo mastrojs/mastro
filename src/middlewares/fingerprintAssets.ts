@@ -13,7 +13,7 @@ export const fingerprintAssets: Middleware = {
       const ext = posix.extname(pathname);
       const data = await res.arrayBuffer().then(Buffer.from);
       const digest = createHash("sha256").update(data).digest("hex").slice(0, 8);
-      const hashedPath = `${pathname.slice(0, -1 * ext.length)}-${digest}${ext}`;
+      const hashedPath = `${pathname.slice(0, pathname.length - ext.length)}-${digest}${ext}`;
       assetHashes[pathname.slice("/_assets/".length)] = hashedPath;
       res.headers.set("Content-Disposition", `attachment; filename=${hashedPath}`);
       return new Response(data, res);
