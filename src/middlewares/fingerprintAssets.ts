@@ -15,7 +15,7 @@ export const fingerprintAssets: Middleware = {
       const digest = createHash("sha256").update(data).digest("hex").slice(0, 8);
       const hashedPath = `${pathname.slice(0, pathname.length - ext.length)}-${digest}${ext}`;
       assetHashes[pathname.slice("/_assets/".length)] = hashedPath;
-      res.headers.set("Content-Disposition", `attachment; filename=${hashedPath}`);
+      res.headers.set("Content-Disposition", `attachment; filename=${posix.basename(hashedPath)}`);
       return new Response(data, res);
     } else {
       return res;

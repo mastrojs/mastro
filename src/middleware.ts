@@ -10,11 +10,11 @@ import type { Handler } from "./core/mastro.ts";
  * When doing static site generation (or asset generation),
  * suppress generation of a page by returning `new Response(null, { status: 404 })`.
  * To change the file name of the generated file, set a `Content-Disposition` header on your
- * response, for example:
+ * response to a filename (without directory separators), for example:
  *
  * ```
  * const { body, headers, status } = ctx.fetchUpstream(req);
- * headers.set("Content-Disposition", 'filename="file name.jpg"');
+ * headers.set("Content-Disposition", 'filename="file%20name.jpg"');
  * return new Response(body, { headers, status })`
  * ```
  */

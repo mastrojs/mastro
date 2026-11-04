@@ -97,7 +97,8 @@ const generatePage = async (handler: Handler<[Context]>, url: URL, ctx: Context)
   const req = new Request(url);
   const response = await handler(req, ctx);
   const filename = parseContentDisposition(response.headers.get("Content-Disposition"));
-  const path = filename ? "/" + encodeURIComponent(filename) : url.pathname;
+  const directory = url.pathname.slice(0, url.pathname.lastIndexOf("/") + 1);
+  const path = filename ? directory + filename : url.pathname;
   const outFilePath = filePath(path.endsWith("/") ? `${path}index.html` : path);
   return { response, outFilePath };
 };

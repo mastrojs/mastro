@@ -4,10 +4,10 @@ import { test } from "node:test";
 import { chainMiddlewares } from "../middleware.ts";
 import { fingerprintAssets } from "./fingerprintAssets.ts";
 
-for (const [path, hashedPath] of [
-  ["/_assets/plain", "/_assets/plain-2cf24dba"],
-  ["/_assets/nested.dir/plain", "/_assets/nested.dir/plain-2cf24dba"],
-  ["/_assets/styles.css", "/_assets/styles-2cf24dba.css"],
+for (const [path, filename] of [
+  ["/_assets/plain", "plain-2cf24dba"],
+  ["/_assets/nested.dir/plain", "plain-2cf24dba"],
+  ["/_assets/styles.css", "styles-2cf24dba.css"],
 ] as const) {
   test(`fingerprinting preserves the asset path for ${path}`, async () => {
     const handler = chainMiddlewares([fingerprintAssets]);
@@ -19,7 +19,7 @@ for (const [path, hashedPath] of [
     });
 
     assert.equal(response.status, 200);
-    assert.equal(response.headers.get("Content-Disposition"), `attachment; filename=${hashedPath}`);
+    assert.equal(response.headers.get("Content-Disposition"), `attachment; filename=${filename}`);
     assert.equal(await response.text(), "hello");
   });
 }

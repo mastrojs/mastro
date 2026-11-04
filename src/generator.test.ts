@@ -176,7 +176,10 @@ test("generator: encodes filesystem names and decodes generated output exactly o
     const app = createApp()
       .get('/hello%20world/', () => new Response('page'))
       .get('/download', () => new Response('download', {
-        headers: { 'Content-Disposition': 'filename="file %20.txt"' }
+        headers: { 'Content-Disposition': 'filename="file%20%2520.txt"' }
+      }))
+      .get('/downloads/report', () => new Response('nested download', {
+        headers: { 'Content-Disposition': 'filename="file%20%2520.txt"' }
       }));
     const handler = app.createHandler();
     const assetUrl = '/assets/' + encodeURIComponent(${JSON.stringify(asset)});
@@ -210,6 +213,42 @@ test("generator: encodes filesystem names and decodes generated output exactly o
   );
   assert.equal(await readFile(join(cwd, "generated", "hello world", "index.html"), "utf8"), "page");
   assert.equal(await readFile(join(cwd, "generated", "file %20.txt"), "utf8"), "download");
+  assert.equal(await readFile(join(cwd, "generated", "downloads", "file %20.txt"), "utf8"), "nested download");
+});
+
+test("generator: fingerprinted asset URLs resolve to the generated files", async (t) => {
+  const cwd = await mkdtemp(join(tmpdir(), "mastro-test-"));
+  t.after(() => rm(cwd, { recursive: true, force: true }));
+  await mkdir(join(cwd, "routes", "_assets", "nested folder"), { recursive: true });
+  const names = ["hello world.css", 'hello # %20 ü; " 世界.css'];
+  for (const name of names) {
+    await writeFile(join(cwd, "routes", "_assets", "nested folder", name), "hello");
+  }
+
+  const script = `
+    import assert from 'node:assert/strict';
+    import { readFile } from 'node:fs/promises';
+    import { generate } from ${JSON.stringify(new URL("./generator.ts", import.meta.url).href)};
+    import { createApp } from ${JSON.stringify(new URL("./servers/server.ts", import.meta.url).href)};
+    const app = createApp();
+    assert.equal(await generate(app, { onlyPregenerate: true }), true);
+    const hashes = JSON.parse(await readFile('generatedAssets.json', 'utf8'));
+    const handler = app.createHandler({ environment: 'production' });
+    for (const name of ${JSON.stringify(names)}) {
+      const key = 'nested%20folder/' + encodeURIComponent(name);
+      const hashedPath = hashes[key];
+      assert.equal(hashedPath, '/_assets/nested%20folder/' + encodeURIComponent(name.slice(0, -4)) + '-2cf24dba.css');
+      assert.equal(await readFile('generated' + decodeURIComponent(hashedPath), 'utf8'), 'hello');
+      const response = await handler(new Request('http://127.0.0.1' + hashedPath));
+      assert.equal(response.status, 200);
+      assert.equal(await response.text(), 'hello');
+    }
+  `;
+  const result = spawnSync(process.execPath, ["--input-type=module", "-e", script], {
+    cwd, encoding: "utf8", timeout: 10_000,
+  });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
 });
 
 test("generator: rejects ambiguous URL paths from middleware", async (t) => {
