@@ -24,7 +24,7 @@ export const findRoutes = async (): Promise<FileRoute[]> => {
       "\n\nWARNING: No route files found!\n  see https://mastrojs.github.io/docs/routing/\n\n",
     );
   }
-  return routeFiles.map(filePath).sort(compareRoutes).map((name) => ({ name, pathname: toPattern(name) }));
+  return routeFiles.map(filePath).sort(compr).map((name) => ({ name, pathname: toPattern(name) }));
 };
 
 export const loadRoutes = async (routes: FileRoute[], loader: RouteLoader): Promise<Route[]> => {
@@ -57,19 +57,12 @@ export const loadRoutes = async (routes: FileRoute[], loader: RouteLoader): Prom
 };
 
 /**
- * Perhaps we should sort this according to more solid route precedence criteria.
- * Currently, it's just reverse alphabetical order, which at least guarantees that
- * - [...slug] loses out over more specific routes that start with a lowercase char
+ * Compare routes according to reverse alphabetical order, with the exception that `[` goes last.
+ * This guarantees us at least that:
+ * - dynamic segments lose out over fixed segments at every depth
  * - longer paths win over their prefixes.
- *
- * And we have an exception for character 7 so that e.g.`routes/.well-known/foo.server.ts`
- * takes precedence over `routes/[...slug].server.ts`
  */
-const compareRoutes = (a: string, b: string) => {
-  if (a[7] === "[" && b[7] !== "[") return 1;
-  if (b[7] === "[" && a[7] !== "[") return -1;
-  return a < b ? 1 : -1;
-};
+const compr = (a: string, b: string) => a.replaceAll("[", "\0") < b.replaceAll("[", "\0") ? 1 : -1;
 
 const toPattern = (filePath: FilePath) => {
   const pathParts = filePath.split("/").slice(1);
