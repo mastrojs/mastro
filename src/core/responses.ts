@@ -25,7 +25,7 @@ export const getParams = (req: Request): Record<string, string | undefined> =>
 export const htmlResponse = (
   body: string | AsyncIterable<string>,
   status = 200,
-  headers?: HeadersInit,
+  headers?: Record<string, string>,
 ): Response =>
   new Response(
     isAsyncIterable(body) ? toReadableStream(body) : body,
@@ -44,7 +44,7 @@ export const htmlToResponse = (node: Html): Response =>
 export const jsonResponse = (
   body: object,
   status = 200,
-  headers?: HeadersInit,
+  headers?: Record<string, string>,
 ): Response =>
   new Response(JSON.stringify(body), {
     status,
@@ -57,7 +57,7 @@ export const jsonResponse = (
  */
 export const sseResponse = <T extends object>(
   stream: AsyncIterable<T>,
-  headers?: HeadersInit,
+  headers?: Record<string, string>,
 ): Response =>
   new Response(
     toReadableStream(mapIterable(stream, (chunk) => `data: ${JSON.stringify(chunk)}\n\n`)),
