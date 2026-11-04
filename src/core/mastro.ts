@@ -33,7 +33,7 @@ export interface Route<E extends unknown[] = unknown[]> {
   /** `URLPattern` with `pathname` set */
   pattern: URLPattern;
   /** Called by the static site generator. */
-  getStaticPaths: () => Promise<string[]> | string[];
+  getStaticPaths?: () => Promise<string[]> | string[];
   /** Before starting your server, you can run `mastro generate --only-pregenerate` to
    * only pregenerate routes which have this field set. */
   pregenerate?: true;
@@ -69,7 +69,7 @@ export class Mastro<E extends unknown[] = unknown[]> {
       opts = { handler: opts };
     }
     this.routes.push({
-      getStaticPaths: opts.getStaticPaths || (() => [pathname]),
+      getStaticPaths: opts.getStaticPaths,
       handler: opts.handler,
       method,
       name: pathname,

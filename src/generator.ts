@@ -17,7 +17,6 @@ import {
   type GeneratorContextSimple,
   type Middleware,
 } from "./middleware.ts";
-import { hasRouteParams } from "./servers/fileRouter.ts";
 import { middlewares as defaultMiddlewares } from "./servers/server.ts";
 
 /**
@@ -122,17 +121,16 @@ const createRouter = (routes: Route[]): Middleware => ({
   getStaticPaths: async (ctx) => {
     const rs = ctx.onlyPregenerate ? routes.filter((r) => r.pregenerate) : routes;
     const paths = rs.toReversed().map(async (r) => {
-      if (hasRouteParams(r.name)) {
-        if (typeof r.getStaticPaths !== "function") throw Error(r.name + errMsg);
-        return r.getStaticPaths();
-      } else {
-        return r.pattern.pathname;
-      }
+      if (typeof r.getStaticPaths === "function") return r.getStaticPaths();
+      if (hasRouteParams.test(r.pattern.pathname)) throw Error(r.name + errMsg);
+      return r.pattern.pathname;
     });
     return (await Promise.all(paths)).flat();
   },
 });
-const errMsg = " should export a function named getStaticPaths, returning an array of strings.";
+// URLPattern parameters, wildcards, and groups require concrete paths:
+const hasRouteParams = /(?<!\\)[:*{(]/
+const errMsg = " should provide a getStaticPaths function returning an array of strings.";
 
 const validateStaticPaths = (name: string, paths: string[]) => {
   const prefix = `${name}"#getStaticPaths`;

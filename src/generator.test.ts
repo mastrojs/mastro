@@ -49,6 +49,55 @@ test("generate: programmatic router with createApp", async (t) => {
 
 const mastroCli = fileURLToPath(new URL("./cli.ts", import.meta.url));
 
+test("generator: programmatic routes generate their declared static paths", async (t) => {
+  t.mock.method(console, "info", () => {});
+  const outFolder = await mkdtemp(join(tmpdir(), "mastro-test-"));
+  t.after(() => rm(outFolder, { recursive: true, force: true }));
+  const requestedPaths: string[] = [];
+  let enumerations = 0;
+  const app = new Mastro({
+    middlewares: [{ name: "staticFiles", handler: (req, ctx) => ctx.fetchUpstream(req) }],
+  }).get("/posts/:slug/", {
+    getStaticPaths: async () => {
+      enumerations++;
+      return ["/posts/hello/", "/posts/hello%20world/"];
+    },
+    handler: (req) => {
+      const path = new URL(req.url).pathname;
+      requestedPaths.push(path);
+      return new Response(path);
+    },
+  });
+
+  assert.equal(await generate(app, { outFolder }), true);
+  assert.equal(enumerations, 1);
+  assert.deepEqual(requestedPaths, ["/posts/hello/", "/posts/hello%20world/"]);
+  assert.deepEqual((await readdir(join(outFolder, "posts"))).sort(), ["hello", "hello world"]);
+  assert.equal(await readFile(join(outFolder, "posts", "hello", "index.html"), "utf8"), "/posts/hello/");
+  assert.equal(
+    await readFile(join(outFolder, "posts", "hello world", "index.html"), "utf8"),
+    "/posts/hello%20world/",
+  );
+});
+
+test("generator: dynamic programmatic routes require explicit static paths", async (t) => {
+  const outFolder = await mkdtemp(join(tmpdir(), "mastro-test-"));
+  t.after(() => rm(outFolder, { recursive: true, force: true }));
+
+  for (const pathname of ["/posts/:slug/", "/files/*", "/posts/:id(\\d+)/", "/posts{/archive}?"]) {
+    let calls = 0;
+    const app = new Mastro({
+      middlewares: [{ name: "staticFiles", handler: (req, ctx) => ctx.fetchUpstream(req) }],
+    }).get(pathname, () => {
+      calls++;
+      return new Response("page");
+    });
+
+    await assert.rejects(generate(app, { outFolder }), /should provide a getStaticPaths function/);
+    assert.equal(calls, 0);
+  }
+});
+
 test("file routes can read files using encoded URLPattern slugs", async (t) => {
   const cwd = await mkdtemp(join(tmpdir(), "mastro-test-"));
   t.after(() => rm(cwd, { recursive: true, force: true }));
