@@ -7,10 +7,12 @@ export const logger: Middleware = {
     const { method, url } = req;
     const res = await ctx.fetchUpstream(req);
     const { status } = res;
-    const isDev = ctx.mode === "generator" || ctx.environment === "development";
     if (status < 400) {
-      if (isDev) log("info", method, url, status, "routeName" in res ? res.routeName : "");
+      if (ctx.mode === "server" && ctx.environment === "development") {
+        log("info", method, url, status, "routeName" in res ? res.routeName : "");
+      }
     } else {
+      const isDev = ctx.mode === "generator" || ctx.environment === "development";
       const e = "error" in res ? (res.error as any) : "";
 
       if (e?.name === "NotFound" || e?.code === "ENOENT") {
