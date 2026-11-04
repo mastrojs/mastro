@@ -16,36 +16,39 @@ export const staticFiles: Middleware = {
   name: "staticFiles",
   getStaticPaths: () =>
     findFiles(["routes/**/*", "routes/**/.*/**/*"])
-      .then((paths) => paths.filter(notReserved).map((p) => p.slice(6))),
+      .then((paths) => paths.filter((p) => !reserved(p)).map((p) => p.slice(6))),
   handler: async (req, ctx) => await serveStaticFile(req, ctx) || ctx.fetchUpstream(req),
 };
 
 const serveStaticFile = async (req: Request, ctx: Context): Promise<Response | undefined> => {
-  if (req.method === "GET" && notReserved(req.url)) {
+  if (req.method === "GET") {
     const { pathname } = new URL(req.url);
     const path = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
     const isDev = ctx.mode === "server" && ctx.environment === "development";
-    const pregenerated = isDev ? null : await tryServeFile(req, "generated" + path);
-    return pregenerated || await tryServeFile(req, "routes" + path);
+    const pregenerated = isDev ? null : await tryServeFile(req, "generated" + path, reserved);
+    return pregenerated || await tryServeFile(req, "routes" + path, reserved);
   }
 };
 
-/** Decode the URL path and reject parent-directory segments before reading. */
-export const tryServeFile = async (req: Request, path: string): Promise<Response | undefined> => {
+export const tryServeFile = async (
+  req: Request,
+  path: string,
+  reserved?: (path: FilePath) => boolean,
+): Promise<Response | undefined> => {
   let decodedPath: FilePath;
   try {
     decodedPath = filePath(path);
   } catch {
     return newResponse(400);
   }
+  if (reserved?.(decodedPath)) return;
+
   const res = await serveFile(req, decodedPath);
-  if (res.status === 404 || res.status === 405) {
-    return;
-  } else {
-    const cacheHeader = staticCacheControlVal(req);
-    if (cacheHeader) res.headers.set("Cache-Control", cacheHeader);
-    return res;
-  }
+
+  if (res.status === 404 || res.status === 405) return;
+  const cacheHeader = staticCacheControlVal(req);
+  if (cacheHeader) res.headers.set("Cache-Control", cacheHeader);
+  return res;
 };
 
 /**
@@ -123,7 +126,7 @@ const serveFile = async (req: Request, filePath: FilePath): Promise<Response> =>
   return new Response(stream, { status: 200, headers });
 };
 
-const notReserved = (p: string) => !(p.endsWith(".client.ts") || /\.server\.(ts|js)$/.test(p));
+const reserved = (p: string) => p.endsWith(".client.ts") || /\.server\.(ts|js)$/.test(p);
 
 const newResponse = (status: number) => new Response(`HTTP ${status}`, { status });
 
