@@ -80,6 +80,30 @@ test("generator: programmatic routes generate their declared static paths", asyn
   );
 });
 
+test("generator: generates GET and ALL routes and skips other methods", async (t) => {
+  t.mock.method(console, "info", () => {});
+  const outFolder = await mkdtemp(join(tmpdir(), "mastro-test-"));
+  t.after(() => rm(outFolder, { recursive: true, force: true }));
+  const app = new Mastro({
+    middlewares: [{ name: "staticFiles", handler: (req, ctx) => ctx.fetchUpstream(req) }],
+  })
+    .get("/", () => new Response("home"))
+    .addRoute("all", "/all.html", (req) => new Response(req.method))
+    .post("/submit.html", () => new Response("submitted"))
+    .post("/posts/:slug/", () => new Response("created"))
+    .put("/update.html", {
+      getStaticPaths: () => {
+        assert.fail("Non-GET routes must not enumerate static paths");
+      },
+      handler: () => new Response("updated"),
+    });
+
+  assert.equal(await generate(app, { outFolder }), true);
+  assert.deepEqual((await readdir(outFolder)).sort(), ["all.html", "index.html"]);
+  assert.equal(await readFile(join(outFolder, "index.html"), "utf8"), "home");
+  assert.equal(await readFile(join(outFolder, "all.html"), "utf8"), "GET");
+});
+
 test("generator: dynamic programmatic routes require explicit static paths", async (t) => {
   const outFolder = await mkdtemp(join(tmpdir(), "mastro-test-"));
   t.after(() => rm(outFolder, { recursive: true, force: true }));

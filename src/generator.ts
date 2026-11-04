@@ -120,11 +120,11 @@ const createRouter = (routes: Route[]): Middleware => ({
   handler: routeHandler(routes),
   getStaticPaths: async (ctx) => {
     const rs = ctx.onlyPregenerate ? routes.filter((r) => r.pregenerate) : routes;
-    const paths = rs.toReversed().map(async (r) => {
+    const paths = rs.filter((r) => r.method === "GET" || r.method === "all").map(async (r) => {
       if (typeof r.getStaticPaths === "function") return r.getStaticPaths();
       if (hasRouteParams.test(r.pattern.pathname)) throw Error(r.name + errMsg);
       return r.pattern.pathname;
-    });
+    }).reverse();
     return (await Promise.all(paths)).flat();
   },
 });
