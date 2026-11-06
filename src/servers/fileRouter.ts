@@ -1,4 +1,4 @@
-import { filePath, type FilePath, findFiles } from "../core/fs.ts";
+import { urlPathToFilePath, type FilePath, findFiles } from "../core/fs.ts";
 import { httpMethods, type Route } from "../core/mastro.ts";
 
 interface FileRoute {
@@ -24,7 +24,7 @@ export const findRoutes = async (): Promise<FileRoute[]> => {
       "\n\nWARNING: No route files found!\n  see https://mastrojs.github.io/docs/routing/\n\n",
     );
   }
-  return routeFiles.map(filePath).sort(compr).map((name) => ({ name, pathname: toPattern(name) }));
+  return routeFiles.map(urlPathToFilePath).sort(compr).map((name) => ({ name, pathname: toPattern(name) }));
 };
 
 export const loadRoutes = async (routes: FileRoute[], loader: RouteLoader): Promise<Route[]> => {

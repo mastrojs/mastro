@@ -3,7 +3,7 @@ import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
 import { extname } from "node:path";
 import { contentTypeFromExt } from "./mediaTypes.ts";
-import { filePath, type FilePath, findFiles } from "../../core/fs.ts";
+import { urlPathToFilePath, type FilePath, findFiles } from "../../core/fs.ts";
 import type { Context, Middleware } from "../../middleware.ts";
 import { staticCacheControlVal } from "../../core/routeHelpers.ts";
 
@@ -37,7 +37,7 @@ export const tryServeFile = async (
 ): Promise<Response | undefined> => {
   let decodedPath: FilePath;
   try {
-    decodedPath = filePath(path);
+    decodedPath = urlPathToFilePath(path);
   } catch {
     return newResponse(400);
   }

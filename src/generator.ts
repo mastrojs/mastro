@@ -7,7 +7,7 @@
 
 import { posix } from "node:path";
 
-import { filePath } from "./core/fs.ts";
+import { urlPathToFilePath } from "./core/fs.ts";
 import type { Handler, Mastro, Route } from "./core/mastro.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
 import {
@@ -99,7 +99,7 @@ const generatePage = async (handler: Handler<[Context]>, url: URL, ctx: Context)
   const filename = parseContentDisposition(response.headers.get("Content-Disposition"));
   const directory = url.pathname.slice(0, url.pathname.lastIndexOf("/") + 1);
   const path = filename ? directory + filename : url.pathname;
-  const outFilePath = filePath(path.endsWith("/") ? `${path}index.html` : path);
+  const outFilePath = urlPathToFilePath(path.endsWith("/") ? `${path}index.html` : path);
   return { response, outFilePath };
 };
 

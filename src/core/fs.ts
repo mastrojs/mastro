@@ -7,21 +7,22 @@
  */
 import type { StandardSchemaV1 } from "./standard-schema.d.ts";
 
-/** A decoded project-relative filesystem path, with forward slashes on every platform. */
+/**
+ * Branded type of a normalized, project-relative filesystem path.
+ */
 export type FilePath = string & { readonly __filePath: unique symbol };
 
-/** Convert a URL path to a project-relative filesystem path, stripping leading slashes and rejecting .. segments. */
-export const filePath = (urlPath: string & { readonly __filePath?: never }): FilePath => {
+/**
+ * Convert a URL path to a normalized, project-relative filesystem path with forward slashes
+ * on every platform. For example `urlPathToFilePath("/foo/bar%20baz.jpg") === "foo/bar baz.jpg"`
+ */
+export const urlPathToFilePath = (urlPath: string & { readonly __filePath?: never }): FilePath => {
   const path = normalizeSlashes(decodeURIComponent(urlPath)).replace(/^\/+/, "");
-  if (path.split("/").includes("..")) throw Error("File paths must not include .. segments");
-  // on Windows, prevent paths starting like `C:` and `./C:`
-  if (sep === "\\" && /^(?:\.\/+)*[a-z]:/i.test(path)) throw Error("File paths must be relative");
-  return (path || ".") as FilePath;
+  if (path.split("/").includes("..")) throw Error("FilePath must not include .. segments");
+  // on Windows, prevent paths starting with `C:`, `./C:`, etc:
+  if (sep === "\\" && /^(?:\.\/+)*[a-z]:/i.test(path)) throw Error("FilePath must be relative");
+  return (path || ".") as FilePath; // urlPathToFilePath("/") === "."
 };
-
-/** Encode a filesystem path for use as a URL path, preserving directory slashes. */
-export const urlPath = (path: FilePath): string =>
-  path.split("/").map(encodeURIComponent).join("/");
 
 // in variables to prevent bundling by esbuild:
 const nodeFs = "node:fs/promises";
@@ -51,42 +52,42 @@ const vscodeExtensionFs = typeof document === "object"
  */
 export const readDir = async (path: string): Promise<string[]> => {
   const files: string[] = await (fs
-    ? (await fs).readdir(filePath(path), { withFileTypes: true })
+    ? (await fs).readdir(urlPathToFilePath(path), { withFileTypes: true })
       .then((files) =>
         files.flatMap((file) =>
           file.isSymbolicLink() || file.isDirectory() || file.name[0] === "." ? [] : file.name
         )
       )
-    : vscodeExtensionFs.readDir(leadingSlash(filePath(path))));
-  return files.map((name) => urlPath(normalizeSlashes(name)));
+    : vscodeExtensionFs.readDir(urlPathToFilePath(path)));
+  return files.map(toUrlPath);
 };
 
 /**
  * Return the contents of a text file on the local file system as a string.
  *
- * Input is a URL path relative to project root, decoded once before reading.
+ * Input is a URL path relative to project root.
  */
 export const readTextFile = async (path: string): Promise<string> =>
   fs
-    ? (await fs).readFile(filePath(path), { encoding: "utf8" })
-    : vscodeExtensionFs.readTextFile(leadingSlash(filePath(path)));
+    ? (await fs).readFile(urlPathToFilePath(path), { encoding: "utf8" })
+    : vscodeExtensionFs.readTextFile(urlPathToFilePath(path));
 
 /**
  * Return the contents of a binary file on the local file system.
  *
- * Input is a URL path relative to project root, decoded once before reading.
+ * Input is a URL path relative to project root.
  */
 export const readFile = async (path: string): Promise<Uint8Array<ArrayBufferLike>> =>
   fs
-    ? (await fs).readFile(filePath(path))
-    : vscodeExtensionFs.readFile(leadingSlash(filePath(path)));
+    ? (await fs).readFile(urlPathToFilePath(path))
+    : vscodeExtensionFs.readFile((urlPathToFilePath(path)));
 
 /**
  * Return the file paths on the local file system, relative to the current working directory,
  * expanding glob patterns like `*` and `**`. Do not pass it untrusted input.
  *
- * Returned URL paths are encoded, use forward slashes, are sorted alphabetically
- * and don't start with a slash. Glob patterns use filesystem names, not URL encoding.
+ * Returned paths are sorted alphabetically, are URL-encoded, use forward slashes,
+ * and don't start with a slash. Input glob patterns use filesystem names, not URL encoding.
  *
  * Except for when using the Mastro VSCode extension, this is a thin wrapper around
  * [fs.glob](https://nodejs.org/api/fs.html#fspromisesglobpattern-options).
@@ -100,15 +101,13 @@ export const findFiles = async (pattern: string | string[]): Promise<string[]> =
     const paths: string[] = [];
     for await (const entry of (await fs).glob(pattern, { withFileTypes: true })) {
       if (entry.isFile()) {
-        const path = entry.parentPath + sep + entry.name;
-        const relativeToProjectRoot = path.slice(process.cwd().length + 1);
-        paths.push(urlPath(normalizeSlashes(relativeToProjectRoot)));
+        const relativeToCwd = (entry.parentPath + sep + entry.name).slice(process.cwd().length + 1);
+        paths.push(toUrlPath(relativeToCwd));
       }
     }
     return paths.sort();
   } else {
-    return ((await vscodeExtensionFs.findFiles(pattern)) as string[])
-      .map((path) => urlPath(normalizeSlashes(path))).sort();
+    return ((await vscodeExtensionFs.findFiles(pattern)) as string[]).map(toUrlPath).sort();
   }
 };
 
@@ -157,8 +156,9 @@ const validatePattern = (p: string) => {
   return p;
 }
 
-const leadingSlash = (path: string) =>
-  path.startsWith("/") ? path : "/" + path;
+// normalize and convert a filesystem path to a URL path
+const toUrlPath = (path: string): string =>
+  normalizeSlashes(path).split("/").map(encodeURIComponent).join("/");
 
 // Replace backslashes with forward slashes on Windows.
 const normalizeSlashes = (path: string): FilePath =>
