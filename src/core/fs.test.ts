@@ -5,51 +5,60 @@ import { join, relative, sep } from "node:path";
 import { test } from "node:test";
 
 import {
-  filePath,
+  urlPathToFilePath,
   type FilePath,
   findFiles,
   readDir,
   readFile,
   readJsonFiles,
   readTextFile,
-  urlPath,
 } from "./fs.ts";
 
-test("filePath decodes URL paths, urlPath preserves filename characters", () => {
-  const path: FilePath = filePath("/assets/./hello%20%23%3F%2520-%C3%BC.txt");
+test("urlPathToFilePath decodes URL paths and preserves filesystem characters", () => {
+  const path: FilePath = urlPathToFilePath("/assets/./hello%20%23%3F%2520-%C3%BC.txt");
   assert.equal(path, "assets/./hello #?%20-ü.txt");
-  assert.equal(urlPath(path), "assets/./hello%20%23%3F%2520-%C3%BC.txt");
-  assert.equal(filePath("/assets//./file.txt"), "assets//./file.txt");
-  assert.equal(filePath(urlPath(path)), path);
-  assert.equal(filePath("/hello%20world/"), "hello world/");
-  assert.equal(filePath("///hello%20world/"), "hello world/");
-  assert.equal(filePath("/%2fhello.txt"), "hello.txt");
-  assert.equal(filePath("/"), ".");
-  assert.throws(() => filePath("/%FF"), URIError);
-  assert.throws(() => filePath("/100%.txt"), URIError);
+  assert.equal(urlPathToFilePath("/assets//./file.txt"), "assets//./file.txt");
+  assert.equal(urlPathToFilePath("/hello%20world/"), "hello world/");
+  assert.equal(urlPathToFilePath("///hello%20world/"), "hello world/");
+  assert.equal(urlPathToFilePath("/%2fhello.txt"), "hello.txt");
+  assert.equal(urlPathToFilePath("/"), ".");
+  assert.equal(urlPathToFilePath(""), ".");
+  assert.throws(() => urlPathToFilePath("/%FF"), URIError);
+  assert.throws(() => urlPathToFilePath("/100%.txt"), URIError);
 
-  assert.equal(filePath("/a%5Cb/c/"), sep === "\\" ? "a/b/c/" : "a\\b/c/");
-  assert.equal(filePath("/file..name.txt"), "file..name.txt");
-  assert.equal(filePath("/%252e%252e/file.txt"), "%2e%2e/file.txt");
+  assert.equal(urlPathToFilePath("/a%5Cb/c/"), sep === "\\" ? "a/b/c/" : "a\\b/c/");
+  assert.equal(urlPathToFilePath("/file..name.txt"), "file..name.txt");
+  assert.equal(urlPathToFilePath("/%252e%252e/file.txt"), "%2e%2e/file.txt");
 
   // These checks are compile-time only: runtime strings cannot carry a brand.
   if (false) {
     // @ts-expect-error A FilePath must not be URL-decoded twice.
-    filePath(path);
-    // @ts-expect-error URL encoding requires a decoded FilePath.
-    urlPath("/assets/file.txt");
+    urlPathToFilePath(path);
     // @ts-expect-error Plain strings must be converted before use as FilePaths.
     const unconverted: FilePath = "/assets/file.txt";
   }
 });
 
 test("filesystem reads reject decoded parent-directory segments", async () => {
-  for (const path of ["../secret", "data/../secret", "data/..", "/data/%2e%2e/secret", "data/%2e%2e%2fsecret"]) {
-    assert.throws(() => filePath(path), /must not include \.\. segments/);
+  for (const path of [
+    "../secret",
+    "data/../secret",
+    "data/..",
+    "/data/%2e%2e/secret",
+    "data/%2e%2e%2fsecret",
+  ]) {
+    assert.throws(() => urlPathToFilePath(path), /must not include \.\. segments/);
     for (const read of [readFile, readTextFile, readDir]) {
       await assert.rejects(read(path), /must not include \.\. segments/);
     }
   }
+});
+
+test("readDir accepts empty and slash paths for the project root", async () => {
+  const expected = await readDir(".");
+  assert.ok(expected.includes("package.json"));
+  assert.deepEqual(await readDir(""), expected);
+  assert.deepEqual(await readDir("/"), expected);
 });
 
 test("filesystem helpers exchange URL paths and decode exactly once when reading", async (t) => {
@@ -82,18 +91,18 @@ test("Windows filesystem paths use forward slashes without decoding filesystem n
         yield { isFile: () => true, parentPath: process.cwd() + '\\\\routes\\\\nested', name: 'hello%20.txt' };
       }
     }});
-    const { filePath, findFiles, urlPath } = await import(${JSON.stringify(new URL("./fs.ts", import.meta.url).href)});
+    const { urlPathToFilePath, findFiles } = await import(${JSON.stringify(new URL("./fs.ts", import.meta.url).href)});
     for (const path of ['/a%5Cb/../c/', 'data%5c..%5csecret', 'data\\\\..\\\\secret']) {
-      assert.throws(() => filePath(path), /must not include \\.\\. segments/);
+      assert.throws(() => urlPathToFilePath(path), /must not include \\.\\. segments/);
     }
-    assert.equal(filePath('routes\\\\nested\\\\hello%20world.txt'), 'routes/nested/hello world.txt');
-    assert.equal(filePath('%5C%5Cserver%5Cshare%5Cfile.txt'), 'server/share/file.txt');
+    assert.equal(urlPathToFilePath('routes\\\\nested\\\\hello%20world.txt'), 'routes/nested/hello world.txt');
+    assert.equal(urlPathToFilePath('%5C%5Cserver%5Cshare%5Cfile.txt'), 'server/share/file.txt');
     for (const path of ['C:/secret', '/C:%5csecret', './C:secret', '././C:secret', './/./C:secret']) {
-      assert.throws(() => filePath(path), /must be relative/);
+      assert.throws(() => urlPathToFilePath(path), /must be relative/);
     }
     const paths = await findFiles('routes/**/*');
     assert.deepEqual(paths, ['routes/nested/hello%2520.txt']);
-    assert.equal(filePath(paths[0]), 'routes/nested/hello%20.txt');
+    assert.equal(urlPathToFilePath(paths[0]), 'routes/nested/hello%20.txt');
   `;
   const result = spawnSync(
     process.execPath,

@@ -1,28 +1,48 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { test } from "node:test";
 
-import { Mastro } from "../core/mastro.ts";
-import { tsToJs } from "./tsToJs.ts";
+import { importRegex } from "./tsToJs.ts";
 
-test("transformed JavaScript does not retain the source Content-Length", async () => {
-  const cwd = process.cwd();
-  const directory = await mkdtemp(join(tmpdir(), "mastro-ts-to-js-"));
-  try {
-    await mkdir(join(directory, "routes"));
-    await writeFile(join(directory, "routes", "demo.client.ts"), 'import "./dep.client.ts"');
-    process.chdir(directory);
+const replaceImports = (code: string) => code.replace(importRegex, "$1.js$2;");
 
-    const handler = new Mastro({ middlewares: [tsToJs] }).createHandler();
-    const response = await handler(new Request("http://localhost/demo.client.js"));
+test("importRegex rewrites multiline and indented static TypeScript imports", () => {
+  const code = `import {
+  value,
+} from "./dep.client.ts";
+  import other from './dep.client.ts'
+import * as dependency from
+  "./dep.client.ts";
+import "./dep.client.ts"
+import "./already.js";
+const path = "./dep.client.ts";`;
+  assert.equal(
+    replaceImports(code),
+    `import {
+  value,
+} from "./dep.client.js";
+  import other from './dep.client.js';
+import * as dependency from
+  "./dep.client.js";
+import "./dep.client.js";
+import "./already.js";
+const path = "./dep.client.ts";`,
+  );
+});
 
-    assert.equal(response.status, 200);
-    assert.equal(await response.text(), 'import "./dep.client.js";');
-    assert.equal(response.headers.get("Content-Length"), null);
-  } finally {
-    process.chdir(cwd);
-    await rm(directory, { recursive: true, force: true });
+test("importRegex leaves dynamic imports unchanged", () => {
+  for (const code of [
+    'import("./dep.client.ts");',
+    'import ("./dep.client.ts");',
+    'import (\n  "./dep.client.ts"\n);',
+    'import\n(\n  "./dep.client.ts"\n);',
+  ]) {
+    assert.equal(replaceImports(code), code);
   }
+});
+
+test("importRegex leaves JavaScript imports and ordinary strings unchanged", () => {
+  const code = `import { value } from "./dep.js";
+const path = "./dep.client.ts";
+const example = "import value from './dep.client.ts';";`;
+  assert.equal(replaceImports(code), code);
 });

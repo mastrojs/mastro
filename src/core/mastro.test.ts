@@ -2,8 +2,25 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { Mastro, type HttpMethod } from "./mastro.ts";
+import { getParams } from "./responses.ts";
 
-test("concurrent requests keep their own extra arguments", async () => {
+test("apps own their middleware arrays when constructed from shared options", async () => {
+  const options = { middlewares: [] as Mastro["middlewares"] };
+  const first = new Mastro(options);
+  const second = new Mastro(options).get("/", () => new Response("second"));
+
+  first.middlewares.push(() => new Response("first middleware"));
+  const third = new Mastro(options).get("/", () => new Response("third"));
+
+  assert.equal(options.middlewares.length, 0);
+  const cases = [[first, "first middleware"], [second, "second"], [third, "third"]] as const;
+  for (const [app, expected] of cases) {
+    const response = await app.createHandler()(new Request("https://example.com/"));
+    assert.equal(await response.text(), expected);
+  }
+});
+
+test("concurrent requests keep their own parameters and extra arguments", async () => {
   const handler = new Mastro<[string]>({
     middlewares: [
       async (req, ctx) => {
@@ -13,13 +30,40 @@ test("concurrent requests keep their own extra arguments", async () => {
       },
     ],
   })
-    .get("/:name", (req, extra) => new Response(extra))
+    .get("/:name", async (req, extra) => {
+      await Promise.resolve();
+      assert.deepEqual(getParams(req), { name: extra.slice(1) });
+      return new Response(extra);
+    })
     .createHandler();
 
   const responses = await Promise.all(
     ["/first", "/second"].map((path) => handler(new Request("https://example.com" + path), path)),
   );
   assert.deepEqual(await Promise.all(responses.map((res) => res.text())), ["/first", "/second"]);
+});
+
+test("programmatic routes expose parameters from the selected route", async () => {
+  const respond = (req: Request) => Response.json(getParams(req));
+  const handler = new Mastro()
+    .post("/users/:name", respond)
+    .get("/users/:id", respond)
+    .addRoute("all", "/files/:path(.*)?", respond)
+    .get("/plain", respond)
+    .createHandler();
+  const cases: Array<[string, HttpMethod, Record<string, string>]> = [
+    ["/users/42", "GET", { id: "42" }],
+    ["/users/hello%20world", "GET", { id: "hello%20world" }],
+    ["/users/alice", "POST", { name: "alice" }],
+    ["/files/one/two", "PUT", { path: "one/two" }],
+    ["/plain", "GET", {}],
+  ];
+
+  for (const [path, method, expected] of cases) {
+    const response = await handler(new Request("https://example.com" + path, { method }));
+    assert.equal(response.status, 200, `${method} ${path}`);
+    assert.deepEqual(await response.json(), expected, `${method} ${path}`);
+  }
 });
 
 test("programmaticRouter", async () => {
