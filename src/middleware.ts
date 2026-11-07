@@ -9,6 +9,7 @@ import type { Handler } from "./core/mastro.ts";
  *
  * When doing static site generation (or asset generation),
  * suppress generation of a page by returning `new Response(null, { status: 404 })`.
+ * The default logger warns about the 404, but generation still succeeds.
  * To change the file name of the generated file, set a `Content-Disposition` header on your
  * response to a filename (without directory separators), for example:
  *

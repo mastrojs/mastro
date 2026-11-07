@@ -10,13 +10,8 @@ import { posix } from "node:path";
 import { urlPathToFilePath } from "./core/fs.ts";
 import type { Handler, Mastro, Route } from "./core/mastro.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
-import {
-  chainMiddlewares,
-  type Context,
-  type GeneratorContext,
-  type GeneratorContextSimple,
-  type Middleware,
-} from "./middleware.ts";
+import type { Context, GeneratorContext, GeneratorContextSimple } from "./middleware.ts";
+import { chainMiddlewares } from "./middleware.ts";
 import { middlewares as defaultMiddlewares } from "./servers/server.ts";
 
 /**
@@ -69,7 +64,8 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
     if ("getStaticPaths" in m && m.getStaticPaths) {
       for (const path of validateStaticPaths(m.name, await m.getStaticPaths(ctx))) {
         // TODO: parallelize without opening too many file handles at once
-        const { response, outFilePath } = await generatePage(handler, new URL(baseUrl + path), ctxWithFetchUpstream);
+        const url = new URL(baseUrl + path);
+        const { response, outFilePath } = await generatePage(handler, url, ctxWithFetchUpstream);
         if (response.ok) {
           const outPath = join(outFolder, outFilePath);
           await fs.mkdir(dirname(outPath), { recursive: true });
@@ -78,7 +74,7 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
           } else {
             console.warn(`\nWARNING: ${path} returned no body (HTTP ${response.status})\n.`);
           }
-        } else {
+        } else if (response.status !== 404) {
           completeSuccess = false;
         }
       }
@@ -116,10 +112,10 @@ const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer
   );
 };
 
-const createRouter = (routes: Route[]): Middleware => ({
+const createRouter = (routes: Route[]) => ({
   name: "router",
   handler: routeHandler(routes),
-  getStaticPaths: async (ctx) => {
+  getStaticPaths: async (ctx: GeneratorContextSimple) => {
     const rs = ctx.onlyPregenerate ? routes.filter((r) => r.pregenerate) : routes;
     const paths = rs.filter((r) => r.method === "GET" || r.method === "all").map(async (r) => {
       if (typeof r.getStaticPaths === "function") return r.getStaticPaths();
@@ -141,7 +137,7 @@ const validateStaticPaths = (name: string, paths: string[]) => {
     if (typeof path !== "string") throw Error(prefix + notStringMsg);
     if (path[0] !== "/") throw Error(prefix + ": paths must start with a slash (/)");
     if (path.includes("#") || path.includes("?") || path.includes("\\")) {
-      throw Error(`${prefix} must return encoded URL paths. Encode path segments with encodeURIComponent.`);
+      throw Error(`${prefix} must return encoded URL paths. Use encodeURIComponent.`);
     }
     if (!path.endsWith("/") && !posix.extname(path) && !path.startsWith("/.well-known/")) {
       console.warn(`\nWARNING: ${name} has path ${path} without file extension.
