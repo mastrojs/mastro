@@ -24,11 +24,13 @@ const serveStaticFile = async (req: Request, ctx: Context): Promise<Response | u
   if (req.method === "GET" || req.method === "HEAD") {
     const { pathname } = new URL(req.url);
     const path = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
-    const isProd = ctx.mode === "server" && ctx.environment === "production"
-    const pregenerated = isProd ? await tryServeFile(req, "generated" + path, reserved) : null;
+    const tryPregen = generatedExists && ctx.mode === "server" && ctx.environment === "production";
+    const pregenerated = tryPregen ? await tryServeFile(req, "generated" + path, reserved) : null;
     return pregenerated || await tryServeFile(req, "routes" + path, reserved);
   }
 };
+
+const generatedExists = (await fs.stat("generated", { throwIfNoEntry: false }))?.isDirectory();
 
 export const tryServeFile = async (
   req: Request,
