@@ -53,10 +53,8 @@ const mastroGenerate = async (values: ReturnType<typeof parseArgs>["values"]) =>
   const serverPath = exists("server.ts") || exists("server.js");
   const example = "`export const app = new Mastro()` or similar.";
   if (!serverPath) {
-    throw new GenerateError(
-      "No `server.ts` or `server.js` file found in the project directory.\nCreate one containing " +
-        example,
-    );
+    throw new GenerateError(`No \`server.ts\` or \`server.js\` found in the project directory root.
+Create one containing ${example}`);
   }
   // if we had https://github.com/nodejs/node/issues/63096, we could start server without server.ts:
   // const app = server ? await import(server).then((m) => m.app as Mastro) : createFileRouterApp();
