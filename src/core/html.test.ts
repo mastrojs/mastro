@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { type Html, html, renderToStream, renderToString, renderToStringSync, unsafeInnerHtml } from './html.ts'
+import { html, renderToStream, renderToString, renderToStringSync, unsafeInnerHtml } from './html.ts'
 import { htmlToResponse } from "./responses.ts";
 
 test("html", async () => {
@@ -296,7 +296,6 @@ const createAsyncIterable = <T>(value: T): AsyncIterable<T> => ({
   [Symbol.asyncIterator]() {
     let done = false;
     return {
-      // deno-lint-ignore require-await
       next: async () => {
         if (done) {
           return { value: undefined, done };

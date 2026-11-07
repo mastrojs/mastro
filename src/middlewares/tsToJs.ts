@@ -3,8 +3,9 @@ import type { Middleware } from "../middleware.ts";
 import { tryServeFile } from "./staticFiles/staticFiles.ts";
 
 /**
- * Convert a TypeScript string to JavaScript by running it through `stripTypeScriptTypes`
- * (or `ts-blank-space` on Bun), and then changing imports ending with `.ts` to end in `.js`.
+ * Middleware that converts `*.client.ts` files to `*.client.js` by running it through
+ * `stripTypeScriptTypes` (or `ts-blank-space` on Bun), and then
+ * changing imports ending with `.ts` to end in `.js`.
  *
  * Since browsers don't understand TypeScript, we run this function on `.client.ts` files,
  * to convert them to `.client.js` files. Extension needs to change because

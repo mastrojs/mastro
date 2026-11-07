@@ -12,7 +12,6 @@
  *
  * Note that we use `String` objects to store already properly escaped HTML.
  */
-// deno-lint-ignore ban-types
 export type HtmlPrimitive = String | string | number | undefined | null | false;
 
 /**

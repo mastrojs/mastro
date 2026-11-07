@@ -14,6 +14,7 @@ import { type Html, isAsyncIterable, renderToStream } from "./html.ts";
  *   const { slug } = getParams(req);
  *   return htmlToResponse(html`Hello ${slug}`);
  * }
+ * ```
  */
 export const getParams = (req: Request): Record<string, string | undefined> =>
   (req as any)._params || {};
@@ -65,7 +66,8 @@ export const sseResponse = <T extends object>(
   );
 
 /**
- * Returns the path of a hashed file name, or the input path if not found in `generatedAssets.json`
+ * Returns the hashed path from `generatedAssets.json`, or the input path prefixed with `/_assets/`
+ * if no hash is found.
  *
  * If you have a `routes/_assets/logo.webp` file, use in your template:
  *
@@ -142,7 +144,7 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
  * If you're hosting your website with GitHub Pages on a sub-directory
  * (e.g. `https://my-name.github.io/my-repo` instead of `https://my-name.github.io`
  * or instead of a custom domain), then you need to prefix all absolute links
- * that start with a slash with you base-path (`/my-repo` in this case),
+ * that start with a slash with your base path (`/my-repo` in this case),
  * which is what this function returns when run on GitHub Actions.
  *
  * For example in your `Layout.ts` file:
@@ -150,7 +152,7 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
  * ```ts
  * import { ghPagesBasePath, html } from "@mastrojs/mastro";
  * export const basePath = ghPagesBasePath(); // export for use in other modules
- * export const GET = () =>
+ * export const Layout = () =>
  *   html`
  *     <html>
  *       <head>
@@ -159,12 +161,12 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
  * ```
  *
  * btw. if you're not on GitHub Pages, but still hosting in a sub-directory, you can
- * change the `generate` command in `deno.json` to `BASEPATH='/my-path' deno task generate`,
+ * change the `generate` command in `package.json` to `BASEPATH='/my-path' mastro generate`,
  * and use that like:
  *
  * ```ts
  * export const basePath = process.env.BASEPATH || "";  // export for use in other modules
- * export const GET = () =>
+ * export const Layout = () =>
  *   html`
  *     <html>
  *       <head>

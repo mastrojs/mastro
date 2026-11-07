@@ -8,12 +8,12 @@
 import type { StandardSchemaV1 } from "./standard-schema.d.ts";
 
 /**
- * Branded type of a normalized, project-relative filesystem path.
+ * Branded type of a decoded, project-relative filesystem path.
  */
 export type FilePath = string & { readonly __filePath: unique symbol };
 
 /**
- * Convert a URL path to a normalized, project-relative filesystem path with forward slashes
+ * Convert a URL path to a decoded, project-relative filesystem path with forward slashes
  * on every platform. For example `urlPathToFilePath("/foo/bar%20baz.jpg") === "foo/bar baz.jpg"`
  */
 export const urlPathToFilePath = (urlPath: string & { readonly __filePath?: never }): FilePath => {
@@ -39,14 +39,13 @@ const { sep = "/" } = typeof document === "object" || isWorker
   ? {}
   : await import(nodePath) as typeof import("node:path");
 
-// we use document.fs because dnt would add a shim for window https://github.com/denoland/dnt/issues/454
 const vscodeExtensionFs = typeof document === "object"
   ? (document as any).fs
     : (isWorker ? (self as any).fs : undefined);
 
 /**
  * Read the directory on the local file system and return its files,
- * non-recursive and ignoring symlinks.
+ * non-recursive and ignoring symlinks and dotfiles.
  *
  * Input is a URL path relative to project root. Returned filenames are URL-encoded.
  */
@@ -112,8 +111,9 @@ export const findFiles = async (pattern: string | string[]): Promise<string[]> =
 };
 
 /**
- * Read all files from the local filesystem that match the supplied glob pattern, (via `findFiles`)
- * and parse then as JSON. URL path is in `path`, URL-encoded filename without suffix in `slug`.
+ * Read all files from the local filesystem that match the supplied glob pattern (via `findFiles`)
+ * and parse them as JSON. Returns an array with `data`, `path` as a URL path, and `slug` as the
+ * URL-encoded filename up to its first dot (e.g. `post.en.json` becomes `post`).
  *
  * The default TypeScript type for the data is `unknown`. You can override that with e.g.
  * `readJsonFiles<{ title: string }>("data/*.json")`. But to actually verify the metadata is
@@ -123,7 +123,7 @@ export const findFiles = async (pattern: string | string[]): Promise<string[]> =
  * ```ts
  * import { object, string } from "./validate.js";
  * const schema = object({ title: string });
- * const arr = await readJsonFiles(pattern, { schema }),
+ * const arr = await readJsonFiles(pattern, { schema });
  * ```
  */
 export const readJsonFiles = async <T>(

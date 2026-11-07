@@ -23,7 +23,7 @@ export type Handler<E extends unknown[] = unknown[]> = (
 export interface Route<E extends unknown[] = unknown[]> {
   /**
    * Name of the route for error messages etc.
-   * For file-based routes the `filePath`, e.g. `/routes/index.server.ts`
+   * For file-based routes the `filePath`, e.g. `routes/index.server.ts`
    */
   name: string;
   /** Fetch handler */

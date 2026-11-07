@@ -1,6 +1,6 @@
 import type { Middleware } from "../middleware.ts";
 
-/** Log non-ok responses. Place this first in the middleware stack. */
+/** Basic logging middleware. Place this first in the middleware stack. */
 export const logger: Middleware = {
   name: "logger",
   handler: async (req, ctx) => {

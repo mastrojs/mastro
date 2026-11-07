@@ -14,9 +14,9 @@ import type { Handler } from "./core/mastro.ts";
  * response to a filename (without directory separators), for example:
  *
  * ```
- * const { body, headers, status } = ctx.fetchUpstream(req);
+ * const { body, headers, status } = await ctx.fetchUpstream(req);
  * headers.set("Content-Disposition", 'filename="file%20name.jpg"');
- * return new Response(body, { headers, status })`
+ * return new Response(body, { headers, status });
  * ```
  */
 export type Middleware<E = unknown[]> =
@@ -28,7 +28,7 @@ export type Middleware<E = unknown[]> =
       handler: Handler<[Context<E>]>;
       /** Called by the static site generator. */
       getStaticPaths?: (ctx: GeneratorContextSimple) => Promise<string[]> | string[];
-      /** Called by the static site generator after generating all pages. */
+      /** Called by the static site generator after generation completes successfully. */
       afterGenerate?: (ctx: GeneratorContextSimple) => void;
     };
 
