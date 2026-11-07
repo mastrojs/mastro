@@ -14,18 +14,11 @@ export const loadFileRoutes = async (): Promise<Route[]> => {
 };
 
 export const findRoutes = async (): Promise<FileRoute[]> => {
-  const routeFiles = await findFiles([
-    "routes/**/*.server.{ts,js}",
-    "routes/**/.*/**/*.server.{ts,js}",
-  ]);
-
-  if (routeFiles.length === 0) {
-    console.warn(
-      "\n\nWARNING: No route files found!\n  see https://mastrojs.github.io/docs/routing/\n\n",
-    );
-  }
-  return routeFiles.map(urlPathToFilePath).sort(compr).map((name) => ({ name, pathname: toPattern(name) }));
+  const files = await findFiles(["routes/**/*.server.{ts,js}", "routes/**/.*/**/*.server.{ts,js}"]);
+  if (files.length === 0) console.warn(noRt);
+  return files.map(urlPathToFilePath).sort(cmp).map((n) => ({ name: n, pathname: toPattern(n) }));
 };
+const noRt = "\n\nWARNING: No route files found!\n  see https://mastrojs.github.io/docs/routing/\n";
 
 export const loadRoutes = async (routes: FileRoute[], loader: RouteLoader): Promise<Route[]> => {
   const modules = await Promise.all(
@@ -59,7 +52,7 @@ export const loadRoutes = async (routes: FileRoute[], loader: RouteLoader): Prom
  * - dynamic segments lose out over fixed segments at every depth
  * - longer paths win over their prefixes.
  */
-const compr = (a: string, b: string) => a.replaceAll("[", "\0") < b.replaceAll("[", "\0") ? 1 : -1;
+const cmp = (a: string, b: string) => a.replaceAll("[", "\0") < b.replaceAll("[", "\0") ? 1 : -1;
 
 const toPattern = (filePath: FilePath) => {
   const pathParts = filePath.split("/").slice(1);
@@ -73,11 +66,10 @@ const toPattern = (filePath: FilePath) => {
     const folder = pathParts[i - 1];
     if (folder && (part === `(${folder}).server.ts` || part === `(${folder}).server.js`)) {
       return "";
-    } else if (part.endsWith(".server.ts") || part.endsWith(".server.js")) {
-      return encodeURIComponent(part.slice(0, -10));
-    } else {
-      return encodeURIComponent(part);
     }
+    return encodeURIComponent(
+      part.endsWith(".server.ts") || part.endsWith(".server.js") ? part.slice(0, -10) : part,
+    ).replace(/[()*]/g, "\\$&"); // escape characters that have special meaning in URLPattern
   });
   return "/" + parts.join("/");
 };

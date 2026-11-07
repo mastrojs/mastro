@@ -124,7 +124,7 @@ const createRouter = (routes: Route[]): Middleware => ({
     const paths = rs.filter((r) => r.method === "GET" || r.method === "all").map(async (r) => {
       if (typeof r.getStaticPaths === "function") return r.getStaticPaths();
       if (hasRouteParams.test(r.pattern.pathname)) throw Error(r.name + errMsg);
-      return r.pattern.pathname;
+      return r.pattern.pathname.replace(/\\(.)/g, "$1"); // unescape URLPattern syntax
     }).reverse();
     return (await Promise.all(paths)).flat();
   },
