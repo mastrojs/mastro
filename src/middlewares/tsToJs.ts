@@ -26,13 +26,7 @@ export const tsToJs: Middleware = {
           headers.set("Content-Type", "text/javascript; charset=utf-8");
           headers.set("Accept-Ranges", "none");
           headers.delete("Content-Length");
-
-          // @ts-expect-error no type definitions for Bun
-          const { stripTypeScriptTypes } = typeof Bun === "object"
-            ? await import(["npm", "ts-blank-space"].join(":"))
-              .then((m) => ({ stripTypeScriptTypes: m.default }))
-            : await import("node:module");
-          const body = stripTypeScriptTypes(await res.text()).replace(importRegex, replacer);
+          const body = stripTypeScriptTypes(await res.text()).replace(importRegex, "$1.js$2;");
           return new Response(body, { headers });
         }
       }
@@ -41,6 +35,8 @@ export const tsToJs: Middleware = {
   },
 };
 
-const importRegex = /^import .*\.ts("|')(;)?$/gm;
-const replacer = (match: string, quote: string, semicolon: string) =>
-  match.slice(0, semicolon ? -5 : -4) + `.js${quote};`;
+// @ts-expect-error no type definitions for Bun
+const { stripTypeScriptTypes } = typeof Bun === "object"
+  ? await import("npm:ts-blank-space" as any).then((m) => ({ stripTypeScriptTypes: m.default }))
+  : await import("node:module");
+export const importRegex: RegExp = /^(\s*import\s+[^"'(]*["'][^"']*)\.ts(["']);?$/gm;
