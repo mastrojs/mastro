@@ -21,11 +21,11 @@ export const staticFiles: Middleware = {
 };
 
 const serveStaticFile = async (req: Request, ctx: Context): Promise<Response | undefined> => {
-  if (req.method === "GET") {
+  if (req.method === "GET" || req.method === "HEAD") {
     const { pathname } = new URL(req.url);
     const path = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
-    const isDev = ctx.mode === "server" && ctx.environment === "development";
-    const pregenerated = isDev ? null : await tryServeFile(req, "generated" + path, reserved);
+    const isProd = ctx.mode === "server" && ctx.environment === "production"
+    const pregenerated = isProd ? await tryServeFile(req, "generated" + path, reserved) : null;
     return pregenerated || await tryServeFile(req, "routes" + path, reserved);
   }
 };
@@ -63,6 +63,8 @@ export const tryServeFile = async (
  * (MIT License)
  */
 const serveFile = async (req: Request, filePath: FilePath): Promise<Response> => {
+  await req.body?.cancel();
+
   if (req.method !== "GET" && req.method !== "HEAD") {
     return newResponse(405);
   }
@@ -72,7 +74,6 @@ const serveFile = async (req: Request, filePath: FilePath): Promise<Response> =>
     fileInfo = await fs.stat(filePath);
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      await req.body?.cancel();
       return newResponse(404);
     } else {
       throw error;
@@ -80,7 +81,6 @@ const serveFile = async (req: Request, filePath: FilePath): Promise<Response> =>
   }
 
   if (fileInfo.isDirectory()) {
-    await req.body?.cancel();
     return newResponse(404);
   }
 
@@ -97,11 +97,6 @@ const serveFile = async (req: Request, filePath: FilePath): Promise<Response> =>
     headers.set("Content-Type", contentTypeValue);
   }
   const fileSize = fileInfo.size;
-  if (req.method === "HEAD") {
-    headers.set("Content-Length", `${fileSize}`);
-    return new Response(null, { status: 200, headers });
-  }
-
   if (etag || fileInfo.mtime) {
     // If a `if-none-match` header is present and the value matches the tag or
     // if a `if-modified-since` header is present and the value is bigger than
@@ -121,12 +116,15 @@ const serveFile = async (req: Request, filePath: FilePath): Promise<Response> =>
   }
 
   headers.set("Content-Length", `${fileSize}`);
+  if (req.method === "HEAD") {
+    return new Response(null, { status: 200, headers });
+  }
   const file = await fs.open(filePath, "r");
   const stream = file.readableWebStream({ autoClose: true }) as ReadableStream;
   return new Response(stream, { status: 200, headers });
 };
 
-const reserved = (p: string) => p.endsWith(".client.ts") || /\.server\.(ts|js)$/.test(p);
+const reserved = (p: string) => /\.(client\.ts|server\.ts|server\.js)$/i.test(p);
 
 const newResponse = (status: number) => new Response(`HTTP ${status}`, { status });
 
