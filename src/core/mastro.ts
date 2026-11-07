@@ -54,7 +54,7 @@ export class Mastro<E extends unknown[] = unknown[]> {
   private routesPromise?: Route<E>[] | Promise<Route<E>[]>;
 
   constructor(opts?: { middlewares?: Middleware<E>[]; routes?: Route<E>[] | Promise<Route<E>[]> }) {
-    this.middlewares = opts?.middlewares || [];
+    this.middlewares = [...(opts?.middlewares || [])];
     this.routesPromise = opts?.routes;
   }
 
