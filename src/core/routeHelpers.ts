@@ -26,6 +26,7 @@ export const routeHandler = <E extends unknown[]>(rs: Route<E>[] | Promise<Route
     if (match) {
       urlMatched = r.name;
       if ((r.method === method || r.method === "all") && typeof r.handler === "function") {
+        (req as any)._params = match.pathname.groups;
         return true;
       }
     }
