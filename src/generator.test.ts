@@ -13,12 +13,27 @@ import { createApp, createFileRouterApp } from "./servers/server.ts";
 
 test("generate: programmatic router with createApp", async (t) => {
   await withTestEnvironment(t, async (outFolder, warnings, errors) => {
+    let finalized = false;
     const app = createApp()
       .get("/", (req, ...extra) => {
         assert.deepEqual(extra, []);
         return new Response("home");
       })
-      .get("/notfound", () => new Response("oops", { status: 404 }))
+      .get("/notfound", () => new Response("oops", { status: 404 }));
+    app.middlewares.push({
+      name: "set finalized=true in afterGenerate",
+      handler: (req, ctx) => ctx.fetchUpstream(req),
+      afterGenerate: () => { finalized = true; },
+    });
+
+    assert.equal(await generate(app, { outFolder }), true, "A 404 must not fail generation");
+    assert.deepEqual(await readdir(outFolder), ["index.html"]);
+    assert.match(warnings.join("\n"), /GET \/notfound => 404/);
+    assert.deepEqual(errors, []);
+    assert.equal(finalized, true);
+
+    finalized = false;
+    app
       .get("/error", () => {
         throw Error("thrown route error");
       })
@@ -28,6 +43,7 @@ test("generate: programmatic router with createApp", async (t) => {
     const diagnostics = [...warnings, ...errors].join("\n");
 
     assert.equal(success, false, "Generation must report failed routes");
+    assert.equal(finalized, false, "Failed generation must not run afterGenerate");
     assert.equal(await readFile(join(outFolder, "index.html"), "utf8"), "home");
     const files = await readdir(outFolder);
     assert.ok(!files.includes("notfound"), "A 404 response must not produce a file");

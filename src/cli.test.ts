@@ -10,7 +10,10 @@ test("CLI generate: fails on missing server file", async () => {
   await runCli("generate", {}, async (_cwd, result) => {
     assert.equal(result.status, 1, result.stderr);
     assert.ok(
-      result.stderr.includes("No `server.ts` or `server.js` file found in the project directory."),
+      result.stderr.includes(
+        "No `server.ts` or `server.js` found in the project directory root.\n" +
+          "Create one containing `export const app = new Mastro()` or similar.",
+      ),
       result.stderr,
     );
   });
