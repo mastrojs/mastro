@@ -3,7 +3,8 @@ import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
 import { extname } from "node:path";
 import { contentTypeFromExt } from "./mediaTypes.ts";
-import { urlPathToFilePath, type FilePath, findFiles } from "../../core/fs.ts";
+import { findFiles } from "../../core/fs.ts";
+import { urlPathToFilePath, type FilePath } from "../../core/fsHelpers.ts";
 import type { Context, Middleware } from "../../middleware.ts";
 import { staticCacheControlVal } from "../../core/routeHelpers.ts";
 

@@ -1,4 +1,5 @@
-import { urlPathToFilePath, type FilePath, findFiles } from "../core/fs.ts";
+import { findFiles } from "../core/fs.ts";
+import { urlPathToFilePath, type FilePath } from "../core/fsHelpers.ts";
 import { httpMethods, type Route } from "../core/mastro.ts";
 
 interface FileRoute {

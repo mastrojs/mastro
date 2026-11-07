@@ -1,43 +1,21 @@
 /**
- * Lightweight wrapper around Node.js's file system functions and using RPC for the
- * [vscode-extension](../../vscode-extension/README.md).
+ * Lightweight wrapper around Node.js's file system functions. But for better interoperability
+ * with URL paths, input and output paths use URL encoding.
+ * Using RPC for the [vscode-extension](../../vscode-extension/README.md).
  * Cloudflare Workers work with Node.js compatibility.
  * For Service Workers (where there is no filesystem), we fall back to undefined
  * and skip Node.js imports so the module can still load.
  */
 import type { StandardSchemaV1 } from "./standard-schema.d.ts";
 
-/**
- * Branded type of a decoded, project-relative filesystem path.
- */
-export type FilePath = string & { readonly __filePath: unique symbol };
+import { isWorker, normalizeSlashes, sep, urlPathToFilePath } from "./fsHelpers.ts";
 
-/**
- * Convert a URL path to a decoded, project-relative filesystem path with forward slashes
- * on every platform. For example `urlPathToFilePath("/foo/bar%20baz.jpg") === "foo/bar baz.jpg"`
- */
-export const urlPathToFilePath = (urlPath: string & { readonly __filePath?: never }): FilePath => {
-  const path = normalizeSlashes(decodeURIComponent(urlPath)).replace(/^\/+/, "");
-  if (path.split("/").includes("..")) throw Error("FilePath must not include .. segments");
-  // on Windows, prevent paths starting with `C:`, `./C:`, etc:
-  if (sep === "\\" && /^(?:\.\/+)*[a-z]:/i.test(path)) throw Error("FilePath must be relative");
-  return (path || ".") as FilePath; // urlPathToFilePath("/") === "."
-};
-
-// in variables to prevent bundling by esbuild:
+// In a variable to prevent bundling by esbuild:
 const nodeFs = "node:fs/promises";
-const nodePath = "node:path";
-
-// @ts-expect-error WorkerGlobalScope
-const isWorker = typeof self !== "undefined" && self.WorkerGlobalScope && navigator.userAgent !== "Cloudflare-Workers";
 
 const fs = typeof document === "object" || isWorker
   ? undefined
   : import(nodeFs) as Promise<typeof import("node:fs/promises")>;
-
-const { sep = "/" } = typeof document === "object" || isWorker
-  ? {}
-  : await import(nodePath) as typeof import("node:path");
 
 const vscodeExtensionFs = typeof document === "object"
   ? (document as any).fs
@@ -159,7 +137,3 @@ const validatePattern = (p: string) => {
 // normalize and convert a filesystem path to a URL path
 const toUrlPath = (path: string): string =>
   normalizeSlashes(path).split("/").map(encodeURIComponent).join("/");
-
-// Replace backslashes with forward slashes on Windows.
-const normalizeSlashes = (path: string): FilePath =>
-  (sep === "\\" ? path.replaceAll("\\", "/") : path) as FilePath;

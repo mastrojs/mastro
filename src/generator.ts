@@ -7,7 +7,7 @@
 
 import { posix } from "node:path";
 
-import { urlPathToFilePath } from "./core/fs.ts";
+import { urlPathToFilePath } from "./core/fsHelpers.ts";
 import type { Handler, Mastro, Route } from "./core/mastro.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
 import type { Context, GeneratorContext, GeneratorContextSimple } from "./middleware.ts";

@@ -4,15 +4,8 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { test } from "node:test";
 
-import {
-  urlPathToFilePath,
-  type FilePath,
-  findFiles,
-  readDir,
-  readFile,
-  readJsonFiles,
-  readTextFile,
-} from "./fs.ts";
+import { findFiles, readDir, readFile, readJsonFiles, readTextFile } from "./fs.ts";
+import { urlPathToFilePath, type FilePath } from "./fsHelpers.ts";
 
 test("urlPathToFilePath decodes URL paths and preserves filesystem characters", () => {
   const path: FilePath = urlPathToFilePath("/assets/./hello%20%23%3F%2520-%C3%BC.txt");
@@ -91,7 +84,8 @@ test("Windows filesystem paths use forward slashes without decoding filesystem n
         yield { isFile: () => true, parentPath: process.cwd() + '\\\\routes\\\\nested', name: 'hello%20.txt' };
       }
     }});
-    const { urlPathToFilePath, findFiles } = await import(${JSON.stringify(new URL("./fs.ts", import.meta.url).href)});
+    const { findFiles } = await import(${JSON.stringify(new URL("./fs.ts", import.meta.url).href)});
+    const { urlPathToFilePath } = await import(${JSON.stringify(new URL("./fsHelpers.ts", import.meta.url).href)});
     for (const path of ['/a%5Cb/../c/', 'data%5c..%5csecret', 'data\\\\..\\\\secret']) {
       assert.throws(() => urlPathToFilePath(path), /must not include \\.\\. segments/);
     }
