@@ -177,21 +177,29 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
 };
 
 /**
- * Tests HTML snippets heuristically to determine whether we should wrap the next part in quotes
- * e.g. `<div class=${'myClass'}>`. We don't handle uppercase tags, HTML comments, or single-quoted
- * attributes, and track only whether we're in <script> contents (not <style> etc).
+ * Parse HTML snippets to determine whether we should wrap the next part in quotes
+ * e.g. `<div class=${'myClass'}>`. We don't handle HTML comments, or single-quoted
+ * attributes, and track only whether we're in <script> contents (but not <style> etc).
  */
 const parseParts = (templateParts: TemplateStringsArray) => {
-  let prefix = "";
+  let inAttr = false, inScript = false;
+  let tagContents = ""; // empty string means we're outside a tag
   return templateParts.map((str) => {
-    const scStart = (prefix += str).lastIndexOf("<script");
-    const inScript = scStart > prefix.lastIndexOf("</script>") && prefix.indexOf(">", scStart) >= 0;
-    const quote = !inScript && prefix.split('"').length % 2 === 1 &&
-      openingTagWithAttr.test(prefix.slice(prefix.lastIndexOf(">") + 1));
-    return { html: unsafeInnerHtml(str), quote };
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      if (inScript && str.startsWith("</script>", i)) inScript = false;
+      if (inScript) continue;
+      if (!tagContents && char !== "<") continue;
+      if (char === '"') inAttr = !inAttr;
+      tagContents += char;
+      if (!inAttr && char === ">") {
+        inScript = /^<script(?:\s|>)/.test(tagContents);
+        tagContents = "";
+      }
+    }
+    return { html: unsafeInnerHtml(str), quote: !inAttr && /\s[\w:-]+=$/.test(tagContents) };
   });
 };
-const openingTagWithAttr = /^\s*<[a-z][\w-]*(?:[^"'<>]|"[^"]*")*\s[\w:-]+=$/;
 
 const escape = (n: HtmlPrimitive): string =>
   typeof n === "string"
