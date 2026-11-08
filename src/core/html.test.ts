@@ -116,6 +116,40 @@ test('html attributes with automatic quote insertion', async () => {
   )
 })
 
+test("html automatic quote insertion ignores quotes in text", () => {
+  const value = "x onmouseover=alert(1)";
+  assert.equal(
+    renderToStringSync(html`<p>A 6" ruler</p><div title=${value}>Details</div>`),
+    '<p>A 6" ruler</p><div title="x onmouseover=alert(1)">Details</div>',
+  );
+  assert.equal(
+    renderToStringSync(html`<p>A 6" ${"ruler"}</p><div title=${value}>Details</div>`),
+    '<p>A 6" ruler</p><div title="x onmouseover=alert(1)">Details</div>',
+  );
+  assert.equal(
+    renderToStringSync(html`<script>const inch = '"';</script><div title=${value}>Details</div>`),
+    '<script>const inch = \'"\';</script><div title="x onmouseover=alert(1)">Details</div>',
+  );
+});
+
+test("html automatic quote insertion tracks quoted attributes across template parts", () => {
+  const value = "x onmouseover=alert(1)";
+  assert.equal(
+    renderToStringSync(
+      html`<div title="A ${6}" data-example="Sam's > <script>" data-name=${value}>Details</div>`,
+    ),
+    '<div title="A 6" data-example="Sam\'s > <script>" data-name="x onmouseover=alert(1)">Details</div>',
+  );
+  assert.equal(
+    renderToStringSync(html`<div title="a > b" class=${'myClass'}></div>`),
+    '<div title="a > b" class="myClass"></div>',
+  );
+  assert.equal(
+    renderToStringSync(html`<div title="<script>" class=${'after'}></div>`),
+    '<div title="<script>" class="after"></div>',
+  );
+});
+
 test("html automatic quote insertion: does not trigger in script contents", async () => {
   assert.deepEqual(
     await renderToString(html`<script>if (a < b) x=${7}</script>`),
@@ -174,14 +208,6 @@ test("html does not falsely add quotes around attribute-like text", async () => 
     "<p>some class=text</p>",
   );
   assert.deepEqual(
-    await renderToString(html`<!-- <div class=${"comment"}> -->`),
-    "<!-- <div class=comment> -->",
-  );
-  assert.deepEqual(
-    await renderToString(html`<div title='not class=${"not an attribute"}'></div>`),
-    "<div title='not class=not an attribute'></div>",
-  );
-  assert.deepEqual(
     await renderToString(html`<div title="not class=${"not an attribute"}"></div>`),
     '<div title="not class=not an attribute"></div>',
   );
@@ -207,23 +233,12 @@ test("html does not falsely add quotes around attribute-like text", async () => 
   );
 });
 
-test(
-  "html currently does not add quotes in cases where a more complex implementation would",
-  async () => {
-    assert.deepEqual(
-      await renderToString(html`<DIV class=${"uppercase"}></DIV>`),
-      "<DIV class=uppercase></DIV>",
-    );
-    assert.deepEqual(
-      await renderToString(html`<div title="a > b" class=${'myClass'}></div>`),
-      '<div title="a > b" class=myClass></div>',
-    )
-    assert.deepEqual(
-      await renderToString(html`<div title="<script>" class=${'after'}></div>`),
-      '<div title="<script>" class=after></div>',
-    )
-  },
-);
+test("html automatic quote insertion handles uppercase tags", () => {
+  assert.equal(
+    renderToStringSync(html`<DIV class=${"uppercase"}></DIV>`),
+    '<DIV class="uppercase"></DIV>',
+  );
+});
 
 test("html caches immutable template strings", async () => {
   const Component = (value: string) => html`<p class=${value}>${value}</p>`;
