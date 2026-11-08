@@ -1,0 +1,12 @@
+{
+  // Run and debug config, see https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start server",
+      "command": "pnpm run start",
+      "request": "launch",
+      "type": "node-terminal"
+    },
+  ]
+}

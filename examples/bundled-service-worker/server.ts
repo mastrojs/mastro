@@ -12,7 +12,7 @@ export const handler = new Mastro<ClientAddress, void>()
   .get("/sw-version", SWConfig)
   .createHandler();
 
-const port = 8000;
+const port = process.env.PORT || 8000;
 
 const server = http.createServer(createRequestListener(handler));
 
