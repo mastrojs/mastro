@@ -1,0 +1,76 @@
+{
+  "name": "@mastrojs/mastro",
+  "version": "0.9.0",
+  "description": "No dependencies,  no build step. Just a simple web framework and site generator.",
+  "homepage": "https://mastrojs.github.io",
+  "bugs": "https://github.com/mastrojs/mastro/issues",
+  "license": "MIT",
+  "type": "module",
+    "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepack": "tsc",
+    "fmt": "oxfmt -c .oxfmtrc.json",
+    "test": "node --test",
+    "bench": "node --experimental-bench --bench 'src/**/*.bench.ts'"
+  },
+  "bin": {
+    "mastro": "./src/cli.ts"
+  },
+  "exports": {
+    ".": "./src/core/index.ts",
+    "./generator": "./src/generator.ts",
+    "./server": "./src/servers/server.ts",
+    "./file-routes": "./src/servers/fileRoutes.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/core/index.d.ts",
+        "default": "./dist/core/index.js"
+      },
+      "./generator": {
+        "types": "./dist/generator.d.ts",
+        "default": "./dist/generator.js"
+      },
+      "./server": {
+        "types": "./dist/servers/server.d.ts",
+        "default": "./dist/servers/server.js"
+      },
+      "./file-routes": {
+        "types": "./dist/servers/fileRoutes.d.ts",
+        "default": "./dist/servers/fileRoutes.js"
+      }
+    }
+  },
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!**/*.test.*",
+    "!**/*.bench.*"
+  ],
+  "devDependencies": {
+    "@types/node": "^24",
+    "oxfmt": "^0.75.0",
+    "typescript": "^7"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.x",
+      "onFail": "download"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "26.x",
+      "onFail": "download"
+    }
+  }
+}
