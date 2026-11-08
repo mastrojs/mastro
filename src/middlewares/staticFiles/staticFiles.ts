@@ -1,57 +1,57 @@
 import { Buffer } from "node:buffer";
 import type { Stats } from "node:fs";
 import fs from "node:fs/promises";
-import { extname, posix } from "node:path";
-import { staticCacheControlVal } from "../routers/common.ts";
-import { tsToJs } from "../tsToJs.ts";
+import { extname } from "node:path";
 import { contentTypeFromExt } from "./mediaTypes.ts";
+import { findFiles } from "../../core/fs.ts";
+import { urlPathToFilePath, type FilePath } from "../../core/fsHelpers.ts";
+import type { Context, Middleware } from "../../middleware.ts";
+import { staticCacheControlVal } from "../../core/routeHelpers.ts";
 
 /**
- * Utility function for the server to serve static files as well.
+ * Serve static files in routes folder (excluding *.client.ts, *.server.ts and *.server.js files)
  *
- * 1. look for matching file in `generated` folder
- * 2. look for matching file in `routes` folder.
- *     - if requested url ends in `.client.js`, transpile the corresponding `.ts` file
+ * In production, we also look for files in the `generated` folder, which take precedence.
  */
-export const serveStaticFile = async (
-  req: Request,
-  isDev: boolean,
-): Promise<Response | undefined> => {
-  let pathname;
-  try {
-    pathname = posix.normalize(decodeURIComponent(new URL(req.url).pathname));
-  } catch {
-    return newResponse(400);
-  }
+export const staticFiles: Middleware = {
+  name: "staticFiles",
+  getStaticPaths: () =>
+    findFiles(["routes/**/*", "routes/**/.*/**/*"])
+      .then((paths) => paths.filter((p) => !reserved(p)).map((p) => p.slice(6))),
+  handler: async (req, ctx) => await serveStaticFile(req, ctx) || ctx.fetchUpstream(req),
+};
 
-  const staticPath = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
-  const pregeneratedFile = isDev ? undefined : await tryServeFile(req, "generated" + staticPath);
-  const fileRes = pregeneratedFile || await tryServeFile(req, "routes" + staticPath);
-  if (fileRes) {
-    return fileRes;
-  }
-  if (pathname.endsWith(".client.js")) {
-    const fileRes = await tryServeFile(req, "routes" + pathname.slice(0, -3) + ".ts");
-    if (fileRes) {
-      const { status, headers } = fileRes; // // 200 or 304 Not Modified, hopefully no range request
-      headers.set("Content-Type", "text/javascript; charset=utf-8");
-      headers.set("Accept-Ranges", "none");
-      return new Response(await tsToJs(await fileRes.text()) || null, { status, headers });
-    }
+const serveStaticFile = async (req: Request, ctx: Context): Promise<Response | undefined> => {
+  if (req.method === "GET" || req.method === "HEAD") {
+    const { pathname } = new URL(req.url);
+    const path = pathname.endsWith("/") ? (pathname + "index.html") : pathname;
+    const tryPregen = generatedExists && ctx.mode === "server" && ctx.environment === "production";
+    const pregenerated = tryPregen ? await tryServeFile(req, "generated" + path, reserved) : null;
+    return pregenerated || await tryServeFile(req, "routes" + path, reserved);
   }
 };
 
-const tryServeFile = async (req: Request, path: string) => {
-  const res = await serveFile(req, path);
-  if (res.status === 404 || res.status === 405) {
-    return;
-  } else {
-    const cacheHeader = staticCacheControlVal(req);
-    if (cacheHeader) {
-      res.headers.set("Cache-Control", cacheHeader);
-    }
-    return res;
+const generatedExists = (await fs.stat("generated", { throwIfNoEntry: false }))?.isDirectory();
+
+export const tryServeFile = async (
+  req: Request,
+  path: string,
+  reserved?: (path: FilePath) => boolean,
+): Promise<Response | undefined> => {
+  let decodedPath: FilePath;
+  try {
+    decodedPath = urlPathToFilePath(path);
+  } catch {
+    return newResponse(400);
   }
+  if (reserved?.(decodedPath)) return;
+
+  const res = await serveFile(req, decodedPath);
+
+  if (res.status === 404 || res.status === 405) return;
+  const cacheHeader = staticCacheControlVal(req);
+  if (cacheHeader) res.headers.set("Cache-Control", cacheHeader);
+  return res;
 };
 
 /**
@@ -65,7 +65,7 @@ const tryServeFile = async (req: Request, path: string) => {
  * https://github.com/denoland/std/blob/2258bf2628a97a03dece8d0235d910bfaf1f501d/http/file_server.ts
  * (MIT License)
  */
-const serveFile = async (req: Request, filePath: string): Promise<Response> => {
+const serveFile = async (req: Request, filePath: FilePath): Promise<Response> => {
   if (req.method !== "GET" && req.method !== "HEAD") {
     return newResponse(405);
   }
@@ -73,9 +73,8 @@ const serveFile = async (req: Request, filePath: string): Promise<Response> => {
   let fileInfo;
   try {
     fileInfo = await fs.stat(filePath);
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      await req.body?.cancel();
+  } catch (error: any) {
+    if (error.code === "ENOENT" || error.code === "ENOTDIR") {
       return newResponse(404);
     } else {
       throw error;
@@ -83,7 +82,6 @@ const serveFile = async (req: Request, filePath: string): Promise<Response> => {
   }
 
   if (fileInfo.isDirectory()) {
-    await req.body?.cancel();
     return newResponse(404);
   }
 
@@ -100,11 +98,6 @@ const serveFile = async (req: Request, filePath: string): Promise<Response> => {
     headers.set("Content-Type", contentTypeValue);
   }
   const fileSize = fileInfo.size;
-  if (req.method === "HEAD") {
-    headers.set("Content-Length", `${fileSize}`);
-    return new Response(null, { status: 200, headers });
-  }
-
   if (etag || fileInfo.mtime) {
     // If a `if-none-match` header is present and the value matches the tag or
     // if a `if-modified-since` header is present and the value is bigger than
@@ -124,10 +117,15 @@ const serveFile = async (req: Request, filePath: string): Promise<Response> => {
   }
 
   headers.set("Content-Length", `${fileSize}`);
+  if (req.method === "HEAD") {
+    return new Response(null, { status: 200, headers });
+  }
   const file = await fs.open(filePath, "r");
   const stream = file.readableWebStream({ autoClose: true }) as ReadableStream;
   return new Response(stream, { status: 200, headers });
 };
+
+const reserved = (p: string) => /\.(client\.ts|server\.ts|server\.js)$/i.test(p);
 
 const newResponse = (status: number) => new Response(`HTTP ${status}`, { status });
 

@@ -5,25 +5,22 @@
  * @module
  */
 
-import type { Stats } from "node:fs";
-import { extname, posix } from "node:path";
-import type { ParseArgsOptionDescriptor } from "node:util";
+import { posix } from "node:path";
 
-import { findFiles, sep } from "./core/fs.ts";
-import type { Route } from "./routers/common.ts";
-import { hasRouteParams, loadRoutes } from "./routers/fileRouter.ts";
+import { urlPathToFilePath } from "./core/fsHelpers.ts";
+import type { Handler, Mastro, Route } from "./core/mastro.ts";
+import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
+import type { Context, GeneratorContext, GeneratorContextSimple } from "./middleware.ts";
+import { chainMiddlewares } from "./middleware.ts";
+import { middlewares as defaultMiddlewares } from "./servers/server.ts";
 
 /**
  * Config options for `generate`
  */
 export interface GenerateOpts {
   /**
-   * Files in this folder get hashed output names. Default is `_assets`, empty string to disable.
-   */
-  assetsFolder?: string;
-  /**
    * Base URL for the synthetic requests sent by the generator. Default is http://127.0.0.1
-   * to make them distinguishable from request from localhost (see `isDevServer`).
+   * to make them distinguishable from requests from localhost (see `isDevServer`).
    */
   baseUrl?: string;
   /**
@@ -36,14 +33,6 @@ export interface GenerateOpts {
    * Useful as a build step for servers.
    */
   onlyPregenerate?: boolean;
-  /**
-   * For use with the programmatic router. Default is to fall back on the file-based router.
-   */
-  routes?: Route[];
-  /**
-   * Generate `.routenames.json`, which the file-based router needs when using a bundled server.
-   */
-  writeRoutenames?: boolean;
 }
 
 /**
@@ -51,240 +40,109 @@ export interface GenerateOpts {
  *
  * Can not be used in the VSCode extension.
  */
-export const generate = async (opts: GenerateOpts = {}): Promise<void> => {
-  const { createHash } = await import("node:crypto");
+export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<boolean> => {
   const fs = await import("node:fs/promises");
-  const { dirname } = await import("node:path");
-  const { pathToFileURL } = await import("node:url");
-  const fileBasedRouter = !opts.routes;
-  const {
-    assetsFolder = "_assets",
-    outFolder = "generated",
-    onlyPregenerate = false,
-    routes = await loadRoutes(),
-  } = opts;
-  const assetsPrefix = assetsFolder ? sep + assetsFolder + sep : undefined;
+  const { dirname, join } = await import("node:path");
+  const { baseUrl = "http://127.0.0.1", outFolder = "generated", onlyPregenerate = false } = opts;
+  const resetP = fs.rm(outFolder, { force: true, recursive: true }).then(() => fs.mkdir(outFolder));
 
-  const isAsset = (path: string) => assetsPrefix && path.startsWith(assetsPrefix) && extname(path);
-  const assetHashes: Record<string, string> = {};
-  const getAssetPath = (path: string, data: Buffer) => {
-    const ext = extname(path);
-    const hash = createHash("sha256").update(data).digest("hex").slice(0, 8);
-    const hashedPath = `${path.slice(0, -1 * ext.length)}-${hash}${ext}`;
-    assetHashes[pathToFileURL(path).pathname.slice(assetsPrefix?.length)] = hashedPath;
-    return hashedPath;
-  };
-  const writeJSON = (path: string, data: object) =>
-    fs.writeFile(path, JSON.stringify(data, null, 2) + "\n");
-
-  if (fileBasedRouter && routes.length === 0) {
-    await ensureDir(fs.stat("routes"));
+  const middlewares = [...app.middlewares];
+  if (!middlewares.some((m) => m.name === "staticFiles")) {
+    // when we get passed an app for Cloudflare Workers or similar, we add staticFiles etc.
+    console.info("Did not find a staticFiles middleware, adding defaultMiddlewares.\n");
+    middlewares.unshift(...defaultMiddlewares);
   }
-  await fs.rm(outFolder, { force: true, recursive: true });
-  await fs.mkdir(outFolder);
+  middlewares.push(createRouter(await app.getRoutes())); // equivalent to Mastro#createHandler
 
-  if (fileBasedRouter && opts.writeRoutenames) {
-    await writeJSON(".routenames.json", routes.map((r) => r.name));
-  }
+  const handler = chainMiddlewares(middlewares);
+  const ctx: GeneratorContextSimple = { mode: "generator", onlyPregenerate, extra: [] };
+  const ctxWithFetchUpstream: GeneratorContext = { ...ctx, fetchUpstream };
+  await resetP;
 
   let completeSuccess = true;
-  for (const route of routes) {
-    const { name } = route;
-    if (route.method === "GET" && (!onlyPregenerate || route.pregenerate)) {
-      if (fileBasedRouter && hasRouteParams(name) && typeof route.getStaticPaths !== "function") {
-        throw Error(
-          name + " should export a function named getStaticPaths, returning an array of strings.",
-        );
-      }
-      for (const file of await generatePagesForRoute(route, opts.baseUrl)) {
-        if (file === false) {
-          completeSuccess = false;
-        } else if (file) {
-          const outPath = outFolder + file.outFilePath;
+  for (const m of middlewares) {
+    if ("getStaticPaths" in m && m.getStaticPaths) {
+      for (const path of validateStaticPaths(m.name, await m.getStaticPaths(ctx))) {
+        // TODO: parallelize without opening too many file handles at once
+        const url = new URL(path, baseUrl);
+        const { response, outFilePath } = await generatePage(handler, url, ctxWithFetchUpstream);
+        if (response.ok) {
+          const outPath = join(outFolder, outFilePath);
           await fs.mkdir(dirname(outPath), { recursive: true });
-          const { body } = file.response;
-          if (body) {
-            let data;
-            let { outFilePath } = file;
-            if (isAsset(outFilePath)) {
-              data = await file.response.arrayBuffer().then(Buffer.from);
-              outFilePath = getAssetPath(outFilePath, data);
-            }
-            await writeFile(outFolder + outFilePath, data || body);
+          if (response.body) {
+            await writeFile(outPath, response.body);
+          } else {
+            console.warn(`\nWARNING: ${path} returned no body (HTTP ${response.status})\n.`);
           }
+        } else if (response.status !== 404) {
+          completeSuccess = false;
         }
       }
     }
   }
+  if (completeSuccess) {
+    await Promise.all(
+      middlewares.map((m) => ("afterGenerate" in m ? m.afterGenerate?.(ctx) : null)),
+    );
+    console.info(`Generated static site and wrote to \`${outFolder}\` folder.`);
+  }
+  return completeSuccess;
+};
 
-  for (const filePath of await getStaticFilePaths()) {
-    await fs.mkdir(dirname(outFolder + filePath), { recursive: true });
-    if (filePath.endsWith(".client.ts")) {
-      const { tsToJs } = await import("./tsToJs.ts");
-      const text = await fs.readFile("routes" + filePath, { encoding: "utf8" });
-      await fs.writeFile(outFolder + filePath.slice(0, -3) + ".js", await tsToJs(text));
-    } else {
-      const outPath = isAsset(filePath)
-        ? getAssetPath(filePath, await fs.readFile("routes" + filePath))
-        : filePath;
-      await fs.copyFile("routes" + filePath, outFolder + outPath);
+const generatePage = async (handler: Handler<[Context]>, url: URL, ctx: Context) => {
+  const req = new Request(url);
+  const response = await handler(req, ctx);
+  const filename = parseContentDisposition(response.headers.get("Content-Disposition"));
+  const directory = url.pathname.slice(0, url.pathname.lastIndexOf("/") + 1);
+  const path = filename ? directory + filename : url.pathname;
+  const outFilePath = urlPathToFilePath(path.endsWith("/") ? `${path}index.html` : path);
+  return { response, outFilePath };
+};
+
+const parseContentDisposition = (val: string | null) => val?.match(/filename="?([^";]+)"?/i)?.[1];
+
+const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer) => {
+  const { createWriteStream } = await import("node:fs");
+  const { Readable } = await import("node:stream");
+  return new Promise<void>((resolve, reject) =>
+    Readable.fromWeb(data as any)
+      .pipe(createWriteStream(path))
+      .on("finish", resolve)
+      .on("error", reject),
+  );
+};
+
+const createRouter = (routes: Route[]) => ({
+  name: "router",
+  handler: routeHandler(routes),
+  getStaticPaths: async (ctx: GeneratorContextSimple) => {
+    const rs = ctx.onlyPregenerate ? routes.filter((r) => r.pregenerate) : routes;
+    const paths = rs.filter((r) => r.method === "GET" || r.method === "all").map(async (r) => {
+      if (typeof r.getStaticPaths === "function") return r.getStaticPaths();
+      if (hasRouteParams.test(r.pattern.pathname)) throw Error(r.name + errMsg);
+      return r.pattern.pathname.replace(/\\(.)/g, "$1"); // unescape URLPattern syntax
+    }).reverse();
+    return (await Promise.all(paths)).flat();
+  },
+});
+// URLPattern parameters, wildcards, and groups require concrete paths:
+const hasRouteParams = /(?<!\\)[:*{(]/
+const errMsg = " should provide a getStaticPaths function returning an array of strings.";
+
+const validateStaticPaths = (name: string, paths: string[]) => {
+  const prefix = `${name}"#getStaticPaths`;
+  const notStringMsg = " must return an array of strings";
+  if (!Array.isArray(paths)) throw Error(prefix + notStringMsg);
+  for (const path of paths) {
+    if (typeof path !== "string") throw Error(prefix + notStringMsg);
+    if (path[0] !== "/") throw Error(prefix + ": paths must start with a slash (/)");
+    if (path.includes("#") || path.includes("?") || path.includes("\\")) {
+      throw Error(`${prefix} must return encoded URL paths. Use encodeURIComponent.`);
     }
-  }
-
-  if (assetsPrefix && Object.keys(assetHashes).length > 0) {
-    await writeJSON("generatedAssets.json", assetHashes);
-  }
-
-  completeSuccess
-    ? console.info(`Generated static site and wrote to ${outFolder}/ folder.`)
-    : process.exit(1);
-};
-
-/**
- * Takes a file path for a route file on the local filesystem, runs the
- * static site generation logic and returns an array of `Response`s with
- * their respective output file paths. However, this function itself
- * doesn't actually write anything to disk. Instead, it's called by `generate`
- * and by the Mastro VSCode extension.
- */
-export const generatePagesForRoute = async (
-  route: Route,
-  baseUrl = "http://127.0.0.1",
-): Promise<Array<{ outFilePath: string; response: Response } | false | undefined>> => {
-  const { name, getStaticPaths } = route;
-  const paths = getStaticPaths
-    ? validateGetStaticPaths(name, await getStaticPaths())
-    : [route.pattern.pathname];
-  return Promise.all(paths.map((p) => generatePage(route, new URL(baseUrl + p))));
-};
-
-const generatePage = async (route: Route, url: URL) => {
-  try {
-    const req = new Request(url);
-    (req as any)._params = route.pattern.exec(url)?.pathname.groups;
-    const response = await route.handler(req);
-    if (response instanceof Response) {
-      const filePath = posix.normalize(decodeURIComponent(url.pathname));
-      const outFilePath = filePath.endsWith("/") ? `${filePath}index.html` : filePath;
-      if (response.ok) {
-        if (!extname(outFilePath) && !outFilePath.startsWith("/.well-known/")) {
-          console.warn(`\nWARNING: ${route.name} generated file ${outFilePath} without file extension.
-    Consider renaming route to e.g. ${route.name.replace(".server", ".html.server")}\n`);
-        }
-        return { outFilePath, response };
-      } else if (response.status >= 500) {
-        throw `received HTTP ${response.status}: ${await response.text()}`;
-      }
-    } else {
-      console.warn(route.name + ": GET must return a Response object");
+    if (!path.endsWith("/") && !posix.extname(path) && !path.startsWith("/.well-known/")) {
+      console.warn(`\nWARNING: ${name} has path ${path} without file extension.
+  Consider renaming route to e.g. ${name.replace(".server", ".html.server")}\n`);
     }
-  } catch (e) {
-    console.error(`\nFailed to generate path ${url.pathname} on route ${route.name}\n `, e);
-    return false;
-  }
-};
-
-const validateGetStaticPaths = (name: string, paths: string[]) => {
-  if (!Array.isArray(paths) || (paths.length > 0 && typeof paths[0] !== "string")) {
-    throw Error(name + "#getStaticPaths must return an array of strings");
-  }
-  if (paths.some((p) => p[0] !== "/")) {
-    throw Error(name + "#getStaticPaths: paths must start with a slash (/)");
   }
   return paths;
 };
-
-/**
- * Return the paths of all non-route files from the the local filesystem.
- * It's called by `generate` and by the VSCode extension.
- */
-export const getStaticFilePaths = async (): Promise<string[]> =>
-  (await findFiles(["routes/**/*", "routes/**/.*/**/*"]))
-    .filter(isStaticFile).map((p) => p.slice(6));
-
-const isStaticFile = (p: string) => !p.endsWith(".server.ts") && !p.endsWith(".server.js");
-
-const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer) => {
-  if (typeof Deno === "object") {
-    return Deno.writeFile(path, data);
-  } else {
-    // Bun.write doesn't accept a ReadableStream
-    // and in my experiment failed silently when passed the original `Response` object.
-    const { createWriteStream } = await import("node:fs");
-    const { Readable } = await import("node:stream");
-    return new Promise<void>((resolve, reject) =>
-      Readable.fromWeb(data as any)
-        .pipe(createWriteStream(path))
-        .on("finish", resolve)
-        .on("error", reject)
-    );
-  }
-};
-
-const ensureDir = async (statsP: Promise<Stats>) => {
-  const noRoutesMsg = "No 'routes' folder found.\nAre you in the right place?";
-  try {
-    const routesDir = await statsP;
-    if (!routesDir.isDirectory()) {
-      console.error(noRoutesMsg);
-      process.exit(1);
-    }
-  } catch (e: any) {
-    console.error(e.code === "ENOENT" ? noRoutesMsg : e);
-    process.exit(1);
-  }
-};
-
-if (typeof document === "undefined" && import.meta.main) {
-  const { parseArgs } = await import("node:util");
-
-  const options: { [opt: string]: ParseArgsOptionDescriptor & { description: string } } = {
-    help: {
-      description: "Print this help page",
-      type: "boolean",
-      short: "h",
-    },
-    "assets-folder": {
-      description: "Files in this folder get hashed output names. Default is `_assets`. " +
-        'To disable, use --assets-folder=""',
-      type: "string",
-    },
-    "base-url": {
-      description: "Base URL for the synthetic requests, defaults to http://127.0.0.1",
-      type: "string",
-    },
-    output: {
-      description: "Name of output folder that will be created, defaults to `generated`",
-      type: "string",
-    },
-    "only-pregenerate": {
-      description: "Only pregenerate routes with `export const pregenerate = true`",
-      type: "boolean",
-    },
-    "write-routenames": {
-      description: "Generate `.routenames.json`. Only needed with the file-based router " +
-        "when also using a bundled server.",
-      type: "boolean",
-    },
-  };
-  try {
-    const values = parseArgs({ options }).values;
-    if (values.help) {
-      const keys = Object.keys(options);
-      const maxKeyLen = Math.max(...keys.map((k) => k.length));
-      const opts = keys.map((key) => ` --${key.padEnd(maxKeyLen)}  ${options[key].description}`);
-      console.info("Options:\n" + opts.join("\n"));
-    } else {
-      await generate({
-        baseUrl: values["base-url"] as string | undefined,
-        assetsFolder: values["assets-folder"] as string | undefined,
-        outFolder: values.output as string | undefined,
-        onlyPregenerate: !!values["only-pregenerate"],
-        writeRoutenames: !!values["write-routenames"],
-      });
-    }
-  } catch (e: any) {
-    console.error(`\n${e.message || e}`);
-    process.exit(1);
-  }
-}

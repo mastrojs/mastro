@@ -1,69 +1,70 @@
 /**
- * Lightweight wrapper around Node.js's file system functions and using RPC for the
- * [vscode-extension](../../vscode-extension/README.md).
+ * Lightweight wrapper around Node.js's file system functions. But for better interoperability
+ * with URL paths, input and output paths use URL encoding.
+ * Using RPC for the [vscode-extension](../../vscode-extension/README.md).
  * Cloudflare Workers work with Node.js compatibility.
- * For Service Workers (where there is no filesystem), we just fall back to undefined, but at least
- * we don't want to break the module, hence no top-level await.
+ * For Service Workers (where there is no filesystem), we fall back to undefined
+ * and skip Node.js imports so the module can still load.
  */
 import type { StandardSchemaV1 } from "./standard-schema.d.ts";
 
-// in variables to prevent bundling by esbuild:
-const nodeFs = "node:fs/promises";
-const nodePath = "node:path";
+import { isWorker, normalizeSlashes, sep, urlPathToFilePath } from "./fsHelpers.ts";
 
-// @ts-expect-error WorkerGlobalScope
-const isWorker = typeof self !== "undefined" && self.WorkerGlobalScope && navigator.userAgent !== "Cloudflare-Workers";
+// In a variable to prevent bundling by esbuild:
+const nodeFs = "node:fs/promises";
 
 const fs = typeof document === "object" || isWorker
   ? undefined
   : import(nodeFs) as Promise<typeof import("node:fs/promises")>;
 
-// we use document.fs because dnt would add a shim for window https://github.com/denoland/dnt/issues/454
 const vscodeExtensionFs = typeof document === "object"
   ? (document as any).fs
     : (isWorker ? (self as any).fs : undefined);
 
 /**
  * Read the directory on the local file system and return its files,
- * non-recursive and ignoring symlinks.
+ * non-recursive and ignoring symlinks and dotfiles.
  *
- * Input path needs to be relative to project root.
+ * Input is a URL path relative to project root. Returned filenames are URL-encoded.
  */
-export const readDir = async (path: string): Promise<string[]> =>
-  fs
-    ? (await fs).readdir(await noLeadingSep(path), { withFileTypes: true })
+export const readDir = async (path: string): Promise<string[]> => {
+  const files: string[] = await (fs
+    ? (await fs).readdir(urlPathToFilePath(path), { withFileTypes: true })
       .then((files) =>
         files.flatMap((file) =>
           file.isSymbolicLink() || file.isDirectory() || file.name[0] === "." ? [] : file.name
         )
       )
-    : vscodeExtensionFs.readDir(leadingSlash(path));
+    : vscodeExtensionFs.readDir(urlPathToFilePath(path)));
+  return files.map(toUrlPath);
+};
 
 /**
  * Return the contents of a text file on the local file system as a string.
  *
- * Input path needs to be relative to project root.
+ * Input is a URL path relative to project root.
  */
 export const readTextFile = async (path: string): Promise<string> =>
   fs
-    ? (await fs).readFile(noLeadingSep(path), { encoding: "utf8" })
-    : vscodeExtensionFs.readTextFile(leadingSlash(path));
+    ? (await fs).readFile(urlPathToFilePath(path), { encoding: "utf8" })
+    : vscodeExtensionFs.readTextFile(urlPathToFilePath(path));
 
 /**
  * Return the contents of a binary file on the local file system.
  *
- * Input path needs to be relative to project root.
+ * Input is a URL path relative to project root.
  */
 export const readFile = async (path: string): Promise<Uint8Array<ArrayBufferLike>> =>
   fs
-    ? (await fs).readFile(noLeadingSep(path))
-    : vscodeExtensionFs.readFile(leadingSlash(path));
+    ? (await fs).readFile(urlPathToFilePath(path))
+    : vscodeExtensionFs.readFile((urlPathToFilePath(path)));
 
 /**
  * Return the file paths on the local file system, relative to the current working directory,
  * expanding glob patterns like `*` and `**`. Do not pass it untrusted input.
  *
- * Returned paths are sorted alphabetically and don't start with a slash (or other path separator).
+ * Returned paths are sorted alphabetically, are URL-encoded, use forward slashes,
+ * and don't start with a slash. Input glob patterns use filesystem names, not URL encoding.
  *
  * Except for when using the Mastro VSCode extension, this is a thin wrapper around
  * [fs.glob](https://nodejs.org/api/fs.html#fspromisesglobpattern-options).
@@ -74,36 +75,23 @@ export const readFile = async (path: string): Promise<Uint8Array<ArrayBufferLike
 export const findFiles = async (pattern: string | string[]): Promise<string[]> => {
   pattern = typeof pattern === "string" ? validatePattern(pattern) : pattern.map(validatePattern);
   if (fs) {
-    const paths = [];
-    // @ts-expect-error no type definitions for Bun
-    if (typeof Bun === "object") {
-      // until https://github.com/oven-sh/bun/issues/22018 is fixed
-      const { glob, lstat } = await fs;
-      for await (const file of glob(pattern)) {
-        const entry = await lstat(file);
-        if (entry.isFile()) {
-          paths.push(file)
-        }
-      }
-    } else {
-      const { sep } = await import(nodePath);
-      for await (const entry of (await fs).glob(pattern, { withFileTypes: true })) {
-        if (entry.isFile()) {
-          const path = entry.parentPath + sep + entry.name;
-          const relativeToProjectRoot = path.slice(process.cwd().length + 1);
-          paths.push(relativeToProjectRoot);
-        }
+    const paths: string[] = [];
+    for await (const entry of (await fs).glob(pattern, { withFileTypes: true })) {
+      if (entry.isFile()) {
+        const relativeToCwd = (entry.parentPath + sep + entry.name).slice(process.cwd().length + 1);
+        paths.push(toUrlPath(relativeToCwd));
       }
     }
     return paths.sort();
   } else {
-    return vscodeExtensionFs.findFiles(pattern);
+    return ((await vscodeExtensionFs.findFiles(pattern)) as string[]).map(toUrlPath).sort();
   }
 };
 
 /**
- * Read all files from the local filesystem that match the supplied glob pattern, (via `findFiles`)
- * and parse then as JSON. Filepath is in `path`, filename without suffix in `slug`.
+ * Read all files from the local filesystem that match the supplied glob pattern (via `findFiles`)
+ * and parse them as JSON. Returns an array with `data`, `path` as a URL path, and `slug` as the
+ * URL-encoded filename up to its first dot (e.g. `post.en.json` becomes `post`).
  *
  * The default TypeScript type for the data is `unknown`. You can override that with e.g.
  * `readJsonFiles<{ title: string }>("data/*.json")`. But to actually verify the metadata is
@@ -113,7 +101,7 @@ export const findFiles = async (pattern: string | string[]): Promise<string[]> =
  * ```ts
  * import { object, string } from "./validate.js";
  * const schema = object({ title: string });
- * const arr = await readJsonFiles(pattern, { schema }),
+ * const arr = await readJsonFiles(pattern, { schema });
  * ```
  */
 export const readJsonFiles = async <T>(
@@ -131,7 +119,7 @@ export const readJsonFiles = async <T>(
         }
         data = res.value;
       }
-      const slug = path.split(sep).at(-1)?.split(".").at(0) || "";
+      const slug = path.split("/").at(-1)?.split(".").at(0) || "";
       return { data, path, slug };
     }),
   );
@@ -142,19 +130,10 @@ export const readJsonFiles = async <T>(
  */
 const validatePattern = (p: string) => {
   p = p.startsWith("/") ? p.slice(1) : p;
-  if (p.startsWith("../") || p.includes("/../")) {
-    throw Error("findFiles pattern must not include ../");
-  }
+  if (p.split("/").includes("..")) throw Error("findFiles pattern must not include .. segments");
   return p;
 }
 
-const leadingSlash = (path: string) =>
-  path.startsWith("/") ? path : "/" + path;
-
-/**
- * File path separator. `\` on Windows, `/` otherwise.
- */
-export const sep: string = typeof document === "object" ? "/" : (await import(nodePath)).sep;
-
-const noLeadingSep = (path: string) =>
-  path.startsWith(sep) ? path.slice(1) : path;
+// normalize and convert a filesystem path to a URL path
+const toUrlPath = (path: string): string =>
+  normalizeSlashes(path).split("/").map(encodeURIComponent).join("/");
