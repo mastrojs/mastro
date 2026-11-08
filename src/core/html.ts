@@ -12,7 +12,6 @@
  *
  * Note that we use `String` objects to store already properly escaped HTML.
  */
-// deno-lint-ignore ban-types
 export type HtmlPrimitive = String | string | number | undefined | null | false;
 
 /**
@@ -44,7 +43,7 @@ export const html = (templateParts: TemplateStringsArray, ...params: Html[]): Ht
   if (!parts) cache.set(templateParts, parts = parseParts(templateParts));
   const output: Html[] = [];
   for (let i = 0; i < parts.length; i++) {
-    const { html, quote } = parts[i];
+    const { html, quote } = parts[i]!;
     output.push(html);
     if (i < params.length) {
       const p = params[i];
