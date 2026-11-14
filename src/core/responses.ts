@@ -66,10 +66,21 @@ export const sseResponse = <T extends object>(
   );
 
 /**
- * Returns the hashed path from `generatedAssets.json`, or the input path prefixed with `/_assets/`
- * if no hash is found.
+ * Returns the hashed path of a fingerprinted asset, as set by the fingerprintAssets middleware.
  *
- * If you have a `routes/_assets/logo.webp` file, use in your template:
+ * - During static site generation, it reads from an in-memory map.
+ * - When running a production server, you need to run `mastro generate --only-pregenerate` in your
+ * CI, which will create a `generatedAssets.json` file, which this function will then read from.
+ * See the [Mastro Guide](https://mastrojs.github.io/guide/caching-service-workers-streaming/#fingerprinting-assets-with-hash-based-file-names).
+ * Don't forget to set your CDN's caching headers for `/_assets/*` to something like
+ * `Cache-Control: public, max-age=31556952, immutable` (1 year), otherwise hashing is little use.
+ *
+ * - Finally, when running the dev server, hashing all assets would be too slow. Thus if no
+ * `generatedAssets.json` file is present on server start, this function returns the unhashed
+ * input path prefixed with `/_assets/`. Therefore, be sure to delete `generatedAssets.json` after
+ * trying out `mastro generate --only-pregenerate` locally.
+ *
+ * Usage in your template, if you have e.g. a `routes/_assets/logo.webp` file:
  *
  * ```
  * import { asset, html } from "@mastrojs/mastro";
@@ -77,14 +88,9 @@ export const sseResponse = <T extends object>(
  * export const Header = () =>
  *   html`<header><img src=${asset("logo.webp")}></header>`;
  * ```
- *
- * Don't forget to set your CDN's caching headers for `/_assets/*` to something like
- * `Cache-Control: public, max-age=31556952, immutable` (1 year), otherwise hashing is little use.
- * When running a server, you additionally need to run the
- * [pregenerate build step](/guide/bundling-assets/#build-step).
- * See the [Mastro Guide](https://mastrojs.github.io/guide/caching-service-workers-streaming/#fingerprinting-assets-with-hash-based-file-names)
  */
-export const asset = (path: string): string => assetHashes[path] || (/_assets/ + path);
+export const asset = (path: string): string =>
+  ((globalThis as any)._mastroAssets || assetHashes)[path] || (/_assets/ + path);
 const assetHashes = await readTextFile("generatedAssets.json")
   .then((data) => JSON.parse(data)).catch(() => ({}));
 

@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "start": "node --watch server.ts",
-    "generate": "mastro generate --only-pregenerate && mastro generate",
+    "generate": "mastro generate",
     "pregenerate": "mastro generate --only-pregenerate",
     "check": "tsc"
   },

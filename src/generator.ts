@@ -10,7 +10,7 @@ import { posix } from "node:path";
 import { urlPathToFilePath } from "./core/fsHelpers.ts";
 import type { Handler, Mastro, Route } from "./core/mastro.ts";
 import { fetchUpstream, routeHandler } from "./core/routeHelpers.ts";
-import type { Context, GeneratorContext, GeneratorContextSimple } from "./middleware.ts";
+import type { Context, GeneratorContext, GeneratorContextSimple, Middleware } from "./middleware.ts";
 import { chainMiddlewares } from "./middleware.ts";
 import { middlewares as defaultMiddlewares } from "./servers/server.ts";
 
@@ -60,24 +60,20 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   await resetP;
 
   let completeSuccess = true;
-  for (const m of middlewares) {
-    if ("getStaticPaths" in m && m.getStaticPaths) {
-      for (const path of validateStaticPaths(m.name, await m.getStaticPaths(ctx))) {
-        // TODO: parallelize without opening too many file handles at once
-        const url = new URL(path, baseUrl);
-        const { response, outFilePath } = await generatePage(handler, url, ctxWithFetchUpstream);
-        if (response.ok) {
-          const outPath = join(outFolder, outFilePath);
-          await fs.mkdir(dirname(outPath), { recursive: true });
-          if (response.body) {
-            await writeFile(outPath, response.body);
-          } else {
-            console.warn(`\nWARNING: ${path} returned no body (HTTP ${response.status})\n.`);
-          }
-        } else if (response.status !== 404) {
-          completeSuccess = false;
-        }
+  for (const path of await getPaths(middlewares, ctx)) {
+    // TODO: parallelize without opening too many file handles at once
+    const url = new URL(path, baseUrl);
+    const { response, outFilePath } = await generatePage(handler, url, ctxWithFetchUpstream);
+    if (response.ok) {
+      const outPath = join(outFolder, outFilePath);
+      await fs.mkdir(dirname(outPath), { recursive: true });
+      if (response.body) {
+        await writeFile(outPath, response.body);
+      } else {
+        console.warn(`\nWARNING: ${path} returned no body (HTTP ${response.status})\n.`);
       }
+    } else if (response.status !== 404) {
+      completeSuccess = false;
     }
   }
   if (completeSuccess) {
@@ -88,6 +84,22 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   }
   return completeSuccess;
 };
+
+// call getStaticPaths of all middlewares and set things up for the fingerprintAssets middleware.
+const getPaths = async (middlewares: Middleware[], ctx: GeneratorContextSimple) => {
+  (globalThis as any)._mastroAssets = {};
+  const paths = await Promise.all(
+    middlewares.flatMap(async (m) =>
+      "getStaticPaths" in m && m.getStaticPaths
+        ? validateStaticPaths(m.name, await m.getStaticPaths(ctx))
+        : [],
+    ),
+  );
+  const assetPaths: string[] = [];
+  const otherPaths: string[] = [];
+  for (const p of paths.flat()) (p.startsWith("/_assets/") ? assetPaths : otherPaths).push(p);
+  return assetPaths.concat(otherPaths);
+}
 
 const generatePage = async (handler: Handler<[Context]>, url: URL, ctx: Context) => {
   const req = new Request(url);

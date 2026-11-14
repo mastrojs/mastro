@@ -14,7 +14,7 @@ export const fingerprintAssets: Middleware = {
       const data = await res.arrayBuffer().then(Buffer.from);
       const digest = createHash("sha256").update(data).digest("hex").slice(0, 8);
       const hashedPath = `${pathname.slice(0, pathname.length - ext.length)}-${digest}${ext}`;
-      assetHashes[pathname.slice("/_assets/".length)] = hashedPath;
+      (globalThis as any)._mastroAssets[pathname.slice("/_assets/".length)] = hashedPath;
       res.headers.set("Content-Disposition", `attachment; filename=${posix.basename(hashedPath)}`);
       return new Response(data, res);
     } else {
@@ -22,10 +22,9 @@ export const fingerprintAssets: Middleware = {
     }
   },
   afterGenerate: async (ctx) => {
-    if (ctx.onlyPregenerate && Object.keys(assetHashes).length > 0) {
-      await fs.writeFile("generatedAssets.json", JSON.stringify(assetHashes, null, 2) + "\n");
+    const { _mastroAssets } = (globalThis as any);
+    if (ctx.onlyPregenerate && _mastroAssets && Object.keys(_mastroAssets).length > 0) {
+      await fs.writeFile("generatedAssets.json", JSON.stringify(_mastroAssets, null, 2) + "\n");
     }
   },
 };
-
-const assetHashes: Record<string, string> = {};

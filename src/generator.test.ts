@@ -7,7 +7,8 @@ import { test, type TestContext } from "node:test";
 import { pathToFileURL } from "node:url";
 
 import { Mastro } from "./core/mastro.ts";
-import { getParams } from "./core/responses.ts";
+import { asset, getParams, htmlToResponse } from "./core/responses.ts";
+import { html } from "./core/html.ts";
 import { generate } from "./generator.ts";
 import { createApp, createFileRouterApp } from "./servers/server.ts";
 
@@ -348,6 +349,54 @@ test("generator: encodes filesystem names and decodes generated output exactly o
       "nested download",
     );
   });
+});
+
+test("generate: fingerprints static and route assets before rendering pages in one build", async (t) => {
+  await withTestEnvironment(t, async () => {
+    await mkdir("routes/_assets", { recursive: true });
+    await writeFile("routes/_assets/static.css", "hello");
+    let includeRouteAsset = true;
+    let assetCalls = 0;
+    const page = () => htmlToResponse(html`${asset("static.css")} ${asset("route.css")}`);
+    const app = createApp().get("/_assets/route.css", {
+      getStaticPaths: () => includeRouteAsset ? ["/_assets/route.css"] : [],
+      handler: () => {
+        assetCalls++;
+        return new Response("world");
+      },
+    }).get("/", page);
+    // This middleware enumerates a page before either source of assets.
+    app.middlewares.unshift({
+      name: "error page",
+      getStaticPaths: () => ["/404.html"],
+      handler: (req, ctx) => new URL(req.url).pathname === "/404.html"
+        ? page()
+        : ctx.fetchUpstream(req),
+    });
+
+    assert.equal(await generate(app), true);
+    assert.equal(assetCalls, 1, "Route assets must be generated only once");
+    for (const file of ["generated/index.html", "generated/404.html"]) {
+      assert.equal(
+        await readFile(file, "utf8"),
+        "/_assets/static-2cf24dba.css /_assets/route-486ea462.css",
+      );
+    }
+    assert.equal(await readFile("generated/_assets/static-2cf24dba.css", "utf8"), "hello");
+    assert.equal(await readFile("generated/_assets/route-486ea462.css", "utf8"), "world");
+    await assert.rejects(readFile("generatedAssets.json"), { code: "ENOENT" });
+
+    includeRouteAsset = false;
+    await writeFile("routes/_assets/static.css", "world");
+    assert.equal(await generate(app), true);
+    assert.equal(assetCalls, 1);
+    assert.equal(
+      await readFile("generated/index.html", "utf8"),
+      "/_assets/static-486ea462.css /_assets/route.css",
+      "A subsequent build must update changed hashes and forget removed assets",
+    );
+    assert.deepEqual(await readdir("generated/_assets"), ["static-486ea462.css"]);
+  }, { changeCwd: true });
 });
 
 test("generate: writes fingerprinted assets and their URL mapping for production serving", async (t) => {
