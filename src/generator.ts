@@ -15,35 +15,25 @@ import { chainMiddlewares } from "./middleware.ts";
 import { middlewares as defaultMiddlewares } from "./servers/server.ts";
 
 /**
- * Config options for `generate`
- */
-export interface GenerateOpts {
-  /**
-   * Base URL for the synthetic requests sent by the generator. Default is http://127.0.0.1
-   * to make them distinguishable from requests from localhost (see `isDevServer`).
-   */
-  baseUrl?: string;
-  /**
-   * Name of output folder that will be created. Default is `generated`.
-   */
-  outFolder?: string;
-  /**
-   * Only pregenerate routes with `export const pregenerate = true`,
-   * but still copy over static files (in case you want to serve those via CDN).
-   * Useful as a build step for servers.
-   */
-  onlyPregenerate?: boolean;
-}
-
-/**
  * Generate all pages for the static site and write them to disk.
  *
  * Can not be used in the VSCode extension.
  */
-export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<boolean> => {
+export const generate = async <E extends unknown[]>(
+  app: Mastro<E>,
+  opts: Partial<GeneratorContext<E>> = {},
+): Promise<boolean> => {
+  const ctx = {
+    baseUrl: opts.baseUrl || "http://127.0.0.1",
+    extra: (opts.extra as any) || [],
+    onlyPregenerate: !!opts.onlyPregenerate,
+    outFolder: opts.outFolder || "generated",
+    mode: "generator",
+  } satisfies GeneratorContextSimple;
+  const { outFolder } = ctx;
+
   const fs = await import("node:fs/promises");
   const { dirname, join } = await import("node:path");
-  const { baseUrl = "http://127.0.0.1", outFolder = "generated", onlyPregenerate = false } = opts;
   const resetP = fs.rm(outFolder, { force: true, recursive: true }).then(() => fs.mkdir(outFolder));
 
   const middlewares = [...app.middlewares];
@@ -55,14 +45,13 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
   middlewares.push(createRouter(await app.getRoutes())); // equivalent to Mastro#createHandler
 
   const handler = chainMiddlewares(middlewares);
-  const ctx: GeneratorContextSimple = { mode: "generator", onlyPregenerate, extra: [] };
-  const ctxWithFetchUpstream: GeneratorContext = { ...ctx, fetchUpstream };
+  const ctxWithFetchUpstream: GeneratorContext<E> = { ...ctx, fetchUpstream };
   await resetP;
 
   let completeSuccess = true;
   for (const path of await getPaths(middlewares, ctx)) {
     // TODO: parallelize without opening too many file handles at once
-    const url = new URL(path, baseUrl);
+    const url = new URL(path, ctx.baseUrl);
     const { response, outFilePath } = await generatePage(handler, url, ctxWithFetchUpstream);
     if (response.ok) {
       const outPath = join(outFolder, outFilePath);
@@ -86,7 +75,7 @@ export const generate = async (app: Mastro, opts: GenerateOpts = {}): Promise<bo
 };
 
 // call getStaticPaths of all middlewares and set things up for the fingerprintAssets middleware.
-const getPaths = async (middlewares: Middleware[], ctx: GeneratorContextSimple) => {
+const getPaths = async <E>(middlewares: Middleware<E>[], ctx: GeneratorContextSimple) => {
   (globalThis as any)._mastroAssets = {};
   const paths = await Promise.all(
     middlewares.flatMap(async (m) =>
@@ -101,7 +90,7 @@ const getPaths = async (middlewares: Middleware[], ctx: GeneratorContextSimple) 
   return assetPaths.concat(otherPaths);
 }
 
-const generatePage = async (handler: Handler<[Context]>, url: URL, ctx: Context) => {
+const generatePage = async <E>(handler: Handler<[Context<E>]>, url: URL, ctx: Context<E>) => {
   const req = new Request(url);
   const response = await handler(req, ctx);
   const filename = parseContentDisposition(response.headers.get("Content-Disposition"));
@@ -124,7 +113,7 @@ const writeFile = async (path: string, data: ReadableStream<Uint8Array> | Buffer
   );
 };
 
-const createRouter = (routes: Route[]) => ({
+const createRouter = <E extends unknown[]>(routes: Route<E>[]) => ({
   name: "router",
   handler: routeHandler(routes),
   getStaticPaths: async (ctx: GeneratorContextSimple) => {

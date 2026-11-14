@@ -37,8 +37,23 @@ export type Context<E = unknown[]> = GeneratorContext<E> | ServerContext<E>;
 export interface GeneratorContext<E = []> {
   fetchUpstream: Handler;
   mode: "generator";
-  onlyPregenerate: boolean;
+  /**
+   * Base URL for the synthetic requests sent by the generator. Default is http://127.0.0.1
+   * to make them distinguishable from requests from localhost (see `isDevServer`).
+   */
+  baseUrl?: string;
+  /**
+   * extra arguments to pass to the fetch handler
+   */
   extra: E;
+  /**
+   * Only pregenerate routes with `pregenerate` set, but still copy over static files.
+   */
+  onlyPregenerate: boolean;
+  /**
+   * Name of output folder that will be created. Default is `generated`.
+   */
+  outFolder?: string;
 }
 
 export type GeneratorContextSimple = Omit<GeneratorContext, "fetchUpstream">;
