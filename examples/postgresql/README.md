@@ -1,3 +1,5 @@
 This is an example of a [Mastro](https://mastrojs.github.io) app connecting to a PostgreSQL database, demonstrating [HTTP streaming](https://mastrojs.github.io/docs/html-components/#http-streaming).
 
-It uses Deno, but can be easily adapted to Node.js or Bun, by merging it with the [respective starter project](https://mastrojs.github.io/docs/getting-started/)
+Run `pnpm start` and open <http://localhost:8000>.
+
+To regenerate the database types from your schema, run `pnpm db-types`.

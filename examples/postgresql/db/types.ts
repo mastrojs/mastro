@@ -3,10 +3,10 @@
  *
  * To generate a file like this from your database schema,
  * see https://kysely.dev/docs/generating-types
- * and modify the `db-types` task in your `deno.json` accordingly.
+ * and modify the `db-types` script in your `package.json` accordingly.
  */
 
-import {
+import type {
   ColumnType,
   Generated,
   Insertable,

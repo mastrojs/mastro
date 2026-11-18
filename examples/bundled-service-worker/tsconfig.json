@@ -1,7 +1,9 @@
 {
   "exclude": ["./sw-config.json"],
   "compilerOptions": {
-    "lib": ["WebWorker"],
+    "target": "esnext",
+    "lib": ["esnext", "dom", "webworker"],
+    "types": ["node"],
     "allowImportingTsExtensions": true,
     "module": "NodeNext",
     "moduleResolution": "nodenext",

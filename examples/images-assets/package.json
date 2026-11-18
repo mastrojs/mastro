@@ -1,0 +1,20 @@
+{
+  "name": "my-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --watch server.ts",
+    "generate": "mastro generate",
+    "generate:assets": "mastro generate --only-pregenerate",
+    "check": "tsc"
+  },
+  "dependencies": {
+    "@mastrojs/mastro": "^0",
+    "@mastrojs/images": "^0",
+    "@remix-run/node-fetch-server": "^1"
+  },
+  "devDependencies": {
+    "@types/node": "^26",
+    "typescript": "^7"
+  }
+}
