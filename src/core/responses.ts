@@ -2,23 +2,6 @@ import { readTextFile } from "./fs.ts";
 import { type Html, isAsyncIterable, renderToStream } from "./html.ts";
 
 /**
- * Take the path of a URL and extract its parameters.
- * See the [Mastro Guide](https://mastrojs.github.io/guide/static-blog-from-markdown-files/#detail-pages).
- *
- * For example in `routes/[slug].server.ts`:
- *
- * ```ts
- * import { getParams, html, htmlToResponse } from "@mastrojs/mastro";
- *
- * export const GET = (req) => {
- *   const { slug } = getParams(req);
- *   return htmlToResponse(html`Hello ${slug}`);
- * }
- */
-export const getParams = (req: Request): Record<string, string | undefined> =>
-  (req as any)._params || {};
-
-/**
  * Create a standard Response object with `Content-Type: text/html` from a string
  * or `AsyncIterable<string>` (in which case it will stream it).
  */
@@ -65,9 +48,21 @@ export const sseResponse = <T extends object>(
   );
 
 /**
- * Returns the path of a hashed file name, or the input path if not found in `generatedAssets.json`
+ * Returns the hashed path of a fingerprinted asset, as set by the fingerprintAssets middleware.
  *
- * If you have a `routes/_assets/logo.webp` file, use in your template:
+ * - During static site generation, it reads from an in-memory map.
+ * - When running a production server, you need to run `mastro generate --only-pregenerate` in your
+ * CI, which will create a `generatedAssets.json` file, which this function will then read from.
+ * See the [Mastro Guide](https://mastrojs.github.io/guide/caching-service-workers-streaming/#fingerprinting-assets-with-hash-based-file-names).
+ * Don't forget to set your CDN's caching headers for `/_assets/*` to something like
+ * `Cache-Control: public, max-age=31556952, immutable` (1 year), otherwise hashing is little use.
+ *
+ * - Finally, when running the dev server, hashing all assets would be too slow. Thus if no
+ * `generatedAssets.json` file is present on server start, this function returns the unhashed
+ * input path prefixed with `/_assets/`. Therefore, be sure to delete `generatedAssets.json` after
+ * trying out `mastro generate --only-pregenerate` locally.
+ *
+ * Usage in your template, if you have e.g. a `routes/_assets/logo.webp` file:
  *
  * ```
  * import { asset, html } from "@mastrojs/mastro";
@@ -75,16 +70,9 @@ export const sseResponse = <T extends object>(
  * export const Header = () =>
  *   html`<header><img src=${asset("logo.webp")}></header>`;
  * ```
- *
- * Don't forget to set your CDN's caching headers for `/_assets/*` to something like
- * `Cache-Control: public, max-age=31556952, immutable` (1 year), otherwise hashing is little use.
- * When running a server, you additionally need to run the
- * [pregenerate build step](/guide/bundling-assets/#build-step).
- * See the [Mastro Guide](https://mastrojs.github.io/guide/caching-service-workers-streaming/#fingerprinting-assets-with-hash-based-file-names)
  */
-export const asset = (path: string): string => assetHashes[path] || (/_assets/ + path);
-const assetHashes = await readTextFile("generatedAssets.json")
-  .then((data) => JSON.parse(data)).catch(() => ({}));
+export const asset = (path: string): string =>
+  (globalThis as any)._mastroAssets?.[path] || (/_assets/ + path);
 
 /**
  * [Identity tag literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/raw#building_an_identity_tag)
@@ -142,7 +130,7 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
  * If you're hosting your website with GitHub Pages on a sub-directory
  * (e.g. `https://my-name.github.io/my-repo` instead of `https://my-name.github.io`
  * or instead of a custom domain), then you need to prefix all absolute links
- * that start with a slash with you base-path (`/my-repo` in this case),
+ * that start with a slash with your base path (`/my-repo` in this case),
  * which is what this function returns when run on GitHub Actions.
  *
  * For example in your `Layout.ts` file:
@@ -150,7 +138,7 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
  * ```ts
  * import { ghPagesBasePath, html } from "@mastrojs/mastro";
  * export const basePath = ghPagesBasePath(); // export for use in other modules
- * export const GET = () =>
+ * export const Layout = () =>
  *   html`
  *     <html>
  *       <head>
@@ -159,12 +147,12 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
  * ```
  *
  * btw. if you're not on GitHub Pages, but still hosting in a sub-directory, you can
- * change the `generate` command in `deno.json` to `BASEPATH='/my-path' deno task generate`,
+ * change the `generate` command in `package.json` to `BASEPATH='/my-path' mastro generate`,
  * and use that like:
  *
  * ```ts
  * export const basePath = process.env.BASEPATH || "";  // export for use in other modules
- * export const GET = () =>
+ * export const Layout = () =>
  *   html`
  *     <html>
  *       <head>
