@@ -304,6 +304,47 @@ test('htmlToResponse: renders text, generators and async iterables', async () =>
   assert.deepEqual(await iterableRes.text(), "hi there")
 })
 
+test("htmlToResponse: errors the body when rendering fails after a chunk", async (t) => {
+  t.mock.method(console, "error", () => {});
+  const failure = new Error("Oops");
+  const generator = async function* () {
+    yield "partial";
+    throw failure;
+  }
+
+  const response = htmlToResponse(html`${generator()}`);
+  const reader = response.body!.getReader();
+  const first = await reader.read();
+  assert.equal(new TextDecoder().decode(first.value), "partial");
+  await assert.rejects(reader.read(), (error) => error === failure);
+});
+
+for (const outcome of ["value", "done", "error"] as const) {
+  test(`htmlToResponse: ignores a pending ${outcome} after cancellation`, async (t) => {
+    const started = Promise.withResolvers<void>();
+    const resume = Promise.withResolvers<void>();
+    async function* content() {
+      yield "partial";
+      started.resolve();
+      await resume.promise;
+      if (outcome === "error") throw new Error("rendering failed after cancellation");
+      if (outcome === "value") yield "late content";
+    }
+
+    const reader = htmlToResponse(html`${content()}`).body!.getReader();
+    assert.equal(new TextDecoder().decode((await reader.read()).value), "partial");
+    const pendingRead = reader.read();
+    await started.promise;
+    await reader.cancel("visitor navigated away");
+    assert.deepEqual(await pendingRead, { value: undefined, done: true });
+
+    resume.resolve();
+    // Let the pending render settle and the stream's pull callback finish.
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(await reader.read(), { value: undefined, done: true });
+  });
+}
+
 /**
  * Creates an `AsyncIterable<T>`, which (unlike the generator) is not an `AsyncIterator`
  */
