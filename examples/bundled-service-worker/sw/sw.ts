@@ -1,11 +1,11 @@
-import { Mastro } from "@mastrojs/mastro/server-programmatic";
+import { Mastro } from "@mastrojs/mastro";
 import * as Home from "./handlers/Home.ts";
 // @ts-expect-error
 import swConfig from "./sw-config" with { type: "json" };
 
 const swHandler = new Mastro()
   .get("/", Home)
-  .createHandler({ serveStaticFiles: false });
+  .createHandler();
 
 /**
  * This file contains a Service Worker that is installed in your user's browser.

@@ -1,11 +1,11 @@
 import { Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
 import cursor from "pg-cursor";
-import { Database } from "./types.ts";
 
-// Deno (both locally and on Deno Deploy) should automatically set the right
-// environment variables, see https://docs.deno.com/deploy/reference/databases/
-// For pg docs, see https://node-postgres.com
+import type { Database } from "./types.ts";
+
+// Configure the connection with PGHOST, PGPORT, PGDATABASE, PGUSER and PGPASSWORD.
+// See https://node-postgres.com/features/connecting
 const pool = new Pool();
 pool.on("error", (e: Error) => console.error(e));
 

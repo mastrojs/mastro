@@ -1,0 +1,24 @@
+{
+  "name": "my-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --watch server.ts",
+    "check": "tsc",
+    "db-types": "kysely-codegen --dialect postgres --out-file ./db/types.ts"
+  },
+  "dependencies": {
+    "@mastrojs/mastro": "^0",
+    "@remix-run/node-fetch-server": "^1",
+    "kysely": "^0",
+    "pg": "^8",
+    "pg-cursor": "^2"
+  },
+  "devDependencies": {
+    "@types/node": "^26",
+    "@types/pg": "^8",
+    "@types/pg-cursor": "^2",
+    "kysely-codegen": "^0",
+    "typescript": "^7"
+  }
+}

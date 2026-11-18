@@ -1,10 +1,10 @@
-import { getParams, htmlToResponse, readDir } from "@mastrojs/mastro";
+import { type Handler, htmlToResponse, readDir } from "@mastrojs/mastro";
 import { Layout } from "../components/Layout.ts";
 
 export const pregenerate = true;
 
-export const handler = async (req: Request) => {
-  const { slug } = getParams(req);
+export const handler: Handler = async (req, { params }) => {
+  const { slug } = params;
 
   // dynamic import to prevent markdown lib from being bundled into CF worker
   const { readMarkdownFile } = await import("@mastrojs/markdown");
