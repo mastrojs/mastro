@@ -98,6 +98,7 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
 
   const encoder = new TextEncoder();
   const iterator = iterable[Symbol.asyncIterator]();
+  let canceled = false;
   return new ReadableStream({
     async pull(controller) {
       try {
@@ -108,18 +109,14 @@ const toReadableStream = (iterable: AsyncIterable<string>) => {
           controller.enqueue(encoder.encode(value));
         }
       } catch (e) {
-        console.error(e);
-        controller.enqueue(encoder.encode(` ${e}`));
-
-        // The idea here is to return a malformed chunk, so CDNs don't cache the response
-        // TODO: test whether this actually works in today's CDNs
-        // see https://stackoverflow.com/questions/15305203/
-        // and https://github.com/withastro/astro/pull/12333
-        controller.enqueue(new Uint8Array([0]));
+        if (canceled) return;
+        console.error("Response failed mid-stream", e);
+        controller.error(e);
       }
     },
-    cancel() {
-      iterator.return?.();
+    async cancel() {
+      canceled = true;
+      await iterator.return?.();
     },
   });
 };
