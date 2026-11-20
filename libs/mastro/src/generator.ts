@@ -1,6 +1,6 @@
 /**
  * This module contains all functions related to static site generation.
- * It is used both by the [vscode-extension](../vscode-extension/) and
+ * It is used both by the [vscode-extension](../../../vscode-extension/) and
  * by the [static site generator on the CLI](https://mastrojs.github.io/docs/install-setup/#generate-a-static-site).
  * @module
  */

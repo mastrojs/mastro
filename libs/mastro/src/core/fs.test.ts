@@ -111,14 +111,10 @@ test("fs: Windows paths use forward slashes without decoding filesystem names", 
 });
 
 test("findFiles: returns matching URL paths and rejects parent-directory segments", async () => {
-  assert.deepEqual(await findFiles("*"), [
-    "LICENSE",
-    "README.md",
-    "package.json",
-    "pnpm-lock.yaml",
-    "pnpm-workspace.yaml",
-    "tsconfig.build.json",
-    "tsconfig.json",
+  assert.deepEqual(await findFiles("src/types/*"), [
+    "src/types/mastro.d.ts",
+    "src/types/middleware.d.ts",
+    "src/types/standard-schema.d.ts",
   ]);
 
   assert.deepEqual(await findFiles("/etc/*"), []);
@@ -131,7 +127,7 @@ test("findFiles: returns matching URL paths and rejects parent-directory segment
 
 test("readJsonFiles: returns parsed data with paths and slugs", async () => {
   const arr = await readJsonFiles<{ name: string }>("*.json");
-  assert.deepEqual(arr.length, 3);
+  assert.deepEqual(arr.length, 2);
   assert.deepEqual(arr[0]?.path, "package.json");
   assert.deepEqual(arr[0]?.slug, "package");
   assert.deepEqual(arr[0]?.data.name, "@mastrojs/mastro");

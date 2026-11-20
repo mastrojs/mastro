@@ -192,7 +192,7 @@ importers:
     dependencies:
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       typescript:
         specifier: ^7
         version: 7.0.2
@@ -205,7 +205,7 @@ importers:
     dependencies:
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
     devDependencies:
       typescript:
         specifier: ^7
@@ -218,7 +218,7 @@ importers:
     dependencies:
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@remix-run/node-fetch-server':
         specifier: ^1
         version: 1.0.0
@@ -240,7 +240,7 @@ importers:
         version: '@jsr/mastrojs__markdown@0.2.2(supports-color@10.2.2)'
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@remix-run/node-fetch-server':
         specifier: ^1
         version: 1.0.0
@@ -259,7 +259,7 @@ importers:
     dependencies:
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@remix-run/node-fetch-server':
         specifier: ^1
         version: 1.0.0
@@ -281,7 +281,7 @@ importers:
         version: '@jsr/mastrojs__markdown@0.1.5(supports-color@10.2.2)'
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -300,7 +300,7 @@ importers:
         version: '@jsr/mastrojs__images@0.0.6'
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@remix-run/node-fetch-server':
         specifier: ^1
         version: 1.0.0
@@ -322,7 +322,7 @@ importers:
         version: '@jsr/mastrojs__images@0.0.7'
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@remix-run/node-fetch-server':
         specifier: ^1
         version: 1.0.0
@@ -341,7 +341,7 @@ importers:
     dependencies:
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@remix-run/node-fetch-server':
         specifier: ^1
         version: 1.0.0
@@ -378,7 +378,7 @@ importers:
     dependencies:
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
     devDependencies:
       typescript:
         specifier: ^7
@@ -391,7 +391,7 @@ importers:
     dependencies:
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@mastrojs/reactive':
         specifier: jsr:@mastrojs/reactive@0
         version: '@jsr/mastrojs__reactive@0.4.1'
@@ -413,7 +413,7 @@ importers:
     dependencies:
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@remix-run/node-fetch-server':
         specifier: ^1
         version: 1.0.0
@@ -432,7 +432,7 @@ importers:
     dependencies:
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@mastrojs/reactive':
         specifier: jsr:@mastrojs/reactive@0
         version: '@jsr/mastrojs__reactive@0.4.1'
@@ -457,7 +457,7 @@ importers:
         version: '@jsr/mastrojs__api@0.1.0'
       '@mastrojs/mastro':
         specifier: ^0
-        version: link:../..
+        version: link:../../libs/mastro
       '@mastrojs/reactive':
         specifier: jsr:@mastrojs/reactive@0
         version: '@jsr/mastrojs__reactive@0.4.1'
@@ -477,6 +477,14 @@ importers:
       typescript:
         specifier: ^7
         version: 7.0.2
+
+  libs/create-mastro:
+    linkDirectory: false
+    publishDirectory: dist
+
+  libs/mastro:
+    linkDirectory: false
+    publishDirectory: dist
 
 packages:
 

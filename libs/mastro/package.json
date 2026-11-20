@@ -1,0 +1,65 @@
+{
+  "name": "@mastrojs/mastro",
+  "version": "0.9.0",
+  "description": "No dependencies,  no build step. Just a simple web framework and site generator.",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepack": "node ../../prepack.ts",
+    "test": "node --test 'src/**/*.test.ts'",
+    "bench": "node --experimental-bench --bench 'src/**/*.bench.ts'"
+  },
+  "bin": {
+    "mastro": "./src/cli.ts"
+  },
+  "homepage": "https://mastrojs.github.io",
+  "bugs": "https://github.com/mastrojs/mastro/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git",
+    "directory": "libs/mastro"
+  },
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!**/*.test.*",
+    "!**/*.bench.*"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./generator": "./src/generator.ts",
+    "./server": "./src/servers/server.ts",
+    "./file-routes": "./src/servers/fileRoutes.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "bin": {
+      "mastro": "./dist/cli.js"
+    },
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./generator": {
+        "types": "./dist/generator.d.ts",
+        "default": "./dist/generator.js"
+      },
+      "./server": {
+        "types": "./dist/servers/server.d.ts",
+        "default": "./dist/servers/server.js"
+      },
+      "./file-routes": {
+        "types": "./dist/servers/fileRoutes.d.ts",
+        "default": "./dist/servers/fileRoutes.js"
+      }
+    },
+    "directory": "dist",
+    "linkDirectory": false
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

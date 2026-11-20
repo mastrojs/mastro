@@ -1,13 +1,13 @@
 {
-  "include": ["src"],
+  "include": ["${configDir}/src"],
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "target": "esnext",
     "types": ["node"],
     "strict": true,
-    "rootDir": "src",
-    "outDir": "dist",
+    "rootDir": "${configDir}/src",
+    "outDir": "${configDir}/dist",
     "rewriteRelativeImportExtensions": true,
     "isolatedDeclarations": true,
     "declaration": true,
