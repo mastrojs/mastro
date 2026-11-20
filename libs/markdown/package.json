@@ -1,0 +1,46 @@
+{
+  "name": "@mastrojs/markdown",
+  "version": "0.2.3",
+  "description": "Generate HTML from Markdown with Mastro.",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepack": "node ../../prepack.ts",
+    "test": "node --test 'src/**/*.test.ts'"
+  },
+  "homepage": "https://github.com/mastrojs/mastro/tree/main/libs/markdown",
+  "bugs": "https://github.com/mastrojs/mastro/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git",
+    "directory": "libs/markdown"
+  },
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!**/*.test.*",
+    "!**/*.bench.*"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/markdown.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/markdown.d.ts",
+        "default": "./dist/markdown.js"
+      }
+    },
+    "directory": "dist",
+    "linkDirectory": false
+  },
+  "dependencies": {
+    "@mastrojs/mastro": "^0",
+    "yaml": "^2.9.1",
+    "micromark": "^4.0.3",
+    "micromark-extension-gfm": "^3.0.0"
+  }
+}

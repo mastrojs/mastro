@@ -1,0 +1,45 @@
+{
+  "name": "@mastrojs/images",
+  "version": "0.0.8",
+  "description": "Transform images with Mastro (resize, compress, etc).",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepack": "node ../../prepack.ts",
+    "test": "node --test 'src/**/*.test.ts'"
+  },
+  "homepage": "https://github.com/mastrojs/mastro/tree/main/libs/images",
+  "bugs": "https://github.com/mastrojs/mastro/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git",
+    "directory": "libs/images"
+  },
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!**/*.test.*",
+    "!**/*.bench.*"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/images.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/images.d.ts",
+        "default": "./dist/images.js"
+      }
+    },
+    "directory": "dist",
+    "linkDirectory": false
+  },
+  "dependencies": {
+    "@imagemagick/magick-wasm": "^0.0.36",
+    "@mastrojs/mastro": "^0",
+    "@std/media-types": "jsr:@std/media-types@^1.1.0"
+  }
+}

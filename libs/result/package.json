@@ -1,0 +1,40 @@
+{
+  "name": "@mastrojs/result",
+  "version": "0.1.3",
+  "description": "A minimal TypeScript Result type for type-safe error handling.",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepack": "node ../../prepack.ts",
+    "test": "node --test 'src/**/*.test.ts'"
+  },
+  "homepage": "https://github.com/mastrojs/mastro/tree/main/libs/result",
+  "bugs": "https://github.com/mastrojs/mastro/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git",
+    "directory": "libs/result"
+  },
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!**/*.test.*",
+    "!**/*.bench.*"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/result.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/result.d.ts",
+        "default": "./dist/result.js"
+      }
+    },
+    "directory": "dist",
+    "linkDirectory": false
+  }
+}

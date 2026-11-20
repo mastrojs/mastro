@@ -1,0 +1,43 @@
+{
+  "name": "@mastrojs/atproto",
+  "version": "0.2.6",
+  "description": "Publish and update standard.site records in the Atmosphere.",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepack": "node ../../prepack.ts",
+    "test": "node --test 'src/**/*.test.ts'"
+  },
+  "homepage": "https://github.com/mastrojs/mastro/tree/main/libs/atproto",
+  "bugs": "https://github.com/mastrojs/mastro/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git",
+    "directory": "libs/atproto"
+  },
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!**/*.test.*",
+    "!**/*.bench.*"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "directory": "dist",
+    "linkDirectory": false
+  },
+  "dependencies": {
+    "@atproto/api": "^0.32.5"
+  }
+}

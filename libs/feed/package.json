@@ -1,0 +1,43 @@
+{
+  "name": "@mastrojs/feed",
+  "version": "0.0.2",
+  "description": "Generate Atom feeds with Mastro.",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepack": "node ../../prepack.ts",
+    "test": "node --test 'src/**/*.test.ts'"
+  },
+  "homepage": "https://github.com/mastrojs/mastro/tree/main/libs/feed",
+  "bugs": "https://github.com/mastrojs/mastro/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git",
+    "directory": "libs/feed"
+  },
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!**/*.test.*",
+    "!**/*.bench.*"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/feed.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/feed.d.ts",
+        "default": "./dist/feed.js"
+      }
+    },
+    "directory": "dist",
+    "linkDirectory": false
+  },
+  "dependencies": {
+    "@mastrojs/mastro": "^0"
+  }
+}
