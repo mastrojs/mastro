@@ -2,7 +2,7 @@
  * Lightweight wrapper around Node.js's file system functions. But for better interoperability
  * with incoming URL paths, input and output paths of these functions use URL encoding.
  *
- * - Implementation uses RPC for the [vscode-extension](../../vscode-extension/README.md).
+ * - Implementation uses RPC for the [vscode-extension](../../../../vscode-extension/README.md).
  * - Cloudflare Workers work with Node.js compatibility.
  * - For Service Workers (where there is no filesystem), we fall back to undefined
  * and skip Node.js imports so the module can still load.

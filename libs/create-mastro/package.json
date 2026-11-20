@@ -1,0 +1,26 @@
+{
+  "name": "@mastrojs/create-mastro",
+  "version": "0.1.7",
+  "scripts": {
+    "prepack": "rm -rf dist && mkdir dist && cp index.js dist/ && node ../scripts/prepare-package.js",
+    "npm-publish": "deno check && pnpm publish --access public"
+  },
+  "homepage": "https://mastrojs.github.io/",
+  "bugs": {
+    "url": "https://github.com/mastrojs/mastro/issues"
+  },
+  "license": "MIT",
+  "author": "Mauro Bieg",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git"
+  },
+  "bin": {
+    "create-mastro": "index.js"
+  },
+  "type": "module",
+  "publishConfig": {
+    "directory": "dist",
+    "linkDirectory": false
+  }
+}

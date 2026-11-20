@@ -50,7 +50,7 @@ const runCli = async (
   try {
     if (options.example) {
       const example = fileURLToPath(
-        new URL(`../examples/${options.example}/`, import.meta.url),
+        new URL(`../../../examples/${options.example}/`, import.meta.url),
       );
       await cp(example, cwd, {
         recursive: true,

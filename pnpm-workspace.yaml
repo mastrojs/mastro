@@ -1,7 +1,8 @@
 packages:
+  - "libs/*"
   - "examples/*"
 allowBuilds:
-  esbuild: set this to true or false
-  workerd: set this to true or false
+  esbuild: true
+  workerd: true
 linkWorkspacePackages: true
 preferWorkspacePackages: true
