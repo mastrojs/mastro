@@ -1,0 +1,44 @@
+{
+  "name": "@mastrojs/reactive",
+  "version": "0.4.2",
+  "description": "A tiny reactive GUI library for MPAs.",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "prepack": "node ../../prepack.ts",
+    "test": "node --test 'src/**/*.test.ts'"
+  },
+  "homepage": "https://mastrojs.github.io/reactive/",
+  "bugs": "https://github.com/mastrojs/mastro/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastrojs/mastro.git",
+    "directory": "libs/reactive"
+  },
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!**/*.test.*",
+    "!**/*.bench.*"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/reactive.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/reactive.d.ts",
+        "default": "./dist/reactive.js"
+      }
+    },
+    "directory": "dist",
+    "linkDirectory": false
+  },
+  "dependencies": {
+    "@mastrojs/mastro": "^0",
+    "@webreflection/signals": "^0.2.8"
+  }
+}
