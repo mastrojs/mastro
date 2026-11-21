@@ -126,6 +126,7 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
 
   // Set up buffer to reduce per-chunk overhead
   let buffer = "";
+  let closed = false;
   const flushBuffer = () => {
     const value = buffer;
     buffer = "";
@@ -143,33 +144,39 @@ export const renderToStream = (node: Html): string | AsyncIterable<string> => {
               return flushBuffer();
             }
             if (isAsyncIterator(nextUp)) {
-              // If an iterator is on top of the stack, consume its next element.
-              // But only pop the iterator itself from the stack when it's done.
+              // If an iterator is on top of the stack, consume its next element:
               const { value, done } = await nextUp.next();
-              if (done) {
-                stack.pop();
-              } else {
-                stack.push(value);
-              }
+              if (closed) break;
+              // But only pop the iterator itself from the stack when it's done:
+              done ? stack.pop() : stack.push(value);
             } else {
               const current = await stack.pop();
+              if (closed) break;
               if (Array.isArray(current)) {
                 for (let i = current.length - 1; i >= 0; i--) {
                   stack.push(current[i]);
                 }
               } else if (isAsyncIterable(current)) {
                 // push iterator on stack for future consumption
-                const iterator = current[Symbol.asyncIterator]();
-                stack.push(iterator);
+                stack.push(current[Symbol.asyncIterator]());
               } else {
                 buffer += escape(current as HtmlPrimitive);
               }
             }
           }
-          // stack is emptied
-          return buffer.length > 0
-            ? flushBuffer()
-            : { value: undefined, done: true };
+          // stack is emptied, only the buffer may be left
+          return buffer.length === 0 || closed
+            ? { value: undefined, done: true }
+            : flushBuffer();
+        },
+        return: async () => {
+          closed = true;
+          // Close sequentially from the inside out, continuing even if cleanup throws.
+          await stack.splice(0).filter(isAsyncIterator<Html>).reduceRight(
+            (cleanup, iterator) => cleanup.finally(() => iterator.return?.()),
+            Promise.resolve(),
+          );
+          return { value: undefined, done: true };
         },
       };
     },

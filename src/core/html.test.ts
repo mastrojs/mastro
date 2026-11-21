@@ -288,6 +288,47 @@ test("renderToStream: buffers sync content and flushes before async work", async
   assert.deepEqual(await Array.fromAsync(stream), ["a", "bc", "d", "e", "f"]);
 });
 
+test("renderToStream: breaking iteration closes the source generator", async () => {
+  let closed = false;
+  async function* content() {
+    try {
+      yield "first";
+      yield "second";
+    } finally {
+      closed = true;
+    }
+  }
+
+  const stream = renderToStream(content());
+  assert.notEqual(typeof stream, "string");
+  for await (const chunk of stream) {
+    assert.equal(chunk, "first");
+    break;
+  }
+  assert.equal(closed, true);
+});
+
+test("renderToStream: cancellation stops a pending promise from opening another iterable", async () => {
+  let opened = false;
+  const content = {
+    [Symbol.asyncIterator]() {
+      opened = true;
+      return createAsyncIterable("late content")[Symbol.asyncIterator]();
+    },
+  };
+  const pending = Promise.withResolvers<typeof content>();
+  const stream = renderToStream(pending.promise);
+  assert(typeof stream !== "string");
+  const iterator = stream[Symbol.asyncIterator]();
+  const next = iterator.next();
+  await iterator.return?.();
+
+  pending.resolve(content);
+  assert.deepEqual(await next, { value: undefined, done: true });
+  assert.deepEqual(await iterator.next(), { value: undefined, done: true });
+  assert.equal(opened, false);
+});
+
 test('htmlToResponse: renders text, generators and async iterables', async () => {
   const res = htmlToResponse('hi')
   assert.deepEqual(await res.text(), 'hi')
@@ -303,6 +344,59 @@ test('htmlToResponse: renders text, generators and async iterables', async () =>
   const iterableRes = htmlToResponse(html`hi ${createAsyncIterable("there")}`)
   assert.deepEqual(await iterableRes.text(), "hi there")
 })
+
+test("htmlToResponse: cancellation awaits nested generator cleanup from the inside out", async () => {
+  const closed: string[] = [];
+  async function* inner() {
+    try {
+      yield "first";
+      yield "second";
+    } finally {
+      await Promise.resolve();
+      closed.push("inner");
+    }
+  }
+  async function* outer() {
+    try {
+      yield inner();
+      yield "last";
+    } finally {
+      await Promise.resolve();
+      closed.push("outer");
+    }
+  }
+
+  const reader = htmlToResponse(outer()).body!.getReader();
+  assert.equal(new TextDecoder().decode((await reader.read()).value), "first");
+  await reader.cancel();
+  assert.deepEqual(closed, ["inner", "outer"]);
+  assert.deepEqual(await reader.read(), { value: undefined, done: true });
+});
+
+test("htmlToResponse: a cleanup failure still closes outer generators and rejects cancellation", async () => {
+  const failure = new Error("cleanup failed");
+  let outerClosed = false;
+  async function* inner() {
+    try {
+      yield "first";
+      yield "second";
+    } finally {
+      throw failure;
+    }
+  }
+  async function* outer() {
+    try {
+      yield inner();
+    } finally {
+      outerClosed = true;
+    }
+  }
+
+  const reader = htmlToResponse(outer()).body!.getReader();
+  assert.equal(new TextDecoder().decode((await reader.read()).value), "first");
+  await assert.rejects(reader.cancel(), (error) => error === failure);
+  assert.equal(outerClosed, true);
+});
 
 test("htmlToResponse: errors the body when rendering fails after a chunk", async (t) => {
   t.mock.method(console, "error", () => {});
@@ -323,24 +417,29 @@ for (const outcome of ["value", "done", "error"] as const) {
   test(`htmlToResponse: ignores a pending ${outcome} after cancellation`, async (t) => {
     const started = Promise.withResolvers<void>();
     const resume = Promise.withResolvers<void>();
+    let closed = false;
     async function* content() {
-      yield "partial";
-      started.resolve();
-      await resume.promise;
-      if (outcome === "error") throw new Error("rendering failed after cancellation");
-      if (outcome === "value") yield "late content";
+      try {
+        yield "partial";
+        started.resolve();
+        await resume.promise;
+        if (outcome === "error") throw new Error("rendering failed after cancellation");
+        if (outcome === "value") yield "late content";
+      } finally {
+        closed = true;
+      }
     }
 
     const reader = htmlToResponse(html`${content()}`).body!.getReader();
     assert.equal(new TextDecoder().decode((await reader.read()).value), "partial");
     const pendingRead = reader.read();
     await started.promise;
-    await reader.cancel("visitor navigated away");
+    const canceled = reader.cancel("visitor navigated away");
     assert.deepEqual(await pendingRead, { value: undefined, done: true });
 
     resume.resolve();
-    // Let the pending render settle and the stream's pull callback finish.
-    await new Promise<void>((resolve) => setImmediate(resolve));
+    await canceled;
+    assert.equal(closed, true);
     assert.deepEqual(await reader.read(), { value: undefined, done: true });
   });
 }
