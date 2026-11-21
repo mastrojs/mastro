@@ -1,9 +1,10 @@
 {
   "name": "@mastrojs/create-mastro",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "scripts": {
-    "prepack": "rm -rf dist && mkdir dist && cp index.js dist/ && node ../scripts/prepare-package.js",
-    "npm-publish": "deno check && pnpm publish --access public"
+    "check": "tsc --noEmit",
+    "prepack": "node ../../prepack.ts",
+    "test": "node --test 'src/**/*.test.ts'"
   },
   "homepage": "https://mastrojs.github.io/",
   "bugs": {
@@ -13,13 +14,22 @@
   "author": "Mauro Bieg",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mastrojs/mastro.git"
+    "url": "git+https://github.com/mastrojs/mastro.git",
+    "directory": "libs/create-mastro"
   },
   "bin": {
-    "create-mastro": "index.js"
+    "create-mastro": "./src/index.ts"
   },
+  "files": [
+    "README.md",
+    "dist"
+  ],
   "type": "module",
   "publishConfig": {
+    "access": "public",
+    "bin": {
+      "create-mastro": "./dist/index.js"
+    },
     "directory": "dist",
     "linkDirectory": false
   }
