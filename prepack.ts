@@ -27,6 +27,6 @@ if (basename(process.cwd()) === "mastro") {
 } else {
   cpFile("README.md", "dist/README.md");
 }
-writeFile("dist/tsconfig.json", JSON.stringify({ extends: "../../../tsconfig.base.json" }));
+writeFile("dist/tsconfig.json", JSON.stringify({ extends: "../tsconfig.json" }));
 
 execFile("tsc", ["-p", "dist/tsconfig.json"], { stdio: "inherit" });

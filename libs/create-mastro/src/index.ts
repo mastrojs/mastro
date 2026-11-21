@@ -1,32 +1,22 @@
 #!/usr/bin/env node
-//@ts-check
-// deno-lint-ignore-file no-process-global
 
-/**
- * This script initializes an empty Mastro project.
- *
- * This is an npm package until JSR has a way to create a "bin" field in the generated package.json
- * See https://github.com/jsr-io/jsr-npm/issues/76
- * and https://gitlab.com/soapbox-pub/xjsr/-/issues/2
- */
-
-import { exec } from "node:child_process";
+import { exec, type ExecOptions } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import fs from "node:fs/promises";
 import { join } from "node:path";
 import { stdin, stdout } from "node:process";
-import readline from "node:readline";
+import readline, { type Key } from "node:readline";
 import { createInterface } from "node:readline/promises";
 import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 
 /**
  * Constants
  */
 const userAgent = process.env.npm_config_user_agent;
 const runtime = (() => {
-  if (typeof Deno === "object") {
-    return "deno";
-  } else if (userAgent?.startsWith("bun/")) {
+  if (userAgent?.startsWith("bun/")) {
     // the usual ways to detect Bun don't appear to work in `bun create`
     return "bun";
   } else if (process.argv[2] === "--cloudflare") {
@@ -36,16 +26,11 @@ const runtime = (() => {
   }
 })();
 const packageManager = (() => {
-  if (runtime === "deno") return "deno";
   switch (userAgent?.split("/")[0]) {
-    case "pnpm":
-      return "pnpm";
-    case "yarn":
-      return "yarn";
-    case "bun":
-      return "bun";
-    default:
-      return "npm";
+    case "pnpm": return "pnpm";
+    case "yarn": return "yarn";
+    case "bun": return "bun";
+    default: return "npm";
   }
 })();
 const templateOutDir = "mastro-main"; // determined by zip file
@@ -57,14 +42,8 @@ const ansiResetStyles = "\x1b[0m";
  * Helper Functions
  */
 
-/**
- * @template {string} T
- * @param {string} question
- * @param {T[]} options
- * @returns {Promise<T>}
- */
-const select = (question, options) =>
-  new Promise((resolve) => {
+const select = <T extends string>(question: string, options: T[]): Promise<T> =>
+  new Promise<T>((resolve) => {
     let index = 0;
 
     const render = () => {
@@ -76,7 +55,7 @@ const select = (question, options) =>
     };
     render();
 
-    process.stdin.on("keypress", (_, key) => {
+    process.stdin.on("keypress", (_: string, key: Key) => {
       switch (key.name) {
         case "c": {
           if (key.ctrl) {
@@ -96,37 +75,19 @@ const select = (question, options) =>
         case "return": {
           console.clear();
           process.stdin.removeAllListeners("keypress");
-          return resolve(options[index]);
+          return resolve(options[index]!);
         }
       }
     });
   });
 
-/**
- * @param {string} path
- * @param {ReadableStream<Uint8Array<ArrayBuffer>>} data
- * @returns {Promise<void>}
- */
-const writeFile = (path, data) => {
-  if (typeof Deno === "object") {
-    return Deno.writeFile(path, data);
-  } else {
-    return new Promise((resolve, reject) =>
-      // @ts-ignore different ReadableStream type
-      Readable.fromWeb(data)
-        .pipe(createWriteStream(path))
-        .on("finish", resolve)
-        .on("error", reject)
-    );
-  }
-};
+const writeFile = (path: string, data: ReadableStream<Uint8Array<ArrayBuffer>>): Promise<void> =>
+  pipeline(Readable.fromWeb(data as NodeReadableStream<Uint8Array>), createWriteStream(path));
 
-/**
- * @param {string} cmd
- * @param {import("node:child_process").ExecOptions} [opts]
- * @returns {Promise<{code: number; stdout: string; stderr: string;}>}
- */
-const execCmd = (cmd, opts) =>
+const execCmd = (
+  cmd: string,
+  opts?: ExecOptions,
+): Promise<{ code: number; stdout: string; stderr: string }> =>
   new Promise((resolve) =>
     exec(cmd, { ...opts, encoding: "utf8" }, (error, stdout, stderr) =>
       resolve({
@@ -136,10 +97,7 @@ const execCmd = (cmd, opts) =>
       }))
   );
 
-/**
- * @param { {fetchZipPromise: Promise<Response>; zipFileName: string } } opts
- */
-const unzip = async (opts) => {
+const unzip = async (opts: { fetchZipPromise: Promise<Response>; zipFileName: string }) => {
   const { fetchZipPromise, zipFileName } = opts;
   const res = await fetchZipPromise;
   if (!res.ok || !res.body) {
@@ -162,23 +120,14 @@ const unzip = async (opts) => {
   }
 };
 
-/**
- * Depending on runtime, updates `deno.json` or `package.json`
- *
- * @param { string } dir
- * @param { (dependencies: Record<string, string>) => void } cb
- */
-const updateDeps = async (dir, cb) => {
-  const path = join(dir, runtime === "deno" ? "deno.json" : "package.json");
+const updateDeps = async (dir: string, cb: (dependencies: Record<string, string>) => void) => {
+  const path = join(dir, "package.json");
   const json = JSON.parse(await fs.readFile(path, { encoding: "utf8" }));
-  cb(json[runtime === "deno" ? "imports" : "dependencies"]);
+  cb(json.dependencies);
   await fs.writeFile(path, JSON.stringify(json, null, 2) + "\n");
 };
 
-/**
- * @param { string } dir
- */
-const updateFilesForBlog = async (dir) => {
+const updateFilesForBlog = async (dir: string) => {
   await Promise.all(["components", "data", "routes"].map(async (folder) => {
     await fs.rm(join(dir, folder), { recursive: true, force: true });
     return fs.rename(join(templateOutDir, "examples", "blog", folder), join(dir, folder));
@@ -190,10 +139,7 @@ const updateFilesForBlog = async (dir) => {
   });
 };
 
-/**
- * @param { string } dir
- */
-const addSveltiaFiles = async (dir) => {
+const addSveltiaFiles = async (dir: string) => {
   const sveltiaConfig =
     `# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
 
@@ -261,10 +207,7 @@ const agentsMd = `We're using the Mastro web framework.
   if absolutely necessary. If so, use \`<script type="module">\`.
 `;
 
-/**
- * @param { string } dir
- */
-const installDeps = async (dir) => {
+const installDeps = async (dir: string) => {
   const install = packageManager + " install";
   const { code, stdout, stderr } = await execCmd(install, { cwd: dir });
   if (code !== 0) {
@@ -272,10 +215,7 @@ const installDeps = async (dir) => {
   }
 };
 
-/**
- * @param { Promise<unknown> } p
- */
-const loadingSpinnerUntil = async (p) => {
+const loadingSpinnerUntil = async (p: Promise<unknown>) => {
   const chars = "-\\|/";
   let i = 0;
   const id = setInterval(() => {
@@ -310,7 +250,7 @@ const main = async () => {
 
   const templateMsg = `Which template do you want to start with? ${
     ansiSetGrey}Use up/down arrow keys:${ansiResetStyles}`;
-  const blogTemplate = "blog (with markdown support)"
+  const blogTemplate = "blog (with markdown support)";
   const template = runtime === "cloudflare"
     ? "basic"
     : await select(templateMsg, ["basic", blogTemplate]);
@@ -329,9 +269,11 @@ const main = async () => {
   await unzip({ fetchZipPromise, zipFileName: zipOutDir + ".zip" });
   try {
     await fs.rename(zipOutDir, dir);
-  } catch (/** @type {any} */ e) {
+  } catch (e) {
     console.error(
-      e.code === "ENOTEMPTY" ? `Could not create directory ${dir}: it already exists.` : e,
+      (e as NodeJS.ErrnoException).code === "ENOTEMPTY"
+        ? `Could not create directory ${dir}: it already exists.`
+        : e,
     );
     await fs.rm(zipOutDir, { recursive: true });
     process.exit(-1);
@@ -365,8 +307,7 @@ const main = async () => {
     await fs.rm(templateOutDir, { recursive: true });
   }
 
-  const installDepsP = runtime !== "deno" &&
-      "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"])
+  const installDepsP = "Yes" === await select("Install dependencies? (recommended)", ["Yes", "No"])
     ? installDeps(dir)
     : undefined;
 
@@ -387,9 +328,7 @@ const main = async () => {
     if (code !== 0) console.warn("Couldn't initialize git repo", stdout, stderr);
   }
 
-  const startInstr = runtime === "deno"
-    ? "deno task start"
-    : `${packageManager} run ${runtime === "cloudflare" ? "dev" : "start"}`;
+  const startInstr = `${packageManager} run ${runtime === "cloudflare" ? "dev" : "start"}`;
   console.log(`
 Success!
 
