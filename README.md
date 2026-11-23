@@ -4,9 +4,15 @@
 
 **No dependencies. No build step. Just a simple web framework.**
 
-Mastro is a web framework and site generator for people who care about their users and web standards. It’s is implemented in just ~800 lines of TypeScript.
+Mastro is a web framework and site generator for people who care about their users and web standards. It’s is implemented in just ~900 lines  of TypeScript.
 
-Use JavaScript/TypeScript’s mature tooling to build fast MPA websites. Instead of going through layers of abstraction, work directly with the browser and your JavaScript runtime – Node.js, Deno, Bun, or Workers.
+Use JavaScript/TypeScript’s mature tooling to build fast MPA websites. Instead of going through layers of abstraction, work directly with the browser and Node.js, Bun, or Workers.
+
+
+## Install
+
+    pnpm create @mastrojs/mastro@latest
+
 
 ## Minimal yet powerful
 
@@ -18,13 +24,13 @@ Use JavaScript/TypeScript’s mature tooling to build fast MPA websites. Instead
 
 ## No bloat
 
-- **No overhead**: implemented in just [~800 lines](https://github.com/mastrojs/mastro/tree/main/libs/mastro/src#readme) of TypeScript with no dependencies.
+- **No overhead**: implemented in just [~900 lines ](https://github.com/mastrojs/mastro/tree/main/libs/mastro/src#readme) of TypeScript with no dependencies.
 - **No client-side JavaScript** (until you [add some](https://mastrojs.github.io/guide/interactivity-with-javascript-in-the-browser/)): create [MPA](https://mastrojs.github.io/guide/client-side-vs-server-side-javascript-static-vs-ondemand-spa-vs-mpa/) websites that load [fast](https://mastrojs.github.io#fast-for-everyone).
 - **No bundler** (until you [add one](https://mastrojs.github.io/guide/bundling-assets/)): your code ships exactly how you wrote it.
 - **No magic**: use plain `<img>` and `<a>` tags referencing [asset routes](https://mastrojs.github.io/blog/2026-01-29-everything-is-a-route-one-interface-for-servers-static-sites-and-assets/).
 - **No VC-money**: no eventual enshitification – selling is none of our business.
 - **No update treadmill**: we use web standards instead [dependencies](https://jsr.io/@mastrojs/mastro/dependencies).
-- **No lock-in**: swap out Mastro later or fork it – it's only [~800 lines](https://github.com/mastrojs/mastro/tree/main/libs/mastro/src#readme) after all.
+- **No lock-in**: swap out Mastro later or fork it – it's only [~900 lines ](https://github.com/mastrojs/mastro/tree/main/libs/mastro/src#readme) after all.
 
 
 ## Documentation
