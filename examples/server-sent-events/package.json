@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@mastrojs/mastro": "^0",
-    "@remix-run/node-fetch-server": "^1"
+    "srvx": "^1"
   },
   "devDependencies": {
     "@types/node": "^26",

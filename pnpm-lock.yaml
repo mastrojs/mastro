@@ -219,9 +219,9 @@ importers:
       '@mastrojs/mastro':
         specifier: ^0
         version: link:../../libs/mastro
-      '@remix-run/node-fetch-server':
+      srvx:
         specifier: ^1
-        version: 1.0.1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -241,9 +241,9 @@ importers:
       '@mastrojs/mastro':
         specifier: ^0
         version: link:../../libs/mastro
-      '@remix-run/node-fetch-server':
+      srvx:
         specifier: ^1
-        version: 1.0.1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -260,12 +260,12 @@ importers:
       '@mastrojs/mastro':
         specifier: ^0
         version: link:../../libs/mastro
-      '@remix-run/node-fetch-server':
-        specifier: ^1
-        version: 1.0.1
       esbuild:
         specifier: ^0.27.3
         version: 0.27.7
+      srvx:
+        specifier: ^1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -301,9 +301,9 @@ importers:
       '@mastrojs/mastro':
         specifier: ^0
         version: link:../../libs/mastro
-      '@remix-run/node-fetch-server':
+      srvx:
         specifier: ^1
-        version: 1.0.1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -320,9 +320,9 @@ importers:
       '@mastrojs/mastro':
         specifier: ^0
         version: link:../../libs/mastro
-      '@remix-run/node-fetch-server':
+      srvx:
         specifier: ^1
-        version: 1.0.1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -336,9 +336,6 @@ importers:
       '@mastrojs/mastro':
         specifier: ^0
         version: link:../../libs/mastro
-      '@remix-run/node-fetch-server':
-        specifier: ^1
-        version: 1.0.1
       kysely:
         specifier: ^0
         version: 0.29.9
@@ -348,6 +345,9 @@ importers:
       pg-cursor:
         specifier: ^2
         version: 2.22.1(pg@8.23.1)
+      srvx:
+        specifier: ^1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -386,9 +386,9 @@ importers:
       '@mastrojs/reactive':
         specifier: ^0
         version: link:../../libs/reactive
-      '@remix-run/node-fetch-server':
+      srvx:
         specifier: ^1
-        version: 1.0.1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -402,9 +402,9 @@ importers:
       '@mastrojs/mastro':
         specifier: ^0
         version: link:../../libs/mastro
-      '@remix-run/node-fetch-server':
+      srvx:
         specifier: ^1
-        version: 1.0.1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -421,9 +421,9 @@ importers:
       '@mastrojs/reactive':
         specifier: ^0
         version: link:../../libs/reactive
-      '@remix-run/node-fetch-server':
+      srvx:
         specifier: ^1
-        version: 1.0.1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -449,9 +449,9 @@ importers:
       '@mastrojs/result':
         specifier: ^0
         version: link:../../libs/result
-      '@remix-run/node-fetch-server':
+      srvx:
         specifier: ^1
-        version: 1.0.1
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^26
@@ -1274,9 +1274,6 @@ packages:
 
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
-
-  '@remix-run/node-fetch-server@1.0.1':
-    resolution: {integrity: sha512-g3mcqTVDyg/i/mW4YJVt8N3bkw5zmhC45dqYPqL7O4eohAm8kT7ROxkc7Oo/9xkNjjBh6ijFbkuKgf8bNffnUg==}
 
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
@@ -2121,6 +2118,11 @@ packages:
     resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
     engines: {node: '>= 10.x'}
 
+  srvx@1.0.8:
+    resolution: {integrity: sha512-ngFS/J6St4PJfHRHGjr78xkPPtbyXtdMOLNE4x/XZunEK3OhV7aGUWMHf9WTUEy6wm1U0W4okkd82ZFFWRVQTw==}
+    engines: {node: '>=20.16.0'}
+    hasBin: true
+
   supports-color@10.2.2:
     resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
     engines: {node: '>=18'}
@@ -2681,8 +2683,6 @@ snapshots:
       supports-color: 10.2.2
 
   '@poppinss/exception@1.2.3': {}
-
-  '@remix-run/node-fetch-server@1.0.1': {}
 
   '@sindresorhus/is@7.2.0': {}
 
@@ -3509,6 +3509,8 @@ snapshots:
       '@types/node': 26.6.6
 
   split2@4.2.0: {}
+
+  srvx@1.0.8: {}
 
   supports-color@10.2.2: {}
 

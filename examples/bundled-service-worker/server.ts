@@ -1,22 +1,17 @@
-import { createServer } from "node:http";
-
 import { createApp } from "@mastrojs/mastro/server";
-import { createRequestListener, type ClientAddress } from "@remix-run/node-fetch-server";
+import { FastResponse, serve } from "srvx";
 
 import * as Home from "./handlers/Home.ts";
 import * as SW from "./handlers/SW.ts";
 import * as SWConfig from "./handlers/SWConfig.ts";
 
 // see https://mastrojs.github.io/docs/routing/#programmatic-router
-export const app = createApp<[ClientAddress]>()
+export const app = createApp()
   .get("/", Home)
   .get("/sw.js", SW)
   .get("/sw-config", SWConfig);
 
-const port = process.env.PORT || 8000;
-
 if (import.meta.main) {
-  createServer(createRequestListener(app.createHandler())).listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-  });
+  globalThis.Response = FastResponse; // see https://srvx.h3.dev/guide/node
+  serve({ fetch: app.createHandler() });
 }

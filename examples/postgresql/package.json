@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@mastrojs/mastro": "^0",
-    "@remix-run/node-fetch-server": "^1",
+    "srvx": "^1",
     "kysely": "^0",
     "pg": "^8",
     "pg-cursor": "^2"

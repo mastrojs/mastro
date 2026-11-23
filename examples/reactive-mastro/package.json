@@ -10,7 +10,7 @@
   "dependencies": {
     "@mastrojs/mastro": "^0",
     "@mastrojs/reactive": "^0",
-    "@remix-run/node-fetch-server": "^1"
+    "srvx": "^1"
   },
   "devDependencies": {
     "@types/node": "^26",
