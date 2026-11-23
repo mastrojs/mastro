@@ -1,4 +1,6 @@
 import type { Agent } from "@atproto/api";
+import { isDeepStrictEqual } from "node:util";
+
 import { rkeyFromPath, type RkeyStrategy } from "./rkey.ts";
 
 export type Action = "createRecord" | "putRecord";
@@ -18,10 +20,11 @@ export interface Document {
    * Full plaintext of the article. No markdown."
    */
   textContent?: string;
-  // tags?: string[];
   /** Optionally provide your own [rkey](https://atproto.com/specs/record-key)
    * to override the `opts.rkeyStrategy` passed to `createOrUpdateStandardSite` */
   rkey?: string;
+  /** Allow any additional fields supported by the standard.site document lexicon. */
+  [key: string]: unknown;
 }
 
 type DocumentValidated = Document & { path: string; rkey: string };
@@ -31,6 +34,14 @@ const documentStringFields = [
   "description",
   "textContent",
 ] as const satisfies Array<keyof Document>;
+
+const documentDeepEqualsFields = [
+  "content",
+  "tags",
+  "links",
+  "labels",
+  "bskyPostRef",
+] as const;
 
 export const validateAndAddRkey = (
   docs: Document[],
@@ -71,7 +82,7 @@ export const createOrUpdateDocuments = async (
   publicationAtUri: string,
   pubPathChanged: boolean,
 ): Promise<void> => {
-  const existingDocs: Record<string, Record<string, string>> = {};
+  const existingDocs: Record<string, Record<string, unknown>> = {};
   for (const oldDoc of await fetchDocuments(agent, publicationAtUri)) {
     existingDocs[oldDoc.rkey] = oldDoc;
   }
@@ -85,11 +96,10 @@ export const createOrUpdateDocuments = async (
   }
 };
 
-// TODO: export this function and test it in `document.test.ts`
-const docChanged = (oldDoc: Record<string, string>, newDoc: Document) =>
-  documentStringFields.some((field) =>
-    oldDoc[field] !== newDoc[field] || oldDoc.publishedAt !== newDoc.publishedAt.toISOString()
-  );
+export const docChanged = (oldDoc: Record<string, unknown>, newDoc: Document): boolean =>
+  oldDoc.publishedAt !== newDoc.publishedAt.toISOString() ||
+  documentStringFields.some((field) => oldDoc[field] !== newDoc[field]) ||
+  documentDeepEqualsFields.some((field) => !isDeepStrictEqual(oldDoc[field], newDoc[field]));
 
 const fetchDocuments = async (agent: Agent, publicationUri: string) => {
   const docs = await agent.com.atproto.repo.listRecords({
@@ -108,22 +118,17 @@ const pushDocument = async (
   action: Action,
   doc: DocumentValidated,
 ) => {
+  const { url: _url, rkey, ...rest } = doc;
   try {
     const res = await agent.com.atproto.repo[action]({
       repo: agent.did!,
       collection: "site.standard.document",
-      rkey: doc.rkey,
+      rkey,
       record: {
+        ...rest,
         $type: "site.standard.document",
         site: publicationUri,
-        title: doc.title,
         publishedAt: doc.publishedAt.toISOString(),
-        path: doc.path,
-        description: doc.description,
-        textContent: doc.textContent,
-        // tags: doc.tags,
-        // Optional: link back to a Bluesky post for comments
-        // bskyPostRef: { uri: "at://mastrojs.bsky.social/app.bsky.feed.post/3mmrn4yif6s2c", cid: "..." },
       },
     });
     console.log(
