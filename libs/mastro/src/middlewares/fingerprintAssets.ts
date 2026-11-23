@@ -12,9 +12,9 @@ export const fingerprintAssets: Middleware = {
   name: "fingerprintAssets",
   handler: async (req, ctx) => {
     const res = await ctx.fetchNext(req);
-    if (!res.ok) return res;
+    if (!res.ok || ctx.mode !== "generator") return res;
     const { pathname } = new URL(req.url);
-    if (ctx.mode === "generator" && pathname.startsWith("/_assets/")) {
+    if (pathname.startsWith("/_assets/")) {
       const ext = posix.extname(pathname);
       const data = await res.arrayBuffer().then(Buffer.from);
       const digest = createHash("sha256").update(data).digest("hex").slice(0, 8);
@@ -22,9 +22,8 @@ export const fingerprintAssets: Middleware = {
       g._mastroAssets[pathname.slice("/_assets/".length)] = hashedPath;
       res.headers.set("Content-Disposition", `attachment; filename=${posix.basename(hashedPath)}`);
       return new Response(data, res);
-    } else {
-      return res;
     }
+    return res;
   },
   beforeGenerate: async () => {
     g._mastroAssets = {};
