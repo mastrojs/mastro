@@ -48,9 +48,7 @@ export const html = (templateParts: TemplateStringsArray, ...params: Html[]): Ht
     if (i < params.length) {
       const p = params[i];
       if (quote) {
-        output.push(unsafeInnerHtml('"'), p, unsafeInnerHtml('"'));
-      } else if (Array.isArray(p)) {
-        output.push(...p);
+        output.push(trustedQuote, p, trustedQuote);
       } else {
         output.push(p);
       }
@@ -106,17 +104,18 @@ export const renderToStringSync = (node: Html): string => {
  */
 export const renderToStream = (node: Html): string | AsyncIterable<string> => {
   let stack: Array<Html | AsyncIterator<Html>> = [node];
-  if (Array.isArray(node)) {
-    stack = node.flat(Infinity as 1);
-    if (!(stack.some((n) => n instanceof Promise || isAsyncIterable(n)))) {
-      // if there is nothing async, we can speed things up by an order of magnitude like this
-      let str = "";
-      for (let i = 0; i < stack.length; i++) {
-        // in my limited testing, this is faster than `stack.map(escape).join("")`
-        str += escape(stack[i] as HtmlPrimitive);
+  if (!containsAsync(node)) {
+    // if there is nothing async, we can speed things up by an order of magnitude like this
+    let str = "";
+    const append = (value: Html) => {
+      if (Array.isArray(value)) {
+        for (const child of value) append(child);
+      } else {
+        str += escape(value as HtmlPrimitive);
       }
-      return str;
-    }
+    };
+    append(node);
+    return str;
   }
 
   // reversing and using pop() is faster than using shift().
@@ -220,7 +219,12 @@ const escapeForAttribute = (str: string) =>
 const needsEscaping = /[&<>'"]/;
 const chars = { "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" };
 
+const containsAsync = (node: Html): boolean =>
+  Array.isArray(node) ? node.some(containsAsync) : node instanceof Promise || isAsyncIterable(node);
+
 const isAsyncIterator = <T>(val: any): val is AsyncIterator<T> =>
   val && typeof val.next === "function";
+
+const trustedQuote = unsafeInnerHtml('"');
 
 const cache = new Map<TemplateStringsArray, { html: HtmlPrimitive; quote: boolean }[]>();
