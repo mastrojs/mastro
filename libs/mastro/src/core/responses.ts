@@ -18,8 +18,12 @@ export const htmlResponse = (
 /**
  * Create a standard Response object from an `Html` node.
  */
-export const htmlToResponse = (node: Html): Response =>
-  htmlResponse(renderToStream(node));
+export const htmlToResponse = (
+  node: Html,
+  status = 200,
+  headers?: Record<string, string>,
+): Response =>
+  htmlResponse(renderToStream(node), status, headers);
 
 /**
  * Create a standard Response object with `Content-Type: application/json`.
