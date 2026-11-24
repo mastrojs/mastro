@@ -38,7 +38,9 @@ customElements.define('todo-list', class extends ReactiveElement {
   toggleTodo (i: number, e: Event) {
     const { checked } = e.target as HTMLInputElement
     const todos = [...this.todos()]
-    todos[i].done = checked
+    const todo = todos[i]
+    if (!todo) return
+    todo.done = checked
     this.todos.set(todos)
   }
 

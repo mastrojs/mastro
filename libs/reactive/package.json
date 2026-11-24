@@ -1,10 +1,10 @@
 {
   "name": "@mastrojs/reactive",
-  "version": "0.4.2",
+  "version": "0.4.4",
   "description": "A tiny reactive GUI library for MPAs.",
   "scripts": {
     "check": "tsc --noEmit",
-    "prepack": "node ../../prepack.ts",
+    "prepack": "node ../../prepack.ts && esbuild src/reactive.ts --bundle --format=esm --outfile=dist/dist/reactive.js && esbuild src/reactive.ts --bundle --minify --format=esm --outfile=dist/dist/reactive.min.js",
     "test": "node --test 'src/**/*.test.ts'"
   },
   "homepage": "https://mastrojs.github.io/reactive/",
@@ -39,6 +39,9 @@
   },
   "dependencies": {
     "@mastrojs/mastro": "^0",
-    "@webreflection/signals": "^0.2.8"
+    "@maverick-js/signals": "^6.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0"
   }
 }

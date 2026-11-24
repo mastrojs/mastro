@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "skipLibCheck": true
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
   }
 }

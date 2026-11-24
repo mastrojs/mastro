@@ -9,7 +9,7 @@
   "dependencies": {
     "@mastrojs/mastro": "^0",
     "srvx": "^1",
-    "esbuild": "^0.27.3"
+    "esbuild": "^0"
   },
   "devDependencies": {
     "@types/node": "^26",

@@ -4,8 +4,9 @@
  * @module
  */
 
-import { renderToString } from '@mastrojs/mastro'
-import * as signals from '@webreflection/signals/disposable'
+import { renderToString } from "@mastrojs/mastro";
+import * as signals from "@maverick-js/signals";
+
 import { parseArgs, parseBind } from "./reactive.util.ts";
 
 export {
@@ -15,7 +16,28 @@ export {
   renderToStream,
   renderToString,
   unsafeInnerHtml,
-} from '@mastrojs/mastro'
+} from "@mastrojs/mastro";
+
+// Inlined types for the re-exported signals.* instead of just doing:
+// export const computed: typeof signals.computed = signals.computed;
+// because of https://github.com/maverick-js/signals/issues/35 – @maverick-js/signals declarations
+// use extensionless imports that break NodeNext resolution in consuming projects.
+export interface ReadSignal<T> {
+  (): T;
+}
+
+export interface WriteSignal<T> extends ReadSignal<T> {
+  set(value: T | ((previous: T) => T)): T;
+}
+
+export interface SignalOptions<T> {
+  id?: string;
+  dirty?: (previous: T, next: T) => boolean;
+}
+
+export interface ComputedSignalOptions<T, R = never> extends SignalOptions<T> {
+  initial?: R;
+}
 
 /**
  * Creates a new signal whose value is computed and returned by the given function.
@@ -23,26 +45,33 @@ export {
  *
  * See [@maverick-js/signals#computed](https://github.com/maverick-js/signals#computed)
  */
-export const computed: typeof signals.computed = signals.computed
+export const computed: <T, R = never>(
+  compute: () => T,
+  options?: ComputedSignalOptions<T, R>,
+) => ReadSignal<T | R> = signals.computed;
 
 /**
  * Invokes the given function each time any of the signals that are read inside are updated (i.e., their value changes)
  *
  * See [@maverick-js/signals#computed](https://github.com/maverick-js/signals#effect)
  */
-export const effect: typeof signals.effect = signals.effect
+export const effect: (
+  effect: () => void | null | false | (() => void),
+  options?: { id?: string },
+) => () => void = signals.effect;
 
 /**
  * Wraps the given value into a signal.
  *
  * See [@maverick-js/signals#computed](https://github.com/maverick-js/signals#signal)
  */
-export const signal: typeof signals.signal = signals.signal
+export const signal: <T>(initialValue: T, options?: SignalOptions<T>) => WriteSignal<T> =
+  signals.signal;
 
 if (typeof HTMLElement !== "function") {
   // if this module happens to get imported server-side,
   // this hack avoids it from crashing on import
-  globalThis.HTMLElement = class Foo {} as any
+  globalThis.HTMLElement = class Foo {} as any;
 }
 
 /**
@@ -50,125 +79,129 @@ if (typeof HTMLElement !== "function") {
  * For usage, see the [Reactive Mastro website](https://mastrojs.github.io/reactive/).
  */
 export class ReactiveElement extends HTMLElement {
-  #dispose?: ReturnType<typeof signals.disposable>
+  #dispose?: signals.Dispose;
   /** override this field in your class constructor as necessary */
-  #eventNames = ['click', 'change', 'input', 'submit']
+  #eventNames = ["click", "change", "input", "submit"];
 
-  async connectedCallback (): Promise<void> {
+  async connectedCallback(): Promise<void> {
     if (this.#dispose) {
       // connectedCallback is also called when custom element is moved,
       // but we want to run the setup only once
-      return
+      return;
     }
 
-    this.#eventNames.forEach(eventName =>
+    this.#eventNames.forEach((eventName) =>
       // to support events on elements that are added after custom element creation,
       // we add a listener to the custom element for each common event name and let the event bubble up there
-      (this.shadowRoot || this).addEventListener(eventName, e => {
-        const { target } = e
-        const value = target && target instanceof HTMLElement
-          ? target.dataset['on' + eventName]
-          : undefined
+      (this.shadowRoot || this).addEventListener(eventName, (e) => {
+        const { target } = e;
+        const value =
+          target && target instanceof HTMLElement ? target.dataset["on" + eventName] : undefined;
         if (value) {
-          e.stopPropagation()
-          const [methodName = '', rawArgs] = value.split('(')
-          const args = parseArgs(rawArgs)
+          e.stopPropagation();
+          const [methodName = "", rawArgs] = value.split("(");
+          const args = parseArgs(rawArgs);
           // @ts-ignore noImplicitAny
-          if (typeof this[methodName] === 'function') {
+          if (typeof this[methodName] === "function") {
             // @ts-ignore noImplicitAny
-            this[methodName](...args, e)
+            this[methodName](...args, e);
           } else {
-            console.warn(`${this.nodeName.toLowerCase()}#${methodName.toString()} is not a function`)
+            console.warn(
+              `${this.nodeName.toLowerCase()}#${methodName.toString()} is not a function`,
+            );
           }
         }
-      })
-    )
+      }),
+    );
 
     // @ts-ignore key initialHtml does not exist
-    if (typeof this.initialHtml === 'function' && !this.innerHTML.trim()) {
+    if (typeof this.initialHtml === "function" && !this.innerHTML.trim()) {
       (this.shadowRoot || this).innerHTML = await renderToString(
         // @ts-ignore key initialHtml does not exist
-        this.initialHtml()
-      )
+        this.initialHtml(),
+      );
     }
 
     for (const attr of this.attributes) {
-      if (!attr.name.startsWith('data-')) {
+      if (!attr.name.startsWith("data-")) {
         // in order to have a uniform interface for component props,
         // we create signals from static attributes and assign them to fields
         // @ts-ignore noImplicitAny
-        this[attr.name] = () => attr.value
+        this[attr.name] = () => attr.value;
       }
     }
 
     setTimeout(() => {
-      this.#dispose = signals.disposable(() => {
+      signals.root((dispose) => {
+        this.#dispose = dispose;
         const registerRenderingEffects = (rootEl: Element | ShadowRoot) => {
           for (const el of rootEl.querySelectorAll(`[data-bind]`)) {
             if (el instanceof HTMLElement && !isChildOfOtherCustomElement(rootEl, el)) {
-              for (const bind of el.dataset.bind?.split(';') || []) {
-                const { error, prop, subprop, fieldOrMethod, args } = parseBind(bind)
+              for (const bind of el.dataset.bind?.split(";") || []) {
+                const { error, prop, subprop, fieldOrMethod, args } = parseBind(bind);
                 if (error) {
-                  console.warn(error, el)
-                // @ts-ignore noImplicitAny
-                } else if (typeof this[fieldOrMethod] !== 'function') {
-                  console.warn(`${this.nodeName.toLowerCase()}#${fieldOrMethod
-                    } is not a signal or method`, el)
+                  console.warn(error, el);
+                  // @ts-ignore noImplicitAny
+                } else if (typeof this[fieldOrMethod] !== "function") {
+                  console.warn(
+                    `${this.nodeName.toLowerCase()}#${fieldOrMethod} is not a signal or method`,
+                    el,
+                  );
                 } else {
                   effect(() => {
                     // @ts-ignore noImplicitAny
-                    const val = this[fieldOrMethod](...args)
-                    if (prop === 'class' && subprop) {
+                    const val = this[fieldOrMethod](...args);
+                    if (prop === "class" && subprop) {
                       // e.g. data-bind="class.myClass = myField"
-                      el.classList[val ? 'add' : 'remove'](subprop)
-                    } else if (prop === 'props' && subprop) {
+                      el.classList[val ? "add" : "remove"](subprop);
+                    } else if (prop === "props" && subprop) {
                       // e.g. data-bind="props.myChildField = myParentField"
                       // @ts-ignore noImplicitAny
-                      el[subprop] = this[fieldOrMethod]
-                    } else if (prop === 'attributes' && subprop) {
+                      el[subprop] = this[fieldOrMethod];
+                    } else if (prop === "attributes" && subprop) {
                       // e.g. data-bind="attributes.myKey = myField"
                       if (val === null) {
-                        el.removeAttribute(subprop)
+                        el.removeAttribute(subprop);
                       } else {
-                        el.setAttribute(subprop, val)
+                        el.setAttribute(subprop, val);
                       }
                     } else if (subprop) {
                       // e.g. data-bind="dataset.myKey = myField"
                       // @ts-ignore noImplicitAny
-                      el[prop][subprop] = val
-                    } else if (prop === 'innerHTML') {
+                      el[prop][subprop] = val;
+                    } else if (prop === "innerHTML") {
                       // e.g. data-bind="myField"
-                      renderToString(val).then(v => {
-                        el[prop] = v
-                        registerRenderingEffects(el)
-                      })
+                      renderToString(val).then((v) => {
+                        el[prop] = v;
+                        registerRenderingEffects(el);
+                      });
                     } else {
                       // e.g. data-bind="required = myField"
                       // @ts-ignore noImplicitAny
-                      el[prop] = val
+                      el[prop] = val;
                     }
-                  })
+                  });
                 }
               }
             }
           }
-        }
-        registerRenderingEffects(this.shadowRoot || this)
-      })
-    })
+        };
+        registerRenderingEffects(this.shadowRoot || this);
+      });
+    });
   }
 
-  disconnectedCallback (): void {
-    this.#dispose?.()
+  disconnectedCallback(): void {
+    this.#dispose?.();
   }
 }
 
 const isChildOfOtherCustomElement = (rootEl: Element | ShadowRoot, el: Element) => {
-  let p = el.parentElement
+  let p = el.parentElement;
   while (p && p !== rootEl) {
-    if (p.nodeName.includes('-')) {
-      return true
+    if (p.nodeName.includes("-")) {
+      return true;
     }
-    p = p.parentElement
+    p = p.parentElement;
   }
-}
+};
