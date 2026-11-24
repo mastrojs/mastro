@@ -17,7 +17,7 @@ import { contentTypeFromExt } from "./mediaTypes.ts";
 export const staticFiles: Middleware = {
   name: "staticFiles",
   getStaticPaths: () =>
-    findFiles(["routes/**/*", "routes/**/.*/**/*"]).then((paths) =>
+    findFiles(["routes/**/*", "routes/**/.*/**/*"], { followSymlinks: true }).then((paths) =>
       paths.filter((p) => !reserved(p)).map((p) => p.slice(6)),
     ),
   handler: async (req, ctx) => (await serveStaticFile(req, ctx)) || ctx.fetchNext(req),

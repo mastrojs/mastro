@@ -68,11 +68,14 @@ export const readFile = async (path: string): Promise<Uint8Array<ArrayBufferLike
  * In [VSCode for the Web](https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
  * there is a [bug](https://github.com/microsoft/vscode/issues/249197) and we had to roll our own.
  */
-export const findFiles = async (pattern: string | string[]): Promise<string[]> => {
+export const findFiles = async (
+  pattern: string | string[],
+  opts?: { followSymlinks?: boolean },
+): Promise<string[]> => {
   pattern = typeof pattern === "string" ? validatePattern(pattern) : pattern.map(validatePattern);
-  if (!fs) return ((await vscodeExtensionFs.findFiles(pattern)) as string[]).map(toUrlPath).sort();
+  if (!fs) return ((await vscodeExtensionFs.findFiles(pattern, opts))).map(toUrlPath).sort();
   const paths: string[] = [];
-  for await (const entry of (await fs).glob(pattern, { withFileTypes: true })) {
+  for await (const entry of (await fs).glob(pattern, { ...opts, withFileTypes: true })) {
     if (entry.isFile()) {
       const relativeToCwd = (entry.parentPath + sep + entry.name).slice(process.cwd().length + 1);
       paths.push(toUrlPath(relativeToCwd));
