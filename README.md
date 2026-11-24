@@ -14,7 +14,7 @@ Use JavaScript/TypeScript’s mature tooling to build fast MPA websites. Instead
     pnpm create @mastrojs/mastro@latest
 
 
-## Minimal yet powerful
+## Simple to start, powerful when you need it
 
 - **Static site generation** – ideal for blogs, marketing sites or webshops that are [fast](https://mastrojs.github.io/#fast-for-everyone).
 - **Server-side rendering** – use Mastro as a [full-stack web framework](https://mastrojs.github.io/guide/forms-and-rest-apis/#a-mock-database).
@@ -26,10 +26,10 @@ Use JavaScript/TypeScript’s mature tooling to build fast MPA websites. Instead
 
 - **No overhead**: implemented in just [~900 lines ](https://github.com/mastrojs/mastro/tree/main/libs/mastro/src#readme) of TypeScript with no dependencies.
 - **No client-side JavaScript** (until you [add some](https://mastrojs.github.io/guide/interactivity-with-javascript-in-the-browser/)): create [MPA](https://mastrojs.github.io/guide/client-side-vs-server-side-javascript-static-vs-ondemand-spa-vs-mpa/) websites that load [fast](https://mastrojs.github.io#fast-for-everyone).
-- **No bundler** (until you [add one](https://mastrojs.github.io/guide/bundling-assets/)): your code ships exactly how you wrote it.
+- **No build step** (until you [add one](https://mastrojs.github.io/guide/bundling-assets/)): your code ships exactly how you wrote it.
 - **No magic**: use plain `<img>` and `<a>` tags referencing [asset routes](https://mastrojs.github.io/blog/2026-01-29-everything-is-a-route-one-interface-for-servers-static-sites-and-assets/).
 - **No VC-money**: no eventual enshitification – selling is none of our business.
-- **No update treadmill**: we use web standards instead [dependencies](https://jsr.io/@mastrojs/mastro/dependencies).
+- **No dependencies**: use web standards instead of keeping up with the frontend treadmill.
 - **No lock-in**: swap out Mastro later or fork it – it's only [~900 lines ](https://github.com/mastrojs/mastro/tree/main/libs/mastro/src#readme) after all.
 
 
@@ -56,6 +56,12 @@ The core of Mastro is tiny. But to get you started quickly for common use-cases,
 - [Install](https://mastrojs.github.io/guide/third-party-packages/) 3rd-party packages like:
   - [Kysely](https://www.kysely.dev/) – type-safe SQL query builder
   - [Sveltia CMS](https://github.com/mastrojs/template-sveltia-cms) – git-based CMS
+
+## Contribute
+
+We consider the source code fairly readable, [start here](https://github.com/mastrojs/mastro/tree/main/libs/mastro/src#readme)!
+
+Please open an issue or similar (see below) to discuss an idea or proposal.
 
 
 ## Join the community
