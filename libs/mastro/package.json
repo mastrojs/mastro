@@ -1,6 +1,6 @@
 {
   "name": "@mastrojs/mastro",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "No dependencies,  no build step. Just a simple web framework and site generator.",
   "scripts": {
     "check": "tsc --noEmit",
