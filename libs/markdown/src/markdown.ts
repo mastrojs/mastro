@@ -4,12 +4,11 @@
  * @module
  */
 
-import { sep } from "node:path";
-
 import { findFiles, type Html, readTextFile, unsafeInnerHtml } from "@mastrojs/mastro";
-import { parse } from "yaml";
 import { micromark, type Options } from "micromark";
 import { gfm, gfmHtml } from "micromark-extension-gfm";
+import { parse } from "yaml";
+
 import type { StandardSchemaV1 } from "./standard-schema.ts";
 
 export type { Options };
@@ -18,7 +17,9 @@ export type { Options };
  * Return type containing the generated HTML and the YAML metadata.
  */
 export interface Md<M extends DefaultM = DefaultM> {
+  /** `Html` node */
   content: Html;
+  /** YAML frontmatter metadata object */
   meta: M;
 }
 
@@ -66,21 +67,27 @@ export const readMarkdownFile = async <M extends DefaultM = DefaultM>(
   opts?: { parse?: Parse; schema?: MetaSchema<M> },
 ): Promise<Md<M>> => parseMd(await readTextFile(path), opts, path);
 
+interface PathAndSlug {
+  /** Full URL path */
+  path: string;
+  /** URL-encoded filename up to its first dot: e.g. `blog/post.en.json` has the slug `post` */
+  slug: string;
+}
 /**
  * Read all files from the local filesystem that match the supplied glob pattern, (via `findFiles`)
- * and convert their markdown contents to `Html` nodes and objects for their metadata.
- * Filepath is in `path`, filename without suffix in `slug`.
+ * and convert their markdown contents.
+ * Returns an array of objects with `content`, `meta`, `path` and `slug`.
  */
 export const readMarkdownFiles = async <M extends DefaultM = DefaultM>(
   pattern: string,
   opts?: { parse?: Parse; schema?: MetaSchema<M> },
-): Promise<Array<Md<M> & { path: string, slug: string; }>> => {
+): Promise<Array<Md<M> & PathAndSlug>> => {
   const paths = await findFiles(pattern);
   return Promise.all(
     paths.map(async (path) => {
       const file = await readTextFile(path);
       const md = await parseMd(file, opts, path);
-      const slug = path.split(sep).at(-1)?.split(".").at(0) || "";
+      const slug = path.split("/").at(-1)?.split(".").at(0) || "";
       return { ...md, path, slug };
     }),
   );
@@ -153,7 +160,7 @@ export const serveMarkdownFolder = <M extends DefaultM = DefaultM>(
     const files = await findFiles(folder + "/**/*.md");
     const l = folder.length;
     return files.map((file) =>
-      file.endsWith("/index.md") ? file.slice(l, -8) : file.slice(l, -3) + "/"
+      file.endsWith("/index.md") ? file.slice(l, -8) : file.slice(l, -3) + "/",
     );
   };
 
@@ -167,9 +174,10 @@ const parseMd = async <M extends DefaultM = DefaultM>(
 ) => {
   const { parse, schema } = opts || {};
   const { body, meta } = await parseYamlFrontmatter(md, schema, filePath);
-  const content = typeof parse === "function"
-    ? unsafeInnerHtml(await parse(body))
-    : markdownPlainToHtml(body, parse);
+  const content =
+    typeof parse === "function"
+      ? unsafeInnerHtml(await parse(body))
+      : markdownPlainToHtml(body, parse);
   return { content, meta };
 };
 
