@@ -12,17 +12,25 @@ import type { Route } from "../types/mastro.js";
 import type { Middleware } from "../types/middleware.d.ts";
 import { loadFileRoutes } from "./fileRouter.ts";
 
-export { logger, fingerprintAssets, tsToJs, staticFiles };
+/**
+ * Array with the default middlewares in correct order:
+ *
+ * - {@link logger}
+ * - {@link fingerprintAssets}
+ * - {@link tsToJs}
+ * - {@link staticFiles}
+ */
 export const middlewares: Middleware[] = [logger, fingerprintAssets, tsToJs, staticFiles];
+export { logger, fingerprintAssets, tsToJs, staticFiles };
 
 /**
- * Creates an app with the programmatic router and default middleware.
+ * Creates a {@link Mastro} app with the programmatic [router](https://mastrojs.github.io/docs/routing/) and default middleware.
  */
 export const createApp = <E extends unknown[]>(): Mastro<E> =>
   new Mastro<E>().use(logger).use(fingerprintAssets).use(tsToJs).use(staticFiles);
 
 /**
- * Creates an app with the file-based router and default middleware.
+ * Creates a {@link Mastro} app with the file-based [router](https://mastrojs.github.io/docs/routing/) and default middleware.
  */
 export const createFileRouterApp = <E extends unknown[]>(routes?: Promise<Route[]>): Mastro<E> =>
   new Mastro<E>({ routes: routes || loadFileRoutes() })

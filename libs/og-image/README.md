@@ -18,13 +18,12 @@ We support newlines and [soft hyphens](https://en.wikipedia.org/wiki/Soft_hyphen
 Since `canvaskit-wasm` apparently cannot read installed system fonts, you need to bring your own font file, e.g. from [Fontsource](https://fontsource.org/).
 
 ```ts
+import fs from "node:fs/promises"
 import { renderImage } from "@mastrojs/og-image";
 
-const fontFile = await Deno.readFile("data/Roboto-Bold.ttf");
+const fontFile = await fs.readFile("data/Roboto-Bold.ttf");
 const response = renderImage(text, { fontFile });
 ```
-
-We used `Deno.readFile` above, but you could also use `fs.readFile` or Mastro's `readFile` function.
 
 ### Mastro blog example
 

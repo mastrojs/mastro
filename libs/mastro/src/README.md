@@ -12,7 +12,7 @@ In `libs/mastro/src`:
 
 The `@mastrojs/mastro` package [main entry point](index.ts) exports the [Mastro app class](mastro.ts) (used directly for programmatic routing, and indirectly with the file-based router), as well as the following files from `core/`:
 
-- [`fs.ts`](core/fs.ts) contains the `readDir`, `readTextFile`, and `findFiles` functions, that work in both the VSCode extension environment and Deno/Node.js/Bun.
+- [`fs.ts`](core/fs.ts) contains the `readDir`, `readTextFile`, and `findFiles` functions, that work in both the VSCode extension environment and Node.js.
 - [`html.ts`](core/html.ts) contains the `html` tagged template literal to construct properly escaped HTML strings.
 - [`responses.ts`](core/responses.ts) – helper functions to create standard [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) objects.
 

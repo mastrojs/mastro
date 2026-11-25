@@ -5,8 +5,9 @@ import type { Context, MiddlewareContext } from "./middleware.d.ts";
 export type Pathname = `/${string}`;
 
 /**
- * A route or middleware handler. It receives a standard Request
- * (and a {@link Context} or {@link MiddlewareContext} as a second argument).
+ * A route or middleware handler. It receives a standard {@link Request}
+ * (and a {@link Context} or {@link MiddlewareContext} as a second argument),
+ * and returns a standard {@link Response} (or Promise of such).
  *
  * ```ts
  * import { type Handler } from "@mastrojs/mastro";
@@ -26,11 +27,11 @@ export interface Route<C = Context> {
    * For file-based routes the `filePath`, e.g. `routes/index.server.ts`
    */
   name: string;
-  /** Fetch handler */
+  /** Fetch {@link Handler} */
   handler: Handler<C>;
-  /** HTTP method, or "all" if the route should match any HTTP method. */
+  /** {@link HttpMethod}, or "all" if the route should match any HTTP method. */
   method: "all" | HttpMethod;
-  /** `URLPattern` with `pathname` set */
+  /** {@link URLPattern} with `pathname` set */
   pattern: URLPattern;
   /** Called by the static site generator. */
   getStaticPaths?: () => Promise<string[]> | string[];

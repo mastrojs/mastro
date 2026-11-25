@@ -10,9 +10,11 @@ import type { Context, Middleware } from "../../types/middleware.d.ts";
 import { contentTypeFromExt } from "./mediaTypes.ts";
 
 /**
- * Serve static files in routes folder (excluding *.client.ts, *.server.ts and *.server.js files)
+ * Serve static files in routes folder
+ * (excluding `*.client.ts`, `*.server.ts` and `*.server.js` files).
  *
- * In production, we also look for files in the `generated` folder, which take precedence.
+ * If `ctx.environment === "production"`, we also look for files in the `generated` folder,
+ * which take precedence. See [pregenerating assets](https://mastrojs.github.io/guide/bundling-assets/#build-step).
  */
 export const staticFiles: Middleware = {
   name: "staticFiles",

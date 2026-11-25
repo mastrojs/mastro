@@ -2,7 +2,7 @@ import type { Handler } from "./mastro.d.ts";
 
 /**
  * Middleware allows you to intercept requests before they hit your routes, and modify responses
- * returned by downstream handlers.
+ * returned by upstream handlers.
  *
  * Often, calling a shared helper function (like [jsonRoute](https://github.com/mastrojs/api))
  * in your routes is simpler. However, middleware can be useful if you have lots of routes,
@@ -93,6 +93,7 @@ export type Middleware<L = {}, C extends { extras: unknown } = Context<unknown[]
       afterGenerate?: (ctx: GeneratorCtxSimple<C>) => void;
     };
 
+/** Object containing at least the `ctx.fetchNext` handler, and  `ctx.locals`. */
 export type MiddlewareContext<C = Context, L = {}> = C & { fetchNext: FetchNext<L> };
 
 type MiddlewareHandler<L = {}, C = Context> = Handler<MiddlewareContext<C, L>>;
@@ -106,7 +107,11 @@ interface BaseContext<E, L, P> {
   readonly params: Readonly<P>;
 }
 
-/** Context that both middleware and routes receive as the second argument. */
+/**
+ * Context that both {@link Middleware} and route {@link Handler} receive as the second argument.
+ *
+ * A {@link GeneratorContext} when doing static site generation, otherwise a {@link ServerContext}.
+ */
 export type Context<
   E = unknown[],
   L = Record<string, unknown>,
@@ -114,6 +119,7 @@ export type Context<
 > = GeneratorContext<E, L, P> | ServerContext<E, L, P>;
 
 export interface GeneratorContext<E, L, P> extends BaseContext<E, L, P> {
+  /** static site generation, or asset pregeneration */
   mode: "generator";
   /** Base URL for synthetic requests. Defaults to http://127.0.0.1. */
   baseUrl?: string;

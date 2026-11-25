@@ -1,5 +1,6 @@
 import { isDevServer, routeHandler } from "./core/routeHelpers.ts";
 import { chainMiddlewares } from "./middleware.ts";
+import type { createApp, createFileRouterApp } from "./servers/server.ts";
 import type { Handler, Pathname, Route, RouteHandler, Simplify } from "./types/mastro.d.ts";
 import type { CompatibleLocals, Context, Middleware } from "./types/middleware.d.ts";
 
@@ -11,16 +12,25 @@ export { httpMethods };
 export type HttpMethod = (typeof httpMethods)[number];
 
 /**
- * Class to construct an app instance.
-
+ * For Node.js and Bun, import the {@link createApp} or {@link createFileRouterApp}
+ * factory functions from ["@mastrojs/mastro/server"](#group-server) and use those,
+ * since they have built-in middleware.
+ *
+ * If you're on a serverless platform or in a Service Worker, construct an app instance directly:
+ *
  * ```ts
+ * import { Mastro } from "@mastrojs/mastro";
+ * import * as Home from "./handlers/Home.ts";
+ *
  * const app = new Mastro()
  *   .use(myMiddleware)
- *   .get("/", (req, ctx) => new Response("Hi"))
+ *   .get("/", Home)
+ *   .get("/hi/:name", (req, ctx) => new Response("Hi " + ctx.params.name))
  * ```
  *
- * For Node.js and Bun, use the `createApp` or `createFileRouterApp`
- * factories that you can import from "@mastrojs/mastro/server".
+ * The first argument to the route constructing methods is a standard {@link URLPattern} pathname,
+ * the second argument is either a {@link Handler} function, or an object with at least a
+ * `GET`, `POST, etc field (or a module with an export named `GET`, `POST`, etc).
  *
  * For the types to get passed through correctly, be sure to chain the method calls as shown above.
  * Otherwise, the generics for URL path parameters, and locals set by middleware, won't be inferred
