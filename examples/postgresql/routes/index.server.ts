@@ -1,7 +1,6 @@
-import { html, htmlToResponse } from "@mastrojs/mastro";
+import { html, htmlToResponse, mapIterable } from "@mastrojs/mastro";
 import { Layout } from "../components/Layout.ts";
 import { db } from "../db/db.ts";
-import { mapIterable } from "../db/iterable.ts";
 
 export const GET = (_req: Request) => {
   const rows = db

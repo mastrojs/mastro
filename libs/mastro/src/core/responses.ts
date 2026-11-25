@@ -1,54 +1,49 @@
-import { readTextFile } from "./fs.ts";
 import { type Html, isAsyncIterable, renderToStream } from "./html.ts";
 
 /**
- * Create a standard Response object with `Content-Type: text/html` from a string
+ * Create a standard {@link Response} object with `Content-Type: text/html` from a string
  * or `AsyncIterable<string>` (in which case it will stream it).
  */
 export const htmlResponse = (
   body: string | AsyncIterable<string>,
   status = 200,
-  headers?: Record<string, string>,
+  headers?: Record<string, string> | Headers,
 ): Response =>
-  new Response(
-    isAsyncIterable(body) ? toReadableStream(body) : body,
-    { status, headers: { "Content-Type": "text/html; charset=utf-8", ...headers } },
-  );
+  new Response(isAsyncIterable(body) ? toReadableStream(body) : body, {
+    status,
+    headers: contentType("text/html; charset=utf-8", headers),
+  });
 
 /**
- * Create a standard Response object from an `Html` node.
+ * Create a standard {@link Response} object from an `Html` node.
  */
 export const htmlToResponse = (
   node: Html,
   status = 200,
-  headers?: Record<string, string>,
-): Response =>
-  htmlResponse(renderToStream(node), status, headers);
+  headers?: Record<string, string> | Headers,
+): Response => htmlResponse(renderToStream(node), status, headers);
 
 /**
- * Create a standard Response object with `Content-Type: application/json`.
+ * Create a standard {@link Response} object with `Content-Type: application/json`.
  */
 export const jsonResponse = (
   body: object,
   status = 200,
-  headers?: Record<string, string>,
+  headers?: Record<string, string> | Headers,
 ): Response =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", ...headers },
-  });
+  new Response(JSON.stringify(body), { status, headers: contentType("application/json", headers) });
 
 /**
- * Create a standard Response object to stream an `AsyncIterable` of JSON data as
+ * Create a standard {@link Response} object to stream an `AsyncIterable` of JSON data as
  * [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events).
  */
 export const sseResponse = <T extends object>(
   stream: AsyncIterable<T>,
-  headers?: Record<string, string>,
+  headers?: Record<string, string> | Headers,
 ): Response =>
   new Response(
     toReadableStream(mapIterable(stream, (chunk) => `data: ${JSON.stringify(chunk)}\n\n`)),
-    { headers: { "Content-Type": "text/event-stream", ...headers } },
+    { headers: contentType("text/event-stream", headers) },
   );
 
 /**
@@ -76,7 +71,7 @@ export const sseResponse = <T extends object>(
  * ```
  */
 export const asset = (path: string): string =>
-  (globalThis as any)._mastroAssets?.[path] || (/_assets/ + path);
+  (globalThis as any)._mastroAssets?.[path] || /_assets/ + path;
 
 /**
  * [Identity tag literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/raw#building_an_identity_tag)
@@ -172,8 +167,20 @@ export const ghPagesBasePath = (): string => {
   return "";
 };
 
-async function* mapIterable<T, R>(iter: AsyncIterable<T>, cb: (val: T) => R): AsyncIterable<R> {
-  for await (const val of iter) {
-    yield cb(val);
-  }
+/**
+ * Like `Array.map` but for [AsyncIterables](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols).
+ *
+ * ```ts
+ * const newIterable = mapIterable(iterable, (n) => n * 2);
+ * ```
+ *
+ * Implemented using generators, which is not as performant as it could be, but simple.
+ */
+export async function* mapIterable<T, R>(i: AsyncIterable<T>, cb: (val: T) => R): AsyncIterable<R> {
+  for await (const val of i) yield cb(val);
 }
+
+const contentType = (val: string, headers: Record<string, string> | Headers = {}) => {
+  headers instanceof Headers ? headers.set("Content-Type", val) : (headers["Content-Type"] = val);
+  return headers;
+};
