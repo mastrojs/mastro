@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { markdownToHtml } from "./markdown.ts";
+import { unsafeInnerHtml } from "@mastrojs/mastro";
+
+import { markdownPlainToHtml, markdownToHtml } from "./markdown.ts";
 
 test("markdownToHtml", async () => {
   assert.deepEqual(await markdownToHtml("hi *there*"), {
@@ -33,4 +35,43 @@ hi *there*`);
     date: "2026-11-21",
     tags: ["one", "two"],
   });
+});
+
+test("markdownToHtml handles frontmatter delimiters", async () => {
+  const cases = [
+    {
+      input: "---\ntitle: hello\n---\nBody",
+      meta: { title: "hello" },
+      content: "<p>Body</p>",
+    },
+    { input: "---\n---\nBody", meta: {}, content: "<p>Body</p>" },
+    { input: "---\n\n---\nBody", meta: {}, content: "<p>Body</p>" },
+    { input: "---\n  \n---\nBody", meta: {}, content: "<p>Body</p>" },
+    { input: "---\n---", meta: {}, content: "" },
+    {
+      input: "---\ntitle: hello\n---",
+      meta: { title: "hello" },
+      content: "",
+    },
+  ] as const;
+  for (const newline of ["\n", "\r\n", "\r"]) {
+    for (const { input, meta, content } of cases) {
+      assert.deepEqual(
+        await markdownToHtml(input.replaceAll("\n", newline)),
+        { content: unsafeInnerHtml(content), meta },
+        input,
+      );
+    }
+  }
+
+  for (const input of [
+    "---\ntitle: hello\n---oops\nBody",
+    "---\ntitle: hello\n----\nBody",
+    "----\ntitle: hello\n---\nBody",
+    "---\ntitle: hello\nBody",
+    "Intro\n---\ntitle: hello\n---\nBody",
+  ]) {
+    const expected = { content: markdownPlainToHtml(input), meta: {} };
+    assert.deepEqual(await markdownToHtml(input), expected, input);
+  }
 });

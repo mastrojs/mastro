@@ -55,7 +55,7 @@ export const markdownToHtml = <M extends DefaultM = DefaultM>(
 /**
  * Convert a markdown string with no YAML frontmatter to an `Html` node
  */
-export const markdownPlainToHtml = (md: string, opts?: Parse): Html =>
+export const markdownPlainToHtml = (md: string, opts?: Options): Html =>
   unsafeInnerHtml(micromark(md, { extensions: [gfm()], htmlExtensions: [gfmHtml()], ...opts }));
 
 /**
@@ -209,11 +209,11 @@ const parseYamlFrontmatter = async <M extends DefaultM>(
   let body = md;
   const results = yamlFrontRe.exec(md);
   try {
-    const yaml = results?.[2];
-    if (yaml) {
-      const metaObj = parse(yaml, { schema: "core" });
+    if (results) {
+      const yaml = results[1] || "";
+      const metaObj = yaml.trim() ? parse(yaml, { schema: "core" }) : {};
       if (metaObj && typeof metaObj === "object" && !(metaObj instanceof Array)) {
-        body = results?.[3] || "";
+        body = results[2] || "";
         meta = metaObj as M;
       }
     }
@@ -238,4 +238,5 @@ const parseYamlFrontmatter = async <M extends DefaultM>(
 };
 
 // from https://github.com/dworthen/js-yaml-front-matter/blob/master/src/index.js#L14
-const yamlFrontRe = /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?([\w\W]*)*/;
+// but then adapted to cover more cases. Perhaps we should switch to https://github.com/parksb/markdown-it-front-matter/blob/master/index.js
+const yamlFrontRe = /^---(?:\r\n|\n|\r)(?:([\s\S]*?)(?:\r\n|\n|\r))?---(?:\r\n|\n|\r|$)([\s\S]*)$/;
