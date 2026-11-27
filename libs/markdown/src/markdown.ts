@@ -14,13 +14,13 @@ import type { StandardSchemaV1 } from "./standard-schema.ts";
 export type { Options };
 
 /**
- * Return type containing the generated HTML and the YAML metadata.
+ * Return type containing the generated HTML in `content`, and the YAML metadata in `meta`.
  */
 export interface Md<M extends DefaultM = DefaultM> {
   /** `Html` node */
   content: Html;
   /** YAML frontmatter metadata object */
-  meta: M;
+  readonly meta: Readonly<M>;
 }
 
 /**
@@ -37,7 +37,7 @@ export type MetaSchema<M> = StandardSchemaV1<unknown, M>;
 /**
  * If no schema is provided, we fall back to this type for the metadata.
  *
- * We use `unknown` instead of `string | number | boolean | Date | null | undefined>`
+ * We use `unknown` instead of `string | number | boolean | Date | null | undefined`
  * because you could have deeply nested objects or arrays.
  */
 export type DefaultM = Record<string, unknown>;
@@ -64,8 +64,8 @@ export const markdownPlainToHtml = (md: string, opts?: Parse): Html =>
  */
 export const readMarkdownFile = async <M extends DefaultM = DefaultM>(
   path: string,
-  opts?: { parse?: Parse; schema?: MetaSchema<M> },
-): Promise<Md<M>> => parseMd(await readTextFile(path), opts, path);
+  opts?: { parse?: Parse; schema?: MetaSchema<M>; disableCache?: boolean },
+): Promise<Md<M>> => parseMd({ path }, opts);
 
 interface PathAndSlug {
   /** Full URL path */
@@ -80,13 +80,12 @@ interface PathAndSlug {
  */
 export const readMarkdownFiles = async <M extends DefaultM = DefaultM>(
   pattern: string,
-  opts?: { parse?: Parse; schema?: MetaSchema<M> },
+  opts?: { parse?: Parse; schema?: MetaSchema<M>; disableCache?: boolean },
 ): Promise<Array<Md<M> & PathAndSlug>> => {
   const paths = await findFiles(pattern);
   return Promise.all(
     paths.map(async (path) => {
-      const file = await readTextFile(path);
-      const md = await parseMd(file, opts, path);
+      const md = await readMarkdownFile(path, opts);
       const slug = path.split("/").at(-1)?.split(".").at(0) || "";
       return { ...md, path, slug };
     }),
@@ -123,7 +122,7 @@ export const readMarkdownFiles = async <M extends DefaultM = DefaultM>(
  * `data/blog/hello-world.md`, and the URL `/` will read out the file `data/index.md`.
  */
 export const serveMarkdownFolder = <M extends DefaultM = DefaultM>(
-  opts: { folder: string; parse?: Parse; schema?: MetaSchema<M> },
+  opts: { folder: string; parse?: Parse; schema?: MetaSchema<M>; disableCache?: boolean },
   renderFn: (convertedMd: Md<M>, req: Request) => Promise<Response> | Response,
 ): {
   GET: (req: Request) => Promise<Response>;
@@ -140,19 +139,16 @@ export const serveMarkdownFolder = <M extends DefaultM = DefaultM>(
     }
     pathname = pathname.slice(0, -1);
     pathname = pathname.startsWith("/") ? pathname : "/" + pathname;
-    let filePath = folder + pathname + ".md";
-    let txt;
+    let converted: Md<M>;
     try {
-      txt = await readTextFile(filePath);
+      converted = await readMarkdownFile(folder + pathname + ".md", opts);
     } catch (e: unknown) {
       if (e instanceof Error && "code" in e && e.code === "ENOENT") {
-        filePath = folder + pathname + "/index.md";
-        txt = await readTextFile(filePath);
+        converted = await readMarkdownFile(folder + pathname + "/index.md", opts);
       } else {
         throw e;
       }
     }
-    const converted = await parseMd(txt, opts, filePath);
     return renderFn(converted, req);
   };
 
@@ -168,18 +164,35 @@ export const serveMarkdownFolder = <M extends DefaultM = DefaultM>(
 };
 
 const parseMd = async <M extends DefaultM = DefaultM>(
-  md: string,
-  opts?: { parse?: Parse; schema?: MetaSchema<M> },
-  filePath?: string,
-) => {
-  const { parse, schema } = opts || {};
-  const { body, meta } = await parseYamlFrontmatter(md, schema, filePath);
-  const content =
-    typeof parse === "function"
-      ? unsafeInnerHtml(await parse(body))
-      : markdownPlainToHtml(body, parse);
-  return { content, meta };
+  source: string | { path: string },
+  opts?: { parse?: Parse; schema?: MetaSchema<M>; disableCache?: boolean },
+): Promise<Md<M>> => {
+  const { disableCache, parse, schema } = opts || {};
+  const filePath = typeof source === "string" ? undefined : source.path;
+  if (!disableCache && filePath) {
+    const cached = mdCache.get(filePath)?.get(parse)?.get(schema);
+    if (cached) return cached as Promise<Md<M>>;
+  }
+
+  const resultP = (async () => {
+    const md = typeof source === "string" ? source : await readTextFile(source.path);
+    const { body, meta } = await parseYamlFrontmatter(md, schema, filePath);
+    const content =
+      typeof parse === "function"
+        ? unsafeInnerHtml(await parse(body))
+        : markdownPlainToHtml(body, parse);
+    return { content, meta };
+  })();
+
+  if (!disableCache && filePath) {
+    mdCache.getOrInsert(filePath, new Map()).getOrInsert(parse, new Map()).set(schema, resultP);
+  }
+  return resultP;
 };
+
+// Parser options and schemas can contain functions, so use their identity as cache keys.
+const mdCache = new Map<string, NestedMaps>();
+type NestedMaps = Map<Parse | undefined, Map<MetaSchema<DefaultM> | undefined, Promise<Md>>>;
 
 /**
  * Converts a string possibly containing yaml frontmatter to a `{ meta, body }` object.
@@ -189,8 +202,8 @@ const parseMd = async <M extends DefaultM = DefaultM>(
  */
 const parseYamlFrontmatter = async <M extends DefaultM>(
   md: string,
-  schema?: MetaSchema<M>,
-  filePath?: string,
+  schema: MetaSchema<M> | undefined,
+  filePath: string | undefined,
 ): Promise<{ body: string; meta: M }> => {
   let meta = {} as M;
   let body = md;

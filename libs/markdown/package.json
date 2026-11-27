@@ -42,5 +42,8 @@
     "yaml": "^2.9.1",
     "micromark": "^4.0.3",
     "micromark-extension-gfm": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=26"
   }
 }
