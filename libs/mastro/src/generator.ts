@@ -23,7 +23,7 @@ import type { Context, GeneratorCtxSimple } from "./types/middleware.d.ts";
  */
 export const generate = async <E extends unknown[], L>(
   app: Mastro<E, L>,
-  opts: Simplify<Partial<GeneratorCtxSimple<Context<E>>>> = {},
+  opts: Simplify<Partial<GeneratorCtxSimple<Context<E>>> & { concurrency?: number }> = {},
 ): Promise<boolean> => {
   const ctx = {
     baseUrl: opts.baseUrl || "http://127.0.0.1",
@@ -50,23 +50,36 @@ export const generate = async <E extends unknown[], L>(
   await Promise.all(ms.map((m) => ("beforeGenerate" in m ? m.beforeGenerate?.(ctx) : null)));
   let completeSuccess = true;
 
-  for (const path of await getPaths(ctx, ...ms, ...routePaths(routes, ctx.onlyPregenerate))) {
-    // TODO: parallelize without opening too many file handles at once
-    const url = new URL(path, ctx.baseUrl);
-    const context = { ...ctx, locals: {}, params: {} };
-    const { response, outFilePath } = await generatePage(handler, url, context);
-    if (response.ok) {
-      const outPath = join(outFolder, outFilePath);
-      await fs.mkdir(dirname(outPath), { recursive: true });
-      if (response.body) {
-        await fs.writeFile(outPath, response.body);
-      } else {
-        console.warn(`\nWARNING: ${path} returned no body (HTTP ${response.status})\n.`);
-      }
-    } else if (response.status !== 404) {
-      completeSuccess = false;
-    }
-  }
+  const renderPages = async (paths: string[]) => {
+    const sharedIterator = paths.values();
+    await Promise.all(
+      // Generate pages concurrently, defaulting to a maximum of 16 at a time:
+      Array.from({ length: Math.min(opts.concurrency || 16, paths.length) }, async () => {
+        for (const path of sharedIterator) {
+          const url = new URL(path, ctx.baseUrl);
+          const context = { ...ctx, locals: {}, params: {} };
+          const { response, outFilePath } = await generatePage(handler, url, context);
+          if (response.ok) {
+            const outPath = join(outFolder, outFilePath);
+            await fs.mkdir(dirname(outPath), { recursive: true });
+            if (response.body) {
+              await fs.writeFile(outPath, response.body);
+            } else {
+              console.warn(`\nWARNING: ${path} returned no body (HTTP ${response.status})\n.`);
+            }
+          } else if (response.status !== 404) {
+            completeSuccess = false;
+          }
+        }
+      }),
+    );
+  };
+
+  const routeMiddleware = createRouteMiddleware(routes, ctx.onlyPregenerate);
+  const { assetPaths, otherPaths } = await getPaths(ctx, ...ms, ...routeMiddleware);
+  await renderPages(assetPaths);
+  await renderPages(otherPaths);
+
   if (completeSuccess) {
     await Promise.all(ms.map((m) => ("afterGenerate" in m ? m.afterGenerate?.(ctx) : null)));
     console.info(`Generated static site and wrote to \`${outFolder}\` folder.`);
@@ -87,7 +100,7 @@ const getPaths = async <E, C = GeneratorCtxSimple<Context<E>>>(ctx: C, ...middle
   for (const p of (await Promise.all(paths)).flat()) {
     (p.startsWith("/_assets/") ? assetPaths : otherPaths).push(p);
   }
-  return assetPaths.concat(otherPaths);
+  return { assetPaths, otherPaths };
 };
 type Mw<C> = {
   name: string;
@@ -130,7 +143,7 @@ const validateStaticPaths = (name: string, paths: string[], pattern?: URLPattern
   return paths;
 };
 
-const routePaths = <E>(routes: Route<Context<E>>[], onlyPregen: boolean) =>
+const createRouteMiddleware = <E>(routes: Route<Context<E>>[], onlyPregen: boolean) =>
   routes
     .filter((r) => (!onlyPregen || r.pregenerate) && (r.method === "GET" || r.method === "all"))
     .map((r) => ({

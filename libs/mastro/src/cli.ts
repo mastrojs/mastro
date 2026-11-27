@@ -68,6 +68,7 @@ Create one containing ${example}`);
   if (!app) throw new GenerateError(serverPath + "\nis missing " + example);
   const success = await generate(app as Mastro, {
     baseUrl: values["base-url"] as string | undefined,
+    concurrency: parseInt(process.env.CONCURRENCY || "", 10),
     outFolder: values.output as string | undefined,
     onlyPregenerate: !!values["only-pregenerate"],
   });
