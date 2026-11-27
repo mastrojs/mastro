@@ -1,6 +1,6 @@
 {
   "name": "@mastrojs/markdown",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "description": "Generate HTML from Markdown with Mastro.",
   "scripts": {
     "check": "tsc --noEmit",

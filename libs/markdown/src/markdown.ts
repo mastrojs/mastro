@@ -128,7 +128,7 @@ export const serveMarkdownFolder = <M extends DefaultM = DefaultM>(
   GET: (req: Request) => Promise<Response>;
   getStaticPaths: () => Promise<string[]>;
 } => {
-  const { folder } = opts;
+  const folder = opts.folder.replace(/\/+$/, "");
 
   const GET = async (req: Request) => {
     let { pathname } = new URL(req.url);
@@ -138,12 +138,12 @@ export const serveMarkdownFolder = <M extends DefaultM = DefaultM>(
       throw err;
     }
     pathname = pathname.slice(0, -1);
-    pathname = pathname.startsWith("/") ? pathname : "/" + pathname;
+    const filePath = folder + (pathname || "/index") + ".md";
     let converted: Md<M>;
     try {
-      converted = await readMarkdownFile(folder + pathname + ".md", opts);
+      converted = await readMarkdownFile(filePath, opts);
     } catch (e: unknown) {
-      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+      if (pathname && e instanceof Error && "code" in e && e.code === "ENOENT") {
         converted = await readMarkdownFile(folder + pathname + "/index.md", opts);
       } else {
         throw e;
