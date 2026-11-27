@@ -2,7 +2,7 @@
   "name": "my-website",
   "type": "module",
   "scripts": {
-    "start": "node --watch server.ts",
+    "start": "node --watch-path . server.ts",
     "generate": "mastro generate",
     "check": "tsc"
   },

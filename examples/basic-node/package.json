@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "node --watch server.ts",
+    "start": "node --watch-path . server.ts",
     "generate": "mastro generate",
     "check": "tsc"
   },
