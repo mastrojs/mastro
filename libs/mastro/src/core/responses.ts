@@ -53,8 +53,9 @@ export const sseResponse = <T extends object>(
  * - When running a production server, you need to run `mastro generate --only-pregenerate` in your
  * CI, which will create a `generatedAssets.json` file, which this function will then read from.
  * See the [Mastro Guide](https://mastrojs.github.io/guide/caching-service-workers-streaming/#fingerprinting-assets-with-hash-based-file-names).
- * Don't forget to set your CDN's caching headers for `/_assets/*` to something like
- * `Cache-Control: public, max-age=31556952, immutable` (1 year), otherwise hashing is little use.
+ * If you use a CDN or have a static site, don't forget to set its caching headers for `/_assets/*`
+ * to something like `Cache-Control: public, max-age=31556952, immutable` (1 year),
+ * otherwise hashing is little use.
  *
  * - Finally, when running the dev server, hashing all assets would be too slow. Thus if no
  * `generatedAssets.json` file is present on server start, this function returns the unhashed
