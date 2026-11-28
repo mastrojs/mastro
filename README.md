@@ -46,13 +46,13 @@ The core of Mastro is tiny. But to get you started quickly for common use-cases,
 
 - Tiny libs in the `@mastrojs` namespace:
   - [Reactive Mastro](https://mastrojs.github.io/reactive/) – a tiny client-side reactive GUI library for MPAs
-  - [markdown](https://github.com/mastrojs/markdown) to HTML
-  - [images](https://github.com/mastrojs/images) – resize/compress/etc.
-  - [og-image](https://github.com/mastrojs/og-image) – generate images from text
-  - [feed](https://github.com/mastrojs/feed) – generate RSS/Atom feeds
-  - [atproto](https://github.com/mastrojs/atproto) – add support for [Standard.site](https://mastrojs.github.io/blog/2026-06-05-how-to-add-standard-site-support-to-your-website/)
-  - [api](https://github.com/mastrojs/api) – type-safe REST APIs and clients
-  - [result](https://github.com/mastrojs/result) – a minimal `Result` type
+  - [markdown](./libs/markdown/) to HTML
+  - [images](./libs/images/) – resize/compress/etc.
+  - [og-image](./libs/og-image/) – generate images from text
+  - [feed](./libs/feed/) – generate RSS/Atom feeds
+  - [atproto](./libs/atproto/) – add support for [Standard.site](https://mastrojs.github.io/blog/2026-06-05-how-to-add-standard-site-support-to-your-website/)
+  - [api](./libs/api/) – type-safe REST APIs and clients
+  - [result](./libs/result/) – a minimal `Result` type
 - [Install](https://mastrojs.github.io/guide/third-party-packages/) 3rd-party packages like:
   - [Kysely](https://www.kysely.dev/) – type-safe SQL query builder
   - [Sveltia CMS](https://github.com/mastrojs/template-sveltia-cms) – git-based CMS

@@ -20,10 +20,11 @@ import type { Handler } from "./mastro.d.ts";
  * However, Mastro's middleware API is explicitly modelled after a network proxy. Thinking
  * of your middleware as a network proxy may be easier than the onion call chain described above.
  *
- * (If you use the `createApp` or `createFileRouterApp` factory from "@mastrojs/mastro/server",
- * be aware that the middleware they set will run before the ones you add later.
+ * If you use the `createApp` or `createFileRouterApp` factory from `@mastrojs/mastro/server`,
+ * be aware that the middleware they set will run before the ones you add later (e.g. static files
+ * will be served by the static file middleware without ever hitting your later middleware).
  * If that's a problem, use `new Mastro()` directly, import the default middlewares you need from
- * "@mastrojs/mastro/server", and add them in the desired order.)
+ * `@mastrojs/mastro/server`, and add them in the desired order.
  *
  * The simplest middleware, which doesn't do anything, is:
  *
@@ -44,6 +45,14 @@ import type { Handler } from "./mastro.d.ts";
  * }
  * ```
  *
+ * Add it to your app with the `use` method:
+ *
+ * ```ts
+ * export const app = createFileRouterApp()
+ *   .use(identityMiddleware)
+ *   .use(redirectMiddleware)
+ * ```
+ *
  * ## Error handling
  *
  * You don't need to wrap `ctx.fetchNext()` in `try...catch` – Mastro already does that for you
@@ -52,14 +61,14 @@ import type { Handler } from "./mastro.d.ts";
  *
  * ## Server and static site generation
  *
- * Middlewares are run on every route and on every request.
+ * Middlewares are run on every route.
  * When doing static site generation, they are run when you generate the site. In that case,
  * returning 404 skips a page. Use the `Content-Disposition` HTTP header to override the output
  * filename (don't include the directory).
  *
- * When running a server, a middleware can be just a {@link MiddlewareHandler} function. For
- * static site generation, if you also need to provide `getStaticPaths` or `afterGenerate`,
- * use the object form (see [tsToJs](../middlewares/tsToJs.ts) for an example).
+ * When running a server, a middleware can be just a handler function (as seen above).
+ * For static site generation, if you also need to provide `getStaticPaths` or `afterGenerate`,
+ * use the object form (see [tsToJs](https://github.com/mastrojs/mastro/blob/main/libs/mastro/src/middlewares/tsToJs.ts) for an example).
  *
  * ## Locals
  *

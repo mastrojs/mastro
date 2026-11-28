@@ -32,8 +32,8 @@ export type HttpMethod = (typeof httpMethods)[number];
  * the second argument is either a {@link Handler} function, or an object with at least a
  * `GET`, `POST, etc field (or a module with an export named `GET`, `POST`, etc).
  *
- * For the types to get passed through correctly, be sure to chain the method calls as shown above.
- * Otherwise, the generics for URL path parameters, and locals set by middleware, won't be inferred
+ * For the types to get passed through correctly when using middleware, be sure to
+ * chain the method calls as shown above. Otherwise, the generics for locals won't be inferred
  * correctly. When using TypeScript, do NOT do something like the following:
  *
  * ```js

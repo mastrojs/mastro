@@ -18,3 +18,5 @@ Finally, we share the [`renderTodo` function](https://github.com/mastrojs/mastro
   - `todo-list.client.ts` – client-side JavaScript
 
 See also the corresponding [chapter in the Mastro guide](https://mastrojs.github.io//guide/forms-and-rest-apis/#client-side-fetching-a-rest-api).
+
+For a type-safe, tRPC-like version of this example, see [todo-list-typesafe-api](../todo-list-typesafe-api/).
